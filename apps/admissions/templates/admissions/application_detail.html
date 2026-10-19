@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}{{ application.application_number }} · Hostel Management System{% endblock %}
+
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li><a href="{% url 'admissions:application_list' %}">Applications</a></li>
+      <li aria-current="page">{{ application.application_number }}</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>{{ application.full_name }}</h1>
+      <p class="hm-sub">{{ application.application_number }} · {{ application.enrolment_number }} · submitted {{ application.submitted_at|date:"j M Y, H:i" }}</p>
+    </div>
+    <span class="hm-badge hm-badge--{{ application.status|lower }}">{{ application.get_status_display }}</span>
+  </div>
+
+  <div class="hm-detail-grid">
+    <div>
+      <section class="hm-panel hm-panel--flush" aria-labelledby="h-personal">
+        <div class="hm-panel__head"><h2 id="h-personal">Applicant</h2></div>
+        <dl class="hm-facts">
+          <div><dt>Gender</dt><dd>{{ application.get_gender_display }}</dd></div>
+          <div><dt>Date of birth</dt><dd>{{ application.date_of_birth|date:"j M Y" }}</dd></div>
+          <div><dt>Phone</dt><dd>{{ application.phone }}</dd></div>
+          <div><dt>Email</dt><dd>{{ application.email }}</dd></div>
+          <div><dt>Address</dt><dd>{{ application.address|linebreaksbr }}</dd></div>
+          <div><dt>Programme</dt><dd>{{ application.programme }}, year {{ application.year_of_study }}</dd></div>
+          <div><dt>CGPA</dt><dd>{{ application.cgpa }}</dd></div>
+        </dl>
+      </section>
+      <section class="hm-panel hm-panel--flush" aria-labelledby="h-guardian">
+        <div class="hm-panel__head"><h2 id="h-guardian">Guardian</h2></div>
+        <dl class="hm-facts">
+          <div><dt>Name</dt><dd>{{ application.guardian_name }} ({{ application.guardian_relation }})</dd></div>
+          <div><dt>Phone</dt><dd>{{ application.guardian_phone }}</dd></div>
+          <div><dt>Email</dt><dd>{{ application.guardian_email|default:"—" }}</dd></div>
+        </dl>
+      </section>
+      <section class="hm-panel hm-panel--flush" aria-labelledby="h-medical">
+        <div class="hm-panel__head"><h2 id="h-medical">Medical</h2></div>
+        <dl class="hm-facts">
+          <div><dt>Blood group</dt><dd>{{ application.get_blood_group_display|default:"Not known" }}</dd></div>
+          <div><dt>Conditions</dt><dd>{{ application.medical_conditions|default:"None stated"|linebreaksbr }}</dd></div>
+        </dl>
+      </section>
+    </div>
+
+    <div>
+      <section class="hm-panel hm-panel--flush" aria-labelledby="h-pref">
+        <div class="hm-panel__head"><h2 id="h-pref">Preference</h2></div>
+        <dl class="hm-facts">
+          <div><dt>Room type</dt><dd>{{ application.get_room_type_display }}</dd></div>
+          <div><dt>Block</dt><dd>{{ application.preferred_block|default:"No preference" }}</dd></div>
+        </dl>
+      </section>
+
+      <section class="hm-panel" aria-labelledby="h-decision">
+        <div class="hm-panel__head"><h2 id="h-decision">Decision</h2></div>
+        {% if application.status == "SUBMITTED" %}
+          <form method="post" action="{% url 'admissions:application_decide' application.pk %}" class="hm-panel__body">
+            {% csrf_token %}
+            {% include "_field.html" with field=decision_form.note %}
+            <div class="d-flex flex-wrap gap-2 mt-3">
+              <button class="btn btn-success" type="submit" name="action" value="approve"><i class="bi bi-check-lg" aria-hidden="true"></i> Approve</button>
+              <button class="btn btn-danger" type="submit" name="action" value="reject"><i class="bi bi-x-lg" aria-hidden="true"></i> Reject</button>
+            </div>
+          </form>
+        {% else %}
+          <div class="hm-panel__body">
+            <p class="mb-1"><strong>{{ application.get_status_display }}</strong> by {{ application.decided_by.get_full_name|default:application.decided_by.username }} on {{ application.decided_at|date:"j M Y, H:i" }}.</p>
+            {% if application.decision_note %}<p class="hm-note mb-0">{{ application.decision_note }}</p>{% endif %}
+          </div>
+        {% endif %}
+      </section>
+      {% block allocation_panel %}{% endblock %}
+    </div>
+  </div>
+{% endblock %}

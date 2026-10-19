@@ -52,6 +52,17 @@ To add people, sign in as an administrator and use **Users & roles → Add user*
   account that has linked an app. It refuses to run unless `DJANGO_DEBUG` is on.
 - API errors use one envelope, `{timestamp, path, status, error, message, traceId}` (SAD 4.4).
 
+## Admission (HMS-F-001)
+
+A resident fills in one application per session (personal, academic, guardian, medical and room-preference
+details) and gets an application number such as `HMS-2026-00001`. A second application for the same enrolment
+number in the same session is refused with a message naming the first. The warden approves or rejects each
+application (a rejection needs a reason). Medical and guardian details are visible only to the applicant and the
+warden; the administrator's view of an application leaves out the medical details.
+
+The same rules back the REST endpoint `POST /api/v1/applications` (SAD 4.3): 201 with
+`{applicationNumber, status}`, 400 for invalid data, 409 for a duplicate.
+
 ## UI design
 
 The portal and admin use one light theme on Bootstrap 5: `static/css/hostel.css` (portal) and
@@ -104,6 +115,17 @@ python manage.py runserver
 ```
 
 Open http://127.0.0.1:8000 for the portal and http://127.0.0.1:8000/admin for the admin site.
+
+### Demo data
+
+```bash
+python manage.py seed_demo
+```
+
+creates one account per role (`admin`, `warden`, `guard`, `maintenance`, `mess`, `aarav`, `diya`, all with
+password `demo-pass-123`) and the sample data the demo needs. It is safe to re-run and refuses to run unless
+`DJANGO_DEBUG` is on. `admin` and `warden` have an authenticator app already linked; read their
+second-step code with `python manage.py totp_code warden`.
 
 The app connects to the `hms` database as user `hms` on localhost. To use different
 settings, set the `POSTGRES_*` environment variables listed in `.env.example`.

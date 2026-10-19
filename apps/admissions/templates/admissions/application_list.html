@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Applications · Hostel Management System{% endblock %}
+
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>Residents</li>
+      <li aria-current="page">Applications</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Applications</h1>
+      <p class="hm-sub">Review hostel applications{% block list_sub %}{% endblock %}.</p>
+    </div>
+    {% block header_actions %}{% endblock %}
+  </div>
+
+  <nav class="hm-tabs" aria-label="Filter by status">
+    {% for tab in tabs %}
+      <a class="hm-tab{% if tab.active %} is-active{% endif %}" href="?status={{ tab.value }}"{% if tab.active %} aria-current="page"{% endif %}>{{ tab.label }}<span class="hm-tab__count">{{ tab.count }}</span></a>
+    {% endfor %}
+  </nav>
+
+  <section class="hm-panel hm-panel--flush" aria-label="Applications">
+    {% if applications %}
+      <div class="table-responsive">
+        <table class="table hm-table hm-table-stack">
+          <thead><tr><th scope="col">Applicant</th><th scope="col">Enrolment</th><th scope="col">Gender</th><th scope="col">Room type</th><th scope="col">Block</th><th scope="col">Applied</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            {% for a in applications %}
+              <tr>
+                <td class="hm-cell-primary"><a class="hm-row-link" href="{% url 'admissions:application_detail' a.pk %}">{{ a.full_name }}</a><span class="hm-sub">{{ a.application_number }}</span></td>
+                <td data-label="Enrolment">{{ a.enrolment_number }}</td>
+                <td data-label="Gender">{{ a.get_gender_display }}</td>
+                <td data-label="Room type">{{ a.get_room_type_display }}</td>
+                <td data-label="Block">{{ a.preferred_block.name|default:"Any" }}</td>
+                <td data-label="Applied">{{ a.submitted_at|date:"j M Y" }}</td>
+                <td data-label="Status"><span class="hm-badge hm-badge--{{ a.status|lower }}">{{ a.get_status_display }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="hm-empty">
+        <i class="bi bi-inbox" aria-hidden="true"></i>
+        <h3>Nothing here</h3>
+        <p>No applications with this status.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Apply for a room · Hostel Management System{% endblock %}
+
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li aria-current="page">Room application</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Apply for a hostel room</h1>
+      <p class="hm-sub">One application per student per session. Fields marked * are required.</p>
+    </div>
+  </div>
+
+  <form method="post" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="hm-alert hm-alert--danger" role="alert"><div class="hm-alert__body">{{ form.non_field_errors|join:" " }}</div></div>
+    {% elif form.errors %}
+      <div class="hm-alert hm-alert--danger" role="alert"><div class="hm-alert__body"><strong>Some details need fixing</strong>Check the highlighted fields below.</div></div>
+    {% endif %}
+    {% for title, fields in form.section_fields %}
+      <section class="hm-panel hm-form-section" aria-labelledby="sec{{ forloop.counter }}">
+        <div class="hm-panel__head"><h2 id="sec{{ forloop.counter }}">{{ title }}</h2></div>
+        <div class="hm-panel__body">
+          <div class="row g-3">
+            {% for field in fields %}
+              <div class="{% if field.name == 'address' or field.name == 'medical_conditions' %}col-12{% else %}col-md-6{% endif %}">
+                {% include "_field.html" %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+    {% endfor %}
+    <div class="hm-form-actions">
+      <a class="btn btn-outline-secondary" href="{% url 'home' %}">Cancel</a>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-send" aria-hidden="true"></i> Submit application</button>
+    </div>
+  </form>
+{% endblock %}

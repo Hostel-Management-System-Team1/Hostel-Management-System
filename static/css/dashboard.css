@@ -1,0 +1,20 @@
+/* Dashboards and panels: compact rounded cards in a grid.
+   Loads after hostel.css, so it only overrides and adds. */
+
+.hm-panel { border-radius: 12px; overflow: hidden; }
+
+.hm-dash { display: grid; gap: 1.25rem; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); align-items: stretch; grid-auto-flow: dense; }
+.hm-dash > .hm-panel { margin: 0; }
+.hm-dash > .hm-panel--wide { grid-column: 1 / -1; }
+.hm-dash .hm-panel__head { padding: .75rem 1rem; flex-wrap: nowrap; gap: .5rem; }
+.hm-dash .hm-panel__head h2 { min-width: 0; font-size: 1.0625rem; }
+.hm-dash .hm-panel__head .btn { flex: none; }
+.hm-dash .hm-facts > div { padding: .6rem 1rem; }
+.hm-dash .hm-facts__note { padding: .6rem 1rem; }
+.hm-dash .hm-empty { padding: 1.5rem 1rem; }
+.hm-dash .hm-empty i { font-size: 1.5rem; }
+.hm-dash .hm-empty p { margin-bottom: 0; }
+
+@media (max-width: 575.98px) {
+  .hm-dash { grid-template-columns: 1fr; }
+}

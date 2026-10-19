@@ -1,0 +1,39 @@
+{# A dashboard panel built by hms/dashboard.py. #}
+<section class="hm-panel hm-panel--flush{% if panel.rows or panel.steps %} hm-panel--wide{% endif %}{% if panel.alert %} hm-panel--alert{% endif %}" aria-labelledby="{{ panel.id }}">
+  <div class="hm-panel__head">
+    <h2 id="{{ panel.id }}">{{ panel.title }}</h2>
+    {% if panel.link %}<a class="btn btn-sm btn-outline-secondary" href="{{ panel.link.1 }}">{{ panel.link.0 }}</a>{% endif %}
+  </div>
+  {% if panel.rows %}
+    <div class="table-responsive">
+      <table class="table hm-table hm-table-stack">
+        <thead><tr>{% for column in panel.columns %}<th scope="col">{{ column }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in panel.rows %}
+            <tr>
+              {% for cell in row.cells %}
+                <td data-label="{{ cell.label }}"{% if forloop.first %} class="hm-cell-primary"{% endif %}>
+                  {% if forloop.first and row.url %}<a class="hm-row-link" href="{{ row.url }}">{{ cell.text }}</a>
+                  {% elif cell.badge %}<span class="hm-badge hm-badge--{{ cell.badge }}">{{ cell.text }}</span>
+                  {% else %}{{ cell.text }}{% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% elif panel.facts %}
+    <dl class="hm-facts">
+      {% for label, value in panel.facts %}<div><dt>{{ label }}</dt><dd>{{ value }}</dd></div>{% endfor %}
+    </dl>
+    {% if panel.note %}<p class="hm-facts__note">{{ panel.note }}</p>{% endif %}
+  {% else %}
+    <div class="hm-empty">
+      <i class="bi {{ panel.empty.icon }}" aria-hidden="true"></i>
+      <h3>{{ panel.empty.title }}</h3>
+      <p>{{ panel.empty.text }}</p>
+      {% if panel.empty.action %}<a class="btn btn-primary" href="{{ panel.empty.action.1 }}">{{ panel.empty.action.0 }}</a>{% endif %}
+    </div>
+  {% endif %}
+</section>
