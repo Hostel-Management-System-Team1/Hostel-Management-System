@@ -28,6 +28,11 @@
     });
   });
 
+  /* Auto-submit: <select data-hm-autosubmit> submits its form when changed */
+  document.addEventListener('change', function (e) {
+    if (e.target.matches('[data-hm-autosubmit]')) e.target.form.submit();
+  });
+
   /* Gate clock */
   var clock = document.querySelector('[data-hm-clock]');
   if (clock) {

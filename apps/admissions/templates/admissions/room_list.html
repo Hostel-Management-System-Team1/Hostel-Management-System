@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Rooms · Hostel Management System{% endblock %}
+
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>Residents</li>
+      <li aria-current="page">Rooms</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Rooms</h1>
+      <p class="hm-sub">Occupancy by room. The administrator maintains the room inventory.</p>
+    </div>
+    <form method="get" class="hm-page-header__actions">
+      <label class="visually-hidden" for="id_block">Block</label>
+      <select class="form-select" id="id_block" name="block" data-hm-autosubmit>
+        <option value="">All blocks</option>
+        {% for block in blocks %}<option value="{{ block.pk }}"{% if block_id == block.pk|stringformat:"s" %} selected{% endif %}>{{ block }}</option>{% endfor %}
+      </select>
+      <noscript><button class="btn btn-outline-secondary" type="submit">Filter</button></noscript>
+    </form>
+  </div>
+
+  <section class="hm-panel hm-panel--flush" aria-label="Rooms">
+    {% if rows %}
+      <div class="table-responsive">
+        <table class="table hm-table hm-table-stack">
+          <thead><tr><th scope="col">Room</th><th scope="col">Type</th><th scope="col">Floor</th><th scope="col">Beds</th><th scope="col">Residents</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            {% for row in rows %}
+              <tr>
+                <td class="hm-cell-primary"><strong>{{ row.room.block.name }} · {{ row.room.number }}</strong></td>
+                <td data-label="Type">{{ row.room.get_room_type_display }}</td>
+                <td data-label="Floor">{{ row.room.floor }}</td>
+                <td data-label="Beds" class="hm-num">{{ row.occupied }} of {{ row.beds }} occupied</td>
+                <td data-label="Residents">{{ row.occupants|join:", "|default:"—" }}</td>
+                <td data-label="Status">{% if row.room.status == "BLOCKED" %}<span class="hm-badge hm-badge--blocked">Blocked</span>{% elif row.vacant %}<span class="hm-badge hm-badge--vacant">{{ row.vacant }} vacant</span>{% else %}<span class="hm-badge hm-badge--occupied">Full</span>{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="hm-empty"><i class="bi bi-door-closed" aria-hidden="true"></i><h3>No rooms yet</h3><p>The administrator adds rooms under Masters in the admin site.</p></div>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -63,6 +63,18 @@ warden; the administrator's view of an application leaves out the medical detail
 The same rules back the REST endpoint `POST /api/v1/applications` (SAD 4.3): 201 with
 `{applicationNumber, status}`, 400 for invalid data, 409 for a duplicate.
 
+## Room inventory and allocation (HMS-F-002, HMS-F-061)
+
+The administrator keeps the inventory in the admin site under **Masters**: blocks (each for one gender),
+rooms (floor, type, bed capacity, status) and the **allocation order** (merit, seniority or first come). A
+room's beds are created from its capacity. A room with an occupied bed cannot be deleted.
+
+The warden opens an approved application and allocates the suggested bed (or picks another vacant one), or uses
+**Allocate all in ranked order**. Only vacant, in-service beds in a block for the applicant's gender are
+offered, matching the requested room type and preferred block; the gender rule is also enforced when an
+allocation is saved. `POST /api/v1/allocations` does the same for one application (201, 404, or 409 when no
+bed matches).
+
 ## UI design
 
 The portal and admin use one light theme on Bootstrap 5: `static/css/hostel.css` (portal) and

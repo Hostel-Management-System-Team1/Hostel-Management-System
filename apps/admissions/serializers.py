@@ -65,3 +65,7 @@ class ApplicationSubmitSerializer(serializers.Serializer):
             return services.submit_application(applicant, **self.flat())
         except DjangoValidationError as error:
             raise serializers.ValidationError(error.message_dict) from error
+
+
+class AllocationRequestSerializer(serializers.Serializer):
+    applicationNumber = serializers.CharField()

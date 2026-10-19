@@ -6,6 +6,9 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.db.models import ProtectedError
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 from . import validators
 
@@ -34,6 +37,123 @@ class Block(models.Model):
         return f"{self.name} ({self.get_gender_display()})"
 
 
+ROOM_TYPE_CAPACITY = {RoomType.SINGLE: 1, RoomType.DOUBLE: 2, RoomType.TRIPLE: 3}
+
+
+class Room(models.Model):
+    """A room in a block. Its beds are created from ``bed_capacity`` (HMS-F-061)."""
+
+    class Status(models.TextChoices):
+        AVAILABLE = "AVAILABLE", "Available"
+        BLOCKED = "BLOCKED", "Blocked (out of service)"
+
+    block = models.ForeignKey(Block, on_delete=models.PROTECT, related_name="rooms")
+    floor = models.PositiveSmallIntegerField(default=0, help_text="0 is the ground floor.")
+    number = models.CharField(max_length=10)
+    room_type = models.CharField(max_length=10, choices=RoomType.choices)
+    bed_capacity = models.PositiveSmallIntegerField(
+        null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(8)],
+        help_text="Leave blank to use the usual capacity for the room type.",
+    )
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.AVAILABLE)
+
+    class Meta:
+        ordering = ["block__name", "floor", "number"]
+        constraints = [
+            models.UniqueConstraint(fields=["block", "number"], name="unique_room_number_in_block")
+        ]
+
+    def __str__(self):
+        return f"{self.block.name} · {self.number}"
+
+    def clean(self):
+        super().clean()
+        capacity = self.bed_capacity or ROOM_TYPE_CAPACITY.get(self.room_type)
+        if self.pk and capacity:
+            keep = self.beds.filter(models.Q(status=Bed.Status.OCCUPIED) | models.Q(
+                allocations__isnull=False)).distinct().count()
+            if capacity < keep:
+                raise ValidationError(
+                    {"bed_capacity": f"{keep} beds in this room are occupied or have a history of "
+                     "residents, so the capacity cannot be lowered below that."}
+                )
+
+    def save(self, *args, **kwargs):
+        if not self.bed_capacity:
+            self.bed_capacity = ROOM_TYPE_CAPACITY.get(self.room_type, 1)
+        super().save(*args, **kwargs)
+        self.sync_beds()
+
+    def sync_beds(self):
+        """Create the beds a new capacity needs; drop unused spare beds when it shrinks."""
+        existing = {bed.label: bed for bed in self.beds.all()}
+        wanted = [chr(ord("A") + i) for i in range(self.bed_capacity)]
+        for label in wanted:
+            if label not in existing:
+                Bed.objects.create(room=self, label=label)
+        for label, bed in existing.items():
+            if label not in wanted and not bed.allocations.exists():
+                bed.delete()
+
+    @property
+    def occupied_count(self):
+        return self.beds.filter(status=Bed.Status.OCCUPIED).count()
+
+
+class Bed(models.Model):
+    """The smallest allocatable unit. A bed is Occupied only through an active Allocation."""
+
+    class Status(models.TextChoices):
+        VACANT = "VACANT", "Vacant"
+        OCCUPIED = "OCCUPIED", "Occupied"
+        BLOCKED = "BLOCKED", "Blocked"
+
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="beds")
+    label = models.CharField(max_length=2)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.VACANT)
+
+    class Meta:
+        ordering = ["room", "label"]
+        constraints = [
+            models.UniqueConstraint(fields=["room", "label"], name="unique_bed_label_in_room")
+        ]
+
+    def __str__(self):
+        return f"{self.room} · bed {self.label}"
+
+
+@receiver(pre_delete, sender=Room)
+def refuse_to_delete_a_room_with_occupied_beds(sender, instance, **kwargs):
+    """A room cannot be deleted while any bed in it is occupied (HMS-F-061)."""
+    if instance.beds.filter(status=Bed.Status.OCCUPIED).exists():
+        raise ProtectedError(f"{instance} has occupied beds and cannot be deleted.", {instance})
+
+
+class AllocationPolicy(models.Model):
+    """How applicants are ranked when beds are allocated; set by the administrator (HMS-F-002)."""
+
+    class Ranking(models.TextChoices):
+        MERIT = "MERIT", "Merit (highest CGPA first)"
+        SENIORITY = "SENIORITY", "Seniority (senior years first, then CGPA)"
+        FIRST_COME = "FIRST_COME", "First come, first served"
+
+    ranking = models.CharField(max_length=12, choices=Ranking.choices, default=Ranking.MERIT)
+
+    class Meta:
+        verbose_name_plural = "allocation policy"
+
+    def __str__(self):
+        return f"Allocation order: {self.get_ranking_display()}"
+
+    def save(self, *args, **kwargs):
+        self.pk = 1  # a single settings row
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def current(cls):
+        return cls.objects.get_or_create(pk=1)[0]
+
+
 class Application(models.Model):
     """A hostel admission application (HMS-F-001)."""
 
@@ -41,6 +161,7 @@ class Application(models.Model):
         SUBMITTED = "SUBMITTED", "Submitted"
         APPROVED = "APPROVED", "Approved"
         REJECTED = "REJECTED", "Rejected"
+        ALLOCATED = "ALLOCATED", "Bed allocated"
 
     class BloodGroup(models.TextChoices):
         UNKNOWN = "", "Not known"
@@ -151,3 +272,48 @@ class Application(models.Model):
         year = self.academic_session.split("-")[0]
         self.application_number = f"HMS-{year}-{self.pk:05d}"
         type(self).objects.filter(pk=self.pk).update(application_number=self.application_number)
+
+
+class Allocation(models.Model):
+    """A resident's bed (HMS-F-002). Transfers move the allocation to another bed (HMS-F-003)."""
+
+    class Status(models.TextChoices):
+        ACTIVE = "ACTIVE", "Active"
+        ENDED = "ENDED", "Ended"
+
+    application = models.OneToOneField(
+        Application, on_delete=models.PROTECT, related_name="allocation"
+    )
+    resident = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="allocations"
+    )
+    bed = models.ForeignKey(Bed, on_delete=models.PROTECT, related_name="allocations")
+    status = models.CharField(max_length=6, choices=Status.choices, default=Status.ACTIVE)
+    allocated_at = models.DateTimeField(auto_now_add=True)
+    allocated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"
+    )
+    ended_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-allocated_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["bed"], condition=models.Q(status="ACTIVE"),
+                name="one_active_allocation_per_bed",
+            ),
+            models.UniqueConstraint(
+                fields=["resident"], condition=models.Q(status="ACTIVE"),
+                name="one_active_allocation_per_resident",
+            ),
+        ]
+
+    def __str__(self):
+        return f"{self.resident} → {self.bed}"
+
+    def save(self, *args, **kwargs):
+        # Gender-segregated hostels are a hard rule, enforced here as well as in the queries
+        # that offer beds, so no code path can place a resident in the other gender's block.
+        if self.bed.room.block.gender != self.application.gender:
+            raise ValidationError("A resident cannot be placed in a block for the other gender.")
+        super().save(*args, **kwargs)

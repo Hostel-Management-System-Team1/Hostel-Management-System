@@ -1,0 +1,41 @@
+{# Bed allocation on the warden's application page. #}
+{% if application.status == "APPROVED" %}
+  <section class="hm-panel" aria-labelledby="h-alloc">
+    <div class="hm-panel__head"><h2 id="h-alloc">Allocate a bed</h2></div>
+    <div class="hm-panel__body">
+      {% if suggested %}
+        <p class="mb-1">Suggested bed</p>
+        <p class="fs-6 fw-semibold mb-1">{{ suggested.room.block.name }} · room {{ suggested.room.number }} · bed {{ suggested.label }}</p>
+        <p class="hm-note">Floor {{ suggested.room.floor }}, {{ suggested.room.get_room_type_display|lower }}. It is vacant and in a block for {{ application.get_gender_display|lower }} residents.</p>
+        <form method="post" action="{% url 'admissions:application_allocate' application.pk %}">
+          {% csrf_token %}
+          <button class="btn btn-primary w-100" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Allocate this bed</button>
+        </form>
+      {% else %}
+        <div class="hm-alert hm-alert--warning" role="alert"><div class="hm-alert__body"><strong>No matching bed</strong>No vacant bed matches this applicant’s gender, preferred block and room type. You can still pick another vacant bed below.</div></div>
+      {% endif %}
+      {% if eligible_beds %}
+        <form method="post" action="{% url 'admissions:application_allocate' application.pk %}" class="mt-3">
+          {% csrf_token %}
+          <label class="form-label" for="id_bed">Or choose a different bed</label>
+          <select class="form-select mb-2" id="id_bed" name="bed" required>
+            <option value="">Select a vacant bed</option>
+            {% for bed in eligible_beds %}<option value="{{ bed.pk }}">{{ bed.room.block.name }} · {{ bed.room.number }} · bed {{ bed.label }} ({{ bed.room.get_room_type_display }})</option>{% endfor %}
+          </select>
+          <button class="btn btn-outline-secondary w-100" type="submit">Allocate chosen bed</button>
+        </form>
+      {% endif %}
+    </div>
+  </section>
+{% elif allocation %}
+  <section class="hm-panel hm-panel--flush" aria-labelledby="h-alloc">
+    <div class="hm-panel__head"><h2 id="h-alloc">Bed</h2></div>
+    <dl class="hm-facts">
+      <div><dt>Block</dt><dd>{{ allocation.bed.room.block.name }}</dd></div>
+      <div><dt>Room</dt><dd>{{ allocation.bed.room.number }} (floor {{ allocation.bed.room.floor }})</dd></div>
+      <div><dt>Bed</dt><dd>{{ allocation.bed.label }}</dd></div>
+      <div><dt>Allocated</dt><dd>{{ allocation.allocated_at|date:"j M Y, H:i" }}</dd></div>
+      <div><dt>By</dt><dd>{{ allocation.allocated_by.get_full_name|default:allocation.allocated_by.username }}</dd></div>
+    </dl>
+  </section>
+{% endif %}
