@@ -1,0 +1,20 @@
+{% extends "admin/base_site.html" %}
+{# Placeholder for an administrator screen planned for a later sprint (HMSAdminSite.module_view). #}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a> &rsaquo; {{ entry.group }} &rsaquo; {{ entry.label }}
+</div>
+{% endblock %}
+
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div id="content-main" class="hms-soon">
+  <span class="hms-soon__glass" aria-hidden="true"><i class="bi bi-hourglass-split"></i></span>
+  <p class="hms-soon__page">{{ entry.label }}</p>
+  <h1 class="hms-soon__title">Coming soon</h1>
+  <span class="hms-soon__sprint">Sprint {{ entry.sprint }}{% if entry.sprint_dates %} · {{ entry.sprint_dates }}{% endif %}</span>
+  {% if entry.issue %}<p class="hms-soon__issue">Tracked in <a href="{{ entry.issue_url }}" target="_blank" rel="noopener">backlog issue #{{ entry.issue }}</a></p>{% endif %}
+</div>
+{% endblock %}

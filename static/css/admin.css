@@ -1,0 +1,808 @@
+/* Django admin restyled with the same colour tokens as static/css/hostel.css. Light theme only. */
+
+:root,
+html[data-theme="dark"],
+html[data-theme="auto"] {
+  --hm-bg: #f4f5f7;
+  --hm-surface: #ffffff;
+  --hm-border: #d5d9e0;
+  --hm-border-soft: #e8ebf0;
+  --hm-border-strong: #8a94a3;
+  --hm-text: #18202e;
+  --hm-muted: #556070;
+  --hm-accent: #1d4e9e;
+  --hm-accent-hover: #153a78;
+  --hm-accent-bg: #e3ebf8;
+  --hm-success: #1e6b3e;
+  --hm-success-bg: #e3f1e8;
+  --hm-warning: #8a5a00;
+  --hm-warning-bg: #f7ecd5;
+  --hm-danger: #b3261e;
+  --hm-danger-bg: #f9e2e0;
+  --hm-sidebar: #17315f;
+  --hm-sidebar-muted: #c9d6ec;
+  --hm-radius: 6px;
+
+  --primary: var(--hm-accent);
+  --secondary: var(--hm-sidebar);
+  --accent: #ffffff;
+  --primary-fg: #ffffff;
+
+  --body-fg: var(--hm-text);
+  --body-bg: var(--hm-surface);
+  --body-quiet-color: var(--hm-muted);
+  --body-medium-color: #36404f;
+  --body-loud-color: var(--hm-text);
+
+  --header-color: #ffffff;
+  --header-branding-color: #ffffff;
+  --header-bg: var(--hm-sidebar);
+  --header-link-color: #ffffff;
+
+  --breadcrumbs-fg: var(--hm-muted);
+  --breadcrumbs-link-fg: var(--hm-accent);
+  --breadcrumbs-bg: var(--hm-surface);
+
+  --link-fg: var(--hm-accent);
+  --link-hover-color: var(--hm-accent-hover);
+  --link-selected-fg: var(--hm-accent-hover);
+
+  --hairline-color: var(--hm-border-soft);
+  --border-color: var(--hm-border);
+
+  --error-fg: var(--hm-danger);
+  --message-success-bg: var(--hm-success-bg);
+  --message-warning-bg: var(--hm-warning-bg);
+  --message-error-bg: var(--hm-danger-bg);
+
+  --darkened-bg: var(--hm-bg);
+  --selected-bg: var(--hm-border-soft);
+  --selected-row: var(--hm-accent-bg);
+
+  --button-fg: #ffffff;
+  --button-bg: var(--hm-accent);
+  --button-hover-bg: var(--hm-accent-hover);
+  --default-button-bg: var(--hm-accent);
+  --default-button-hover-bg: var(--hm-accent-hover);
+  --close-button-bg: var(--hm-muted);
+  --close-button-hover-bg: var(--hm-text);
+  --delete-button-bg: var(--hm-danger);
+  --delete-button-hover-bg: #8f1e18;
+
+  --object-tools-fg: var(--hm-text);
+  --object-tools-bg: var(--hm-surface);
+  --object-tools-hover-bg: var(--hm-bg);
+
+  --font-family-primary: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  color-scheme: light;
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────── */
+.theme-toggle { display: none; }   /* the portal is light-only */
+body { font-size: 13px; }
+h1, #content h1, #site-name { font-family: "IBM Plex Sans", sans-serif; }
+:focus-visible { outline: 3px solid var(--hm-accent); outline-offset: 2px; }
+.bi { line-height: 1; }
+
+/* Icon font used by the ::before icons below */
+.hms-icon::before,
+.addlink::before, .changelink::before, .inlinechangelink::before, .viewlink::before,
+.deletelink::before, .closelink::before, .historylink::before, .viewsitelink::before,
+ul.messagelist li::before {
+  font-family: "bootstrap-icons";
+  font-weight: normal;
+  font-style: normal;
+  line-height: 1;
+  vertical-align: -0.125em;
+}
+
+/* ── Header ────────────────────────────────────────────────────────────── */
+#header { padding-top: 10px; padding-bottom: 10px; }
+#site-name { margin: 0; }
+.hms-brand { display: inline-flex; align-items: center; gap: 10px; color: #fff !important; font-size: 1.05rem; font-weight: 700; }
+.hms-brand:hover { text-decoration: none; }
+.hms-brand small { margin-left: 4px; font: 600 0.7rem "IBM Plex Sans", sans-serif; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hm-sidebar-muted); }
+.hms-logo { width: 32px; height: 32px; display: inline-grid; place-items: center; border-radius: var(--hm-radius); background: #fff; color: var(--hm-sidebar); font-size: 1rem; }
+
+.visually-hidden { position: absolute !important; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* Account menu (templates/admin/hms_user_menu.html) */
+#user-tools { margin-left: auto; padding: 0; font-size: 0.875rem; text-transform: none; letter-spacing: 0; }
+.hms-menu { position: relative; }
+.hms-menu__toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 999px;
+  cursor: pointer;
+  list-style: none;
+  color: #fff;
+}
+.hms-menu__toggle::-webkit-details-marker { display: none; }
+.hms-menu__toggle:hover, .hms-menu[open] .hms-menu__toggle { background: rgba(255, 255, 255, 0.12); }
+.hms-avatar { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: #fff; color: var(--hm-sidebar); font-weight: 700; font-size: 0.8rem; }
+.hms-menu__who { display: flex; flex-direction: column; line-height: 1.15; text-align: left; }
+.hms-menu__who strong { font-weight: 600; color: #fff; }
+.hms-menu__who small { font-size: 0.75rem; color: var(--hm-sidebar-muted); }
+.hms-menu__caret { font-size: 0.75rem; color: var(--hm-sidebar-muted); transition: transform 0.15s; }
+.hms-menu[open] .hms-menu__caret { transform: rotate(180deg); }
+.hms-menu__panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 1000;
+  min-width: 210px;
+  padding: 6px;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+  box-shadow: 0 8px 24px rgba(24, 32, 46, 0.14);
+}
+.hms-menu__panel a, .hms-menu__panel button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--hm-text) !important;
+  font: 500 0.875rem "IBM Plex Sans", sans-serif;
+  text-decoration: none;
+  text-transform: none;
+  letter-spacing: 0;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.hms-menu__panel a:hover, .hms-menu__panel button:hover { background: var(--hm-bg); text-decoration: none; }
+.hms-menu__panel .bi { color: var(--hm-muted); font-size: 1rem; }
+.hms-menu__panel form { display: block; margin: 4px 0 0; padding-top: 4px; border-top: 1px solid var(--hm-border-soft); }
+.hms-menu__panel form button { color: var(--hm-danger) !important; }
+.hms-menu__panel form button .bi { color: var(--hm-danger); }
+
+/* ── Breadcrumbs and page ──────────────────────────────────────────────── */
+/* Breadcrumbs render inside #content (templates/admin/base_site.html) */
+.hms-crumbs div.breadcrumbs {
+  padding: 0;
+  margin: 0 0 6px;
+  background: none;
+  border: 0;
+  color: var(--hm-muted);
+  font-size: 0.9rem;
+}
+.hms-crumbs div.breadcrumbs a { color: var(--hm-accent); }
+.dashboard .hms-crumbs { display: none; }   /* the admin home needs no "Home ›" trail */
+#container, #main { background: var(--hm-bg); }
+#content { padding: 24px 32px 48px; box-sizing: border-box; width: 100%; }
+#content h1 { font-weight: 600; font-size: 1.35rem; color: var(--hm-text); margin-bottom: 16px; }
+#content > p, #content-main > form > div > p:first-child, #content-main > p { color: var(--hm-muted); }
+.hms-narrow { max-width: 760px; }
+
+/* ── Panels ────────────────────────────────────────────────────────────── */
+.module { background: var(--hm-surface); border: 1px solid var(--hm-border); border-radius: var(--hm-radius); margin-bottom: 24px; }
+.module h2, .module caption, .inline-group h2,
+fieldset .fieldset-heading, fieldset .inline-heading, :not(.inline-related) .collapse summary {
+  background: var(--hm-surface);
+  color: var(--hm-text);
+  border: 0;
+  border-bottom: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius) var(--hm-radius) 0 0;
+  font: 600 0.925rem "IBM Plex Sans", sans-serif;
+  letter-spacing: 0;
+  text-transform: none;
+  padding: 12px 16px;
+  margin: 0;
+}
+.module h2 a, .module caption a,
+.module caption a.section:link, .module caption a.section:visited,
+.module h2 a.section:link, .module h2 a.section:visited { color: var(--hm-text); }
+.module caption a.section:hover, .module h2 a.section:hover { color: var(--hm-accent); }
+#content-related .module h2 { font-size: 0.925rem; padding: 12px 16px; }
+#content-related h3 { font-size: 0.875rem; padding: 12px 16px 0; color: var(--hm-muted); }
+#content-related .actionlist { padding: 4px 16px 12px; }
+
+
+/* ── Forms ─────────────────────────────────────────────────────────────── */
+.form-row { padding: 14px 16px; border-bottom: 1px solid var(--hm-border-soft); }
+fieldset.module .form-row:last-child { border-bottom: 0; }
+.aligned label, .wide label { width: 200px; min-width: 200px; color: var(--hm-text); font-weight: 600; }
+.aligned label.vCheckboxLabel { font-weight: 400; }
+div.help, p.help, .help { color: var(--hm-muted); font-size: 0.85rem; }
+div.help ul { margin-top: 4px; }
+input[type=text], input[type=password], input[type=email], input[type=url],
+input[type=number], input[type=tel], input[type=search], textarea, select, .vTextField {
+  border: 1px solid var(--hm-border-strong);
+  border-radius: var(--hm-radius);
+  padding: 7px 10px;
+  font-size: 0.95rem;
+  background: var(--hm-surface);
+}
+select { padding-right: 28px; }
+input:focus, textarea:focus, select:focus { border-color: var(--hm-accent); outline: 3px solid rgba(29, 78, 158, 0.25); outline-offset: 0; }
+.errornote { border: 1px solid var(--hm-danger); border-radius: var(--hm-radius); background: var(--hm-danger-bg); color: var(--hm-danger); padding: 10px 14px; }
+ul.errorlist li { color: var(--hm-danger); }
+
+.hms-lede { display: flex; gap: 10px; align-items: flex-start; color: var(--hm-muted); margin: 0 0 20px; }
+.hms-lede .bi { font-size: 1.2rem; color: var(--hm-accent); margin-top: 1px; }
+
+/* ── Buttons ───────────────────────────────────────────────────────────── */
+.button, input[type=submit], input[type=button], .submit-row input, a.button, button.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 16px;
+  border-radius: var(--hm-radius);
+  font: 600 0.95rem "IBM Plex Sans", sans-serif;
+  text-transform: none !important;
+  letter-spacing: 0;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+/* Secondary buttons are outlined; only the main action is solid */
+.submit-row .button:not(.default), .submit-row input:not(.default),
+#changelist-search input[type=submit], .actions button, #changelist .actions .button {
+  background: var(--hm-surface);
+  color: var(--hm-accent);
+  border: 1px solid var(--hm-border-strong);
+}
+.submit-row .button:not(.default):hover, .submit-row input:not(.default):hover,
+#changelist-search input[type=submit]:hover, .actions button:hover {
+  background: var(--hm-accent-bg);
+  border-color: var(--hm-accent);
+  color: var(--hm-accent-hover);
+}
+.button.default, input[type=submit].default, .submit-row input.default, a.button.default { background: var(--hm-accent); color: #fff; border: 1px solid var(--hm-accent); }
+.button.default:hover, input[type=submit].default:hover, a.button.default:hover { background: var(--hm-accent-hover); border-color: var(--hm-accent-hover); color: #fff; text-decoration: none; }
+
+.submit-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  margin: 8px 0 0;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-radius: var(--hm-radius);
+}
+.submit-row a.deletelink, .submit-row a.closelink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: var(--hm-radius);
+  font-weight: 600;
+  box-sizing: border-box;
+}
+.submit-row a.deletelink { margin-left: auto; background: var(--hm-surface); color: var(--hm-danger); border: 1px solid var(--hm-danger); }
+.submit-row a.deletelink:hover { background: var(--hm-danger); color: #fff; }
+.submit-row a.closelink { background: none; color: var(--hm-muted); }
+.submit-row a.closelink:hover { color: var(--hm-text); background: var(--hm-bg); }
+
+/* ── Link icons (replace Django's coloured SVGs) ───────────────────────── */
+.addlink, .changelink, .inlinechangelink, .viewlink, .deletelink, .historylink, .viewsitelink, .closelink {
+  background-image: none !important;
+  padding-left: 0;
+}
+.addlink::before, .changelink::before, .inlinechangelink::before, .viewlink::before,
+.deletelink::before, .closelink::before, .historylink::before, .viewsitelink::before { margin-right: 5px; }
+.addlink::before { content: "\f64d"; }          /* plus-lg */
+.changelink::before, .inlinechangelink::before { content: "\f4cb"; }   /* pencil */
+.viewlink::before { content: "\f341"; }         /* eye */
+.deletelink::before { content: "\f78b"; }       /* trash3 */
+.closelink::before { content: "\f659"; }        /* x-lg */
+.historylink::before { content: "\f292"; }      /* clock-history */
+.viewsitelink::before { content: "\f1c5"; }     /* box-arrow-up-right */
+.submit-row a.deletelink::before, .submit-row a.closelink::before { margin-right: 0; }
+
+/* ── Object tools (top-right "Add user", "History") ────────────────────── */
+.object-tools { margin-top: -58px; font-size: 0.9rem; }
+.object-tools li { height: auto; margin-left: 8px; }
+.object-tools a:link, .object-tools a:visited {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px !important;
+  background: var(--hm-surface);
+  color: var(--hm-accent);
+  border: 1px solid var(--hm-border-strong);
+  border-radius: var(--hm-radius);
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.object-tools a.addlink:link, .object-tools a.addlink:visited { background: var(--hm-accent); border-color: var(--hm-accent); color: #fff; }
+.object-tools a:hover, .object-tools a:focus { background: var(--hm-accent-bg); border-color: var(--hm-accent); color: var(--hm-accent-hover); }
+.object-tools a.addlink:hover, .object-tools a.addlink:focus { background: var(--hm-accent-hover); color: #fff; }
+
+/* ── Messages ──────────────────────────────────────────────────────────── */
+ul.messagelist li {
+  display: block;
+  padding: 12px 16px;
+  margin: 0 0 12px;
+  border: 1px solid var(--hm-success);
+  border-radius: var(--hm-radius);
+  background-image: none !important;
+  background-color: var(--hm-success-bg);
+  color: var(--hm-text);
+  font-size: 0.95rem;
+}
+ul.messagelist li::before { content: "\f270"; color: var(--hm-success); font-size: 1.1rem; margin-right: 8px; }   /* check2-circle */
+ul.messagelist li.warning { border-color: var(--hm-warning); background-color: var(--hm-warning-bg); }
+ul.messagelist li.warning::before { content: "\f33b"; color: var(--hm-warning); }
+ul.messagelist li.error { border-color: var(--hm-danger); background-color: var(--hm-danger-bg); }
+ul.messagelist li.error::before { content: "\f623"; color: var(--hm-danger); }
+ul.messagelist li.info { border-color: var(--hm-accent); background-color: var(--hm-accent-bg); }
+ul.messagelist li.info::before { content: "\f431"; color: var(--hm-accent); }
+.main > .content > ul.messagelist { margin: 20px 0 0; padding: 0 32px; box-sizing: border-box; }
+
+/* ── Sidebar navigation ────────────────────────────────────────────────── */
+#nav-sidebar { background: var(--hm-bg); border-right: 1px solid var(--hm-border); padding: 16px 14px; box-sizing: border-box; }
+
+
+/* ── Change list ───────────────────────────────────────────────────────── */
+thead th, tfoot td {
+  background: var(--hm-bg);
+  color: var(--hm-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--hm-border);
+}
+#result_list td, #result_list th { padding: 10px 12px; vertical-align: middle; }
+#changelist .actions { background: var(--hm-surface); border-bottom: 1px solid var(--hm-border); padding: 10px 12px; }
+#changelist #toolbar { background: var(--hm-surface); border-bottom: 1px solid var(--hm-border); padding: 12px; }
+#changelist #toolbar form input[type=text] { padding: 7px 10px; }
+#changelist-filter { border-left: 1px solid var(--hm-border); }
+#changelist-filter h2 { background: var(--hm-surface); color: var(--hm-text); font-size: 1.05rem; }
+#changelist-filter h3 { color: var(--hm-text); font-weight: 600; }
+#changelist-filter li.selected a { color: var(--hm-accent); font-weight: 600; }
+#changelist .paginator { background: var(--hm-surface); border-top: 1px solid var(--hm-border); padding: 12px; color: var(--hm-muted); }
+
+/* ── Password changed ──────────────────────────────────────────────────── */
+.hms-done { padding: 36px 28px; text-align: center; }
+.hms-done > .bi { font-size: 2.25rem; color: var(--hm-success); }
+.hms-done h1 { margin: 10px 0 6px !important; }
+.hms-done p { color: var(--hm-muted); margin: 0 0 20px; }
+
+/* ── Login ─────────────────────────────────────────────────────────────── */
+.login { background: var(--hm-bg); }
+.login #container { border: 1px solid var(--hm-border); border-radius: var(--hm-radius); overflow: hidden; margin-top: 12vh; }
+.login #header { justify-content: center; }
+.login #content { padding: 24px; background: var(--hm-surface); max-width: none; }
+.login .form-row { padding: 0 0 14px; border: 0; }
+.login .submit-row { border: 0; padding: 0; margin-top: 6px; }
+.login .submit-row input { width: 100%; justify-content: center; padding: 10px; }
+
+/* ── Overrides for Django's forms.css ──────────────────────────────────
+   Change-form pages load forms.css after this file, so these use #content
+   to win on specificity. */
+#content fieldset .fieldset-heading,
+#content fieldset .inline-heading,
+#content :not(.inline-related) .collapse summary {
+  background: var(--hm-surface);
+  color: var(--hm-text);
+  border: 0;
+  border-bottom: 1px solid var(--hm-border);
+  font: 600 0.925rem "IBM Plex Sans", sans-serif;
+  padding: 12px 16px;
+}
+#content .aligned label, #content .wide label { width: 200px; min-width: 200px; }
+#content .aligned label.vCheckboxLabel { width: auto; min-width: 0; }
+#content div.help, #content p.help, #content .help,
+#content div.help li, #content div.help ul { font-size: 0.85rem; color: var(--hm-muted); }
+#content form div.help ul { height: auto; line-height: 1.5; margin: 4px 0 0; padding-left: 0; list-style: none; }
+#content form .wide p.help, #content form .wide div.help, #content form .wide ul.errorlist,
+#content form .aligned p.help, #content form .aligned div.help, #content form .aligned ul.errorlist {
+  padding-left: 0;
+  margin-left: 210px;
+}
+#content form .aligned .checkbox-row + div.help { margin-left: 0; }
+#content select { height: auto; min-height: 38px; line-height: 1.4; padding-top: 7px; padding-bottom: 7px; }
+#content .submit-row a.closelink, #content .submit-row a.deletelink { display: inline-flex; align-items: center; gap: 6px; line-height: 1.2; }
+#content .submit-row a.closelink { background: none; color: var(--hm-muted); border: 0; }
+#content .submit-row a.closelink:hover { background: var(--hm-bg); color: var(--hm-text); }
+#content .submit-row a.deletelink { background: var(--hm-surface); color: var(--hm-danger); border: 1px solid var(--hm-danger); }
+#content .submit-row a.deletelink:hover { background: var(--hm-danger); color: #fff; }
+
+/* ── Small screens ─────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  #content { padding: 20px 20px 40px; }
+}
+@media (max-width: 767px) {
+  .aligned label, .wide label, #content .aligned label, #content .wide label { width: auto; min-width: 0; }
+  #content form .aligned p.help, #content form .aligned div.help, #content form .wide div.help { margin-left: 0; }
+  .object-tools { margin-top: 0; float: none; }
+  #user-tools { flex-wrap: wrap; justify-content: flex-end; }
+}
+.login .hms-crumbs { display: none; }
+
+/* Collapse tab sits on the sidebar's right edge (Django puts it before the sidebar in the DOM) */
+.main > #nav-sidebar { order: 1; }
+.main > .content { order: 3; }
+
+/* Change-list controls: changelist.css loads after this file, so these use #content */
+#content #changelist #toolbar form input[type="submit"],
+#content #changelist .actions button,
+#content #changelist .actions .button {
+  min-height: 38px;
+  padding: 6px 14px;
+  background: var(--hm-surface);
+  color: var(--hm-accent);
+  border: 1px solid var(--hm-border-strong);
+  border-radius: var(--hm-radius);
+  font: 600 0.9rem "IBM Plex Sans", sans-serif;
+}
+#content #changelist #toolbar form input[type="submit"]:hover,
+#content #changelist .actions button:hover { background: var(--hm-accent-bg); border-color: var(--hm-accent); }
+#content #changelist #toolbar form #searchbar { height: 38px; min-height: 0; box-sizing: border-box; padding: 6px 10px; border: 1px solid var(--hm-border-strong); border-radius: var(--hm-radius); }
+#content #changelist .actions { display: flex; align-items: center; gap: 10px; }
+#content #changelist .actions label { display: inline-flex; align-items: center; gap: 8px; }
+#content #changelist .actions select { min-height: 38px; font-size: 0.9rem; }
+#content #changelist-filter { background: var(--hm-surface); }
+#content #changelist-filter h2 { font: 600 0.925rem "IBM Plex Sans", sans-serif; text-transform: none; letter-spacing: 0; padding: 12px 16px; border-bottom: 1px solid var(--hm-border); }
+#content #changelist-filter details summary { padding-left: 16px; }
+#content #changelist-filter ul { padding-left: 16px; }
+
+
+/* Login: the single button is the main action */
+.login .submit-row input[type=submit] { background: var(--hm-accent); color: #fff; border: 1px solid var(--hm-accent); }
+.login .submit-row input[type=submit]:hover { background: var(--hm-accent-hover); border-color: var(--hm-accent-hover); }
+
+/* Delete confirmation: solid red confirm, quiet cancel */
+.delete-confirmation #content form input[type=submit] { background: var(--hm-danger); border: 1px solid var(--hm-danger); color: #fff; min-height: 40px; }
+.delete-confirmation #content form input[type=submit]:hover { background: #8f1e18; border-color: #8f1e18; }
+.delete-confirmation #content form .cancel-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 8px 16px;
+  margin-left: 8px;
+  box-sizing: border-box;
+  background: var(--hm-surface);
+  color: var(--hm-text);
+  border: 1px solid var(--hm-border-strong);
+  border-radius: var(--hm-radius);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.delete-confirmation #content form .cancel-link:hover { background: var(--hm-bg); }
+
+/* Django styles #logout-form button by id; match the other menu items */
+#user-tools #logout-form button {
+  display: flex;
+  width: 100%;
+  margin: 0;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--hm-danger) !important;
+  font: 500 0.875rem "IBM Plex Sans", sans-serif;
+  text-transform: none;
+  letter-spacing: 0;
+  text-decoration: none;
+}
+#user-tools #logout-form button:hover { background: var(--hm-danger-bg); }
+#user-tools .hms-menu__panel a { border-bottom: 0; }
+
+
+/* ── HMS sidebar (templates/admin/nav_sidebar.html) ────────────────────── */
+#nav-sidebar.hms-side { flex: 0 0 236px; width: 236px; padding: 16px 12px; background: var(--hm-surface); }
+.hms-side__group { display: flex; flex-direction: column; gap: 2px; margin-bottom: 16px; }
+.hms-side__label { padding: 0 10px 4px; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hm-muted); }
+.hms-side__link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+  padding: 6px 10px;
+  border-radius: var(--hm-radius);
+  color: var(--hm-text) !important;
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+.hms-side__link .bi { width: 18px; text-align: center; color: var(--hm-muted); font-size: 1rem; }
+.hms-side__link:hover { background: var(--hm-bg); text-decoration: none; }
+.hms-side__link.is-active { background: var(--hm-accent-bg); color: var(--hm-accent-hover) !important; font-weight: 600; }
+.hms-side__link.is-active .bi { color: var(--hm-accent); }
+.hms-side__soon { margin-left: auto; padding: 0 6px; border: 1px solid var(--hm-border); border-radius: 999px; font-size: 0.68rem; font-weight: 600; color: var(--hm-muted); line-height: 1.5; }
+
+/* ── Dashboard (templates/admin/index.html) ────────────────────────────── */
+.hms-pagehead { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px; margin-bottom: 20px; padding-bottom: 14px; border-bottom: 1px solid var(--hm-border); }
+.hms-pagehead h1 { margin: 0 !important; }
+.hms-pagehead p { margin: 2px 0 0; color: var(--hm-muted); }
+
+.hms-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.hms-stat {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--hm-surface);
+  border: 1px solid var(--hm-border);
+  border-left: 3px solid var(--hm-accent);
+  border-radius: var(--hm-radius);
+  color: var(--hm-text) !important;
+  text-decoration: none;
+}
+.hms-stat:hover { border-color: var(--hm-accent); text-decoration: none; }
+.hms-stat--warn { border-left-color: var(--hm-warning); }
+.hms-stat__icon { grid-row: span 2; width: 38px; height: 38px; display: grid; place-items: center; border-radius: var(--hm-radius); background: var(--hm-accent-bg); color: var(--hm-accent); font-size: 1.1rem; }
+.hms-stat--warn .hms-stat__icon { background: var(--hm-warning-bg); color: var(--hm-warning); }
+.hms-stat__label { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--hm-muted); }
+.hms-stat__value { font: 600 1.6rem "IBM Plex Sans", sans-serif; line-height: 1.1; font-variant-numeric: tabular-nums; }
+
+.hms-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px; }
+.hms-grid2 > .module { margin: 0; }
+#content .hms-panel h2 { display: flex; align-items: center; justify-content: space-between; }
+.hms-headlink { display: inline-flex; align-items: center; gap: 6px; font: 600 0.8rem "IBM Plex Sans", sans-serif; color: var(--hm-accent) !important; }
+
+table.hms-roles { width: 100%; border-collapse: collapse; }
+table.hms-roles th, table.hms-roles td { padding: 9px 16px; border-bottom: 1px solid var(--hm-border-soft); font-size: 0.85rem; background: none; text-transform: none; letter-spacing: 0; color: var(--hm-text); }
+table.hms-roles tr:last-child th, table.hms-roles tr:last-child td { border-bottom: 0; }
+table.hms-roles th { font-weight: 600; width: 40%; text-align: left; }
+.hms-roles__bar span { display: block; height: 6px; min-width: 2px; border-radius: 3px; background: var(--hm-accent); }
+.hms-roles__bar { background: none; }
+.hms-roles__n { width: 40px; text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+
+ul.hms-activity { list-style: none; margin: 0; padding: 4px 0; }
+ul.hms-activity li { display: flex; gap: 10px; align-items: flex-start; padding: 9px 16px; border-bottom: 1px solid var(--hm-border-soft); font-size: 0.85rem; list-style: none; }
+ul.hms-activity li:last-child { border-bottom: 0; }
+.hms-activity__icon { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; font-size: 0.8rem; }
+.hms-activity__icon--add { background: var(--hm-success-bg); color: var(--hm-success); }
+.hms-activity__icon--edit { background: var(--hm-accent-bg); color: var(--hm-accent); }
+.hms-activity__icon--del { background: var(--hm-danger-bg); color: var(--hm-danger); }
+.hms-activity__text small { display: block; color: var(--hm-muted); font-size: 0.75rem; margin-top: 2px; }
+.hms-empty { padding: 28px 16px; text-align: center; color: var(--hm-muted); }
+.hms-empty .bi { font-size: 1.5rem; }
+.hms-empty p { margin: 6px 0 0; }
+
+#content h2.hms-section { margin: 24px 0 12px; font: 600 1.05rem "IBM Plex Sans", sans-serif; color: var(--hm-text); }
+.hms-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.hms-card { display: flex; flex-direction: column; gap: 3px; padding: 14px; background: var(--hm-surface); border: 1px solid var(--hm-border); border-radius: var(--hm-radius); color: var(--hm-text) !important; text-decoration: none; }
+.hms-card:hover { border-color: var(--hm-accent); box-shadow: 0 0 0 1px var(--hm-accent); text-decoration: none; }
+.hms-card__icon { width: 34px; height: 34px; display: grid; place-items: center; margin-bottom: 6px; border-radius: var(--hm-radius); background: var(--hm-accent-bg); color: var(--hm-accent); font-size: 1rem; }
+.hms-card__title { font-weight: 600; font-size: 0.9rem; }
+.hms-card__text { flex: 1; color: var(--hm-muted); font-size: 0.8rem; }
+.hms-card__foot { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; color: var(--hm-accent); }
+.hms-chip { padding: 1px 8px; border: 1px solid var(--hm-border); border-radius: 999px; background: var(--hm-bg); color: var(--hm-muted); font-size: 0.7rem; font-weight: 600; }
+.hms-chip--live { border-color: transparent; background: var(--hm-success-bg); color: var(--hm-success); }
+
+
+@media (max-width: 900px) { .hms-grid2 { grid-template-columns: 1fr; } }
+
+/* Django fixes the admin home at 600px wide; the HMS dashboard uses the full width */
+.dashboard #content { width: 100%; }
+.hms-side__link { box-sizing: border-box; line-height: 1.3; }
+#content fieldset .description { margin: 0; padding: 10px 16px; border-bottom: 1px solid var(--hm-border-soft); color: var(--hm-muted); font-size: 0.85rem; }
+
+/* ══ Round 3 ═══════════════════════════════════════════════════════════════ */
+
+/* Header: logo lines up with the sidebar icons */
+#header { padding: 10px 20px 10px 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.12); }
+
+/* Account menu: header row, smooth caret, panel fades in */
+.hms-menu__caret { display: inline-block; transition: transform 0.2s ease; }
+.hms-menu[open] .hms-menu__caret { transform: rotate(-180deg); }
+.hms-menu[open] .hms-menu__panel { animation: hms-menu-in 0.14s ease-out; }
+@keyframes hms-menu-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.hms-menu__head { padding: 8px 10px 10px; margin-bottom: 4px; border-bottom: 1px solid var(--hm-border-soft); }
+.hms-menu__head strong { display: block; color: var(--hm-text); font-size: 0.875rem; }
+.hms-menu__head small { display: block; color: var(--hm-muted); font-size: 0.75rem; }
+
+/* Change list: compact, consistent controls */
+#content #changelist #toolbar { padding: 12px 14px; }
+#content #changelist-search > div { position: relative; display: flex; align-items: center; max-width: 480px; }
+#content #changelist-search label { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); line-height: 0; }
+#content #changelist-search label img { width: 14px; height: 14px; opacity: 0.6; }
+#content #changelist #toolbar form #searchbar {
+  flex: 1;
+  width: auto;
+  height: 34px;
+  padding: 0 10px 0 32px;
+  border-radius: var(--hm-radius) 0 0 var(--hm-radius);
+}
+#content #changelist #toolbar form input[type="submit"] {
+  height: 34px;
+  min-height: 0;
+  margin-left: -1px;
+  padding: 0 16px;
+  border-radius: 0 var(--hm-radius) var(--hm-radius) 0;
+  background: var(--hm-accent);
+  border-color: var(--hm-accent);
+  color: #fff;
+}
+#content #changelist #toolbar form input[type="submit"]:hover { background: var(--hm-accent-hover); border-color: var(--hm-accent-hover); }
+#content #changelist-search .small.quiet { margin-left: 12px; white-space: nowrap; }
+#content #changelist .actions { padding: 8px 14px; gap: 8px; font-size: 0.8rem; color: var(--hm-muted); }
+#content #changelist .actions select { height: 32px; min-height: 0; padding: 0 28px 0 8px; font-size: 0.8rem; }
+#content #changelist .actions button { height: 32px; min-height: 0; padding: 0 12px; font-size: 0.8rem; }
+#content #result_list thead th { font-size: 0.7rem; }
+#content #result_list td, #content #result_list th { padding: 9px 12px; }
+.object-tools { margin-top: -46px; }
+.object-tools a:link, .object-tools a:visited { padding: 6px 12px !important; font-size: 0.8rem; }
+
+/* Secondary button */
+a.button.hms-button-secondary, .button.hms-button-secondary {
+  background: var(--hm-surface);
+  color: var(--hm-text);
+  border: 1px solid var(--hm-border-strong);
+}
+a.button.hms-button-secondary:hover { background: var(--hm-bg); border-color: var(--hm-text); color: var(--hm-text); }
+
+.hms-menu__panel { text-align: left; }
+#content #changelist .actions button, #content #changelist .actions select { line-height: 1; box-sizing: border-box; }
+#content #result_list thead th { padding: 0; vertical-align: middle; }
+#content #result_list thead th .text > a, #content #result_list thead th .text > span { display: block; padding: 9px 12px; }
+#content #result_list thead th.action-checkbox-column { padding: 0; }
+#content #result_list thead th .sortoptions { padding: 9px 8px 0 0; }
+
+/* ══ Round 4 ═══════════════════════════════════════════════════════════════ */
+
+/* Go button: Django's "#changelist .actions .button" rule outranks a plain "button" selector */
+#content #changelist .actions .button,
+#content #changelist .actions button.button {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  min-height: 0;
+  padding: 0 14px;
+  margin: 0;
+  box-shadow: none;
+  border: 1px solid var(--hm-accent);
+  border-radius: var(--hm-radius);
+  background: var(--hm-accent);
+  color: #fff;
+  font: 600 0.8rem "IBM Plex Sans", sans-serif;
+  line-height: 1;
+}
+#content #changelist .actions .button:hover { background: var(--hm-accent-hover); border-color: var(--hm-accent-hover); }
+#content #changelist .actions select { height: 32px; border-color: var(--hm-border-strong); border-radius: var(--hm-radius); }
+
+/* Column sorting: hide Django's "remove from sorting" and priority markers, keep the arrow */
+#result_list thead th .sortoptions .sortremove,
+#result_list thead th .sortoptions .sortpriority { display: none; }
+#result_list thead th .sortoptions a.toggle { opacity: 0.6; }
+#result_list thead th.sorted { background: var(--hm-border-soft); }
+
+/* "Coming soon" page (templates/admin/hms_module.html) */
+#content-main.hms-soon { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; text-align: center; }
+.hms-soon__glass { width: 88px; height: 88px; display: grid; place-items: center; margin-bottom: 18px; border-radius: 50%; background: var(--hm-accent-bg); color: var(--hm-accent); font-size: 2.5rem; }
+.hms-soon__glass .bi { display: inline-block; animation: hms-glass 3s ease-in-out infinite; }
+@keyframes hms-glass { 0%, 40% { transform: rotate(0); } 50%, 90% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .hms-soon__glass .bi { animation: none; } }
+#content .hms-soon p.hms-soon__page { margin: 0; padding: 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--hm-muted); }
+#content .hms-soon h1.hms-soon__title { margin: 4px 0 12px !important; font-size: 1.9rem; }
+.hms-soon__sprint { display: inline-block; padding: 4px 14px; border-radius: 999px; background: var(--hm-sidebar); color: #fff; font-weight: 600; font-size: 0.85rem; }
+#content .hms-soon p.hms-soon__issue { margin: 16px 0 0; padding: 0; color: var(--hm-muted); font-size: 0.8rem; }
+
+/* Object tools ("Add user", "History") sit on the title row without a float,
+   so the change list beneath them gets the full width */
+#content-main { position: relative; }
+#content-main > .object-tools,
+#content-main > ul.object-tools { position: absolute; top: -50px; right: 0; float: none; margin: 0; }
+
+
+/* ══ Round 5 ═══════════════════════════════════════════════════════════════ */
+
+/* Rounded cards everywhere */
+:root { --hms-card-radius: 12px; }
+.module, #changelist.module, .submit-row, .hms-stat, .hms-card, .errornote, ul.messagelist li { border-radius: var(--hms-card-radius); }
+.module > h2:first-child, .module > caption:first-child,
+#content fieldset .fieldset-heading { border-radius: var(--hms-card-radius) var(--hms-card-radius) 0 0; }
+#changelist.module { overflow: hidden; }
+
+.hms-eyebrow { display: block; margin-bottom: 2px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--hm-muted); }
+.hms-pagehead .button { min-height: 36px; padding: 6px 14px; font-size: 0.85rem; }
+
+/* Users & roles: role tabs */
+.hms-tabs { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--hm-border); overflow-x: auto; }
+.hms-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 10px 10px;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  color: var(--hm-muted) !important;
+  font-weight: 600;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.hms-tab:hover { color: var(--hm-text) !important; text-decoration: none; }
+.hms-tab.is-active { border-bottom-color: var(--hm-accent); color: var(--hm-accent) !important; }
+.hms-tab__count { min-width: 20px; padding: 0 6px; border-radius: 999px; background: var(--hm-border-soft); color: var(--hm-muted); font-size: 0.72rem; line-height: 18px; text-align: center; }
+.hms-tab.is-active .hms-tab__count { background: var(--hm-accent); color: #fff; }
+
+/* Search + status switch on one row */
+.hms-listbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--hm-border); }
+#content .hms-listbar #toolbar { flex: 1 1 320px; padding: 0; margin: 0; border: 0; background: none; }
+.hms-seg { display: inline-flex; padding: 3px; border: 1px solid var(--hm-border); border-radius: 8px; background: var(--hm-bg); }
+.hms-seg__item { padding: 5px 12px; border-radius: 6px; color: var(--hm-muted) !important; font-weight: 600; font-size: 0.8rem; text-decoration: none; }
+.hms-seg__item:hover { color: var(--hm-text) !important; text-decoration: none; }
+.hms-seg__item.is-active { background: var(--hm-surface); color: var(--hm-text) !important; box-shadow: 0 1px 2px rgba(24, 32, 46, 0.12); }
+
+/* Table cells */
+.hms-person { display: inline-flex; align-items: center; gap: 10px; }
+.hms-person__avatar { flex: none; width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; background: var(--hm-accent-bg); color: var(--hm-accent); font-weight: 700; font-size: 0.75rem; }
+.hms-person__text strong { display: block; color: var(--hm-text); font-weight: 600; }
+.hms-person__text small { display: block; color: var(--hm-muted); font-size: 0.75rem; }
+#result_list a:hover .hms-person__text strong { color: var(--hm-accent); text-decoration: underline; }
+.hms-quiet { color: var(--hm-muted); }
+.hms-badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; white-space: nowrap; }
+.hms-badge--resident { background: var(--hm-accent-bg); color: var(--hm-accent-hover); }
+.hms-badge--warden { background: #ece6f8; color: #4f3393; }
+.hms-badge--security-guard { background: #fbe6dc; color: #8a3410; }
+.hms-badge--maintenance-staff { background: var(--hm-warning-bg); color: var(--hm-warning); }
+.hms-badge--mess-manager { background: var(--hm-success-bg); color: var(--hm-success); }
+.hms-badge--administrator { background: var(--hm-sidebar); color: #fff; }
+.hms-status { display: inline-flex; align-items: center; gap: 6px; color: var(--hm-muted); font-size: 0.8rem; font-weight: 600; }
+.hms-status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--hm-border-strong); }
+.hms-status--on { color: var(--hm-success); }
+.hms-status--on::before { background: var(--hm-success); }
+#content #result_list td { vertical-align: middle; padding-top: 10px; padding-bottom: 10px; }
+#content #result_list tbody tr:hover td { background: var(--hm-bg); }
+#content #changelist .actions { border-bottom: 1px solid var(--hm-border); }
+
+/* Django's filter sidebar (other change lists): chevrons and pill-style selection */
+#changelist-filter details > summary::before {
+  content: "\f285" !important;
+  display: inline-block;
+  margin-right: 6px;
+  font: 0.7rem "bootstrap-icons";
+  color: var(--hm-muted);
+  transition: transform 0.15s ease;
+}
+#changelist-filter details[open] > summary::before { transform: rotate(90deg); }
+#changelist-filter details > summary { padding: 10px 16px; font-weight: 600; color: var(--hm-text); }
+#changelist-filter li { border-left: 0 !important; padding: 0; margin: 1px 10px; }
+#changelist-filter li a { display: block; padding: 5px 10px; border-radius: 6px; color: var(--hm-text); }
+#changelist-filter li a:hover { background: var(--hm-bg); text-decoration: none; }
+#changelist-filter li.selected a { background: var(--hm-accent-bg); color: var(--hm-accent-hover); font-weight: 600; }
+
+
+/* ══ Round 6 ═══════════════════════════════════════════════════════════════ */
+
+/* Sidebar is always shown (no collapse); Django hides it unless .main.shifted */
+.main > #nav-sidebar.hms-side { visibility: visible; margin-left: 0; position: sticky; top: 0; align-self: flex-start; height: calc(100vh - var(--hms-header-h)); overflow-y: auto; }
+
+/* One sans-serif typeface: headings by weight, labels in sentence case */
+h1, h2, h3, #content h1, #site-name, .hms-brand { font-family: var(--font-family-primary); letter-spacing: -0.01em; }
+#content h1 { font-weight: 600; }
+.hms-side__label, .hms-eyebrow, .hms-stat__label, .hms-soon__page, .hms-soon__meta dt,
+thead th, #content #result_list thead th, .hms-brand small {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+.hms-side__label { font-size: 0.75rem; }
+.hms-stat__label { font-size: 0.8rem; }
+.hms-eyebrow { font-size: 0.8rem; font-weight: 500; }
+#content #result_list thead th { font-size: 0.8rem; }
+.hms-stat__value { font-weight: 600; }
+.hms-brand small { font-size: 0.75rem; font-weight: 500; }
+
+
+/* ══ Round 7 ═══════════════════════════════════════════════════════════════ */
+
+/* Exact header height, so header + sidebar fill the screen without a stray scrollbar */
+:root { --hms-header-h: 60px; }
+#header { height: var(--hms-header-h); box-sizing: border-box; padding-top: 0; padding-bottom: 0; }
+#footer { padding: 0; }
+#content { padding-bottom: 24px; }
+
+/* Django gives filtered lists a 400px minimum height; let the card fit its rows */
+#content #changelist, #content #changelist.filtered { min-height: 0; }
+
+/* Password field on the user form: "Set" + Reset password, no hash details */
+.hms-pw { display: flex; align-items: center; gap: 14px; }
+.hms-pw .button { min-height: 32px; padding: 4px 12px; font-size: 0.8rem; }

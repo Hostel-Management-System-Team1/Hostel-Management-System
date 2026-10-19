@@ -1,0 +1,34 @@
+{% extends "admin/change_list.html" %}
+{# Users & roles: role tabs and a status switch replace Django's filter sidebar (UserAdmin.changelist_view). #}
+
+{% block content_title %}
+<div class="hms-pagehead">
+  <div>
+    <h1>Users &amp; roles</h1>
+    <p>Accounts for residents and staff. A person's role decides what they can see.</p>
+  </div>
+  {% if has_add_permission %}
+    <a class="button default" href="{% url 'admin:accounts_user_add' %}"><i class="bi bi-person-plus" aria-hidden="true"></i>Add user</a>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block object-tools %}{% endblock %}
+
+{% block search %}
+<nav class="hms-tabs" aria-label="Filter by role">
+  {% for tab in role_tabs %}
+    <a class="hms-tab{% if tab.active %} is-active{% endif %}" href="{{ tab.url }}"{% if tab.active %} aria-current="page"{% endif %}>{{ tab.label }}<span class="hms-tab__count">{{ tab.count }}</span></a>
+  {% endfor %}
+</nav>
+<div class="hms-listbar">
+  {{ block.super }}
+  <nav class="hms-seg" aria-label="Filter by status">
+    {% for tab in status_tabs %}
+      <a class="hms-seg__item{% if tab.active %} is-active{% endif %}" href="{{ tab.url }}"{% if tab.active %} aria-current="page"{% endif %}>{{ tab.label }}</a>
+    {% endfor %}
+  </nav>
+</div>
+{% endblock %}
+
+{% block filters %}{% endblock %}

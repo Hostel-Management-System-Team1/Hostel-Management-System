@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}My profile · Hostel Management System{% endblock %}
+
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li aria-current="page">My profile</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>My profile</h1>
+      <p class="hm-sub">Keep your contact details up to date so the hostel office can reach you.</p>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-7 col-xl-6">
+      <form method="post" class="hm-panel" novalidate>
+        {% csrf_token %}
+        <div class="hm-panel__body">
+          <div class="row g-3">
+            {% for field in form %}
+              <div class="{% if field.name == 'email' %}col-12{% else %}col-sm-6{% endif %}">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                <input class="form-control{% if field.errors %} is-invalid{% endif %}" id="{{ field.id_for_label }}" name="{{ field.html_name }}"
+                       type="{% if field.name == 'email' %}email{% elif field.name == 'phone' %}tel{% else %}text{% endif %}"
+                       value="{{ field.value|default:'' }}"
+                       autocomplete="{% if field.name == 'first_name' %}given-name{% elif field.name == 'last_name' %}family-name{% elif field.name == 'email' %}email{% else %}tel{% endif %}"
+                       {% if field.errors %}aria-describedby="{{ field.id_for_label }}_err"{% endif %}>
+                {% if field.errors %}<div class="invalid-feedback d-block" id="{{ field.id_for_label }}_err">{{ field.errors|join:" " }}</div>{% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="hm-panel__foot d-flex flex-wrap gap-2">
+          <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Save</button>
+          <a class="btn btn-outline-secondary" href="{% url 'home' %}">Cancel</a>
+        </div>
+      </form>
+    </div>
+
+    <div class="col-lg-5 col-xl-4">
+      <section class="hm-panel hm-panel--flush" aria-labelledby="h-account">
+        <div class="hm-panel__head"><h2 id="h-account">Account</h2></div>
+        <dl class="hm-facts">
+          <div><dt>Username</dt><dd>{{ user.username }}</dd></div>
+          <div><dt>Role</dt><dd>{{ user.get_role_display }}</dd></div>
+          <div><dt>Password</dt><dd><a href="{% url 'password_change' %}">Change password</a></dd></div>
+        </dl>
+        <p class="hm-facts__note">Your username and role are managed by the hostel office.</p>
+      </section>
+    </div>
+  </div>
+{% endblock %}

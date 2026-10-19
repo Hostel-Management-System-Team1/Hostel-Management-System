@@ -1,0 +1,94 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{# HMS admin dashboard. Context comes from HMSAdminSite.index (hms/admin_site.py). #}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+{% block coltype %}colM{% endblock %}
+{% block content_title %}{% endblock %}
+
+{% block content %}
+<div id="content-main" class="hms-dash">
+  <div class="hms-pagehead">
+    <div>
+      <h1>Administration</h1>
+      <p>{% firstof user.get_full_name user.get_username %} · {{ user.get_role_display }}</p>
+    </div>
+  </div>
+
+  <section class="hms-stats" aria-label="Summary">
+    <a class="hms-stat" href="{{ users_url }}">
+      <span class="hms-stat__icon" aria-hidden="true"><i class="bi bi-people"></i></span>
+      <span class="hms-stat__label">All accounts</span><span class="hms-stat__value">{{ stats.total }}</span>
+    </a>
+    <a class="hms-stat" href="{{ users_url }}?role__exact=RESIDENT">
+      <span class="hms-stat__icon" aria-hidden="true"><i class="bi bi-house-door"></i></span>
+      <span class="hms-stat__label">Residents</span><span class="hms-stat__value">{{ stats.residents }}</span>
+    </a>
+    <a class="hms-stat" href="{{ users_url }}">
+      <span class="hms-stat__icon" aria-hidden="true"><i class="bi bi-person-badge"></i></span>
+      <span class="hms-stat__label">Staff accounts</span><span class="hms-stat__value">{{ stats.staff }}</span>
+    </a>
+    <a class="hms-stat{% if stats.inactive %} hms-stat--warn{% endif %}" href="{{ users_url }}?is_active__exact=0">
+      <span class="hms-stat__icon" aria-hidden="true"><i class="bi bi-person-slash"></i></span>
+      <span class="hms-stat__label">Inactive</span><span class="hms-stat__value">{{ stats.inactive }}</span>
+    </a>
+  </section>
+
+  <div class="hms-grid2">
+    <section class="module hms-panel" aria-labelledby="h-roles">
+      <h2 id="h-roles"><span>People by role</span><a class="hms-headlink" href="{{ users_url }}add/"><i class="bi bi-person-plus" aria-hidden="true"></i>Add user</a></h2>
+      <table class="hms-roles">
+        <caption class="visually-hidden">Accounts per role</caption>
+        <tbody>
+          {% for row in role_rows %}
+            <tr>
+              <th scope="row"><a href="{{ row.url }}">{{ row.label }}</a></th>
+              <td class="hms-roles__bar"><span style="width: {% widthratio row.count stats.total|default:1 100 %}%"></span></td>
+              <td class="hms-roles__n">{{ row.count }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+
+    <section class="module hms-panel" aria-labelledby="h-recent">
+      <h2 id="h-recent"><span>Recent activity</span></h2>
+      {% if recent_actions %}
+        <ul class="hms-activity">
+          {% for entry in recent_actions %}
+            <li>
+              <span class="hms-activity__icon hms-activity__icon--{% if entry.is_addition %}add{% elif entry.is_deletion %}del{% else %}edit{% endif %}" aria-hidden="true">
+                <i class="bi {% if entry.is_addition %}bi-plus-lg{% elif entry.is_deletion %}bi-trash3{% else %}bi-pencil{% endif %}"></i>
+              </span>
+              <span class="hms-activity__text">
+                <strong>{% firstof entry.user.get_full_name entry.user.get_username %}</strong>
+                {% if entry.is_addition %}added{% elif entry.is_deletion %}deleted{% else %}changed{% endif %}
+                {% if entry.content_type %}{{ entry.content_type.name }}{% endif %}
+                {% if entry.is_deletion or not entry.get_admin_url %}{{ entry.object_repr }}{% else %}<a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>{% endif %}
+                <small>{{ entry.action_time|timesince }} ago</small>
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="hms-empty"><i class="bi bi-clock-history" aria-hidden="true"></i><p>No activity yet. Changes made in the admin appear here.</p></div>
+      {% endif %}
+    </section>
+  </div>
+
+  <h2 class="hms-section">Modules</h2>
+  <div class="hms-cards">
+    {% for entry in modules %}
+      <a class="hms-card" href="{{ entry.url }}">
+        <span class="hms-card__icon" aria-hidden="true"><i class="bi {{ entry.icon }}"></i></span>
+        <span class="hms-card__title">{{ entry.label }}</span>
+        <span class="hms-card__text">{{ entry.hint }}</span>
+        <span class="hms-card__foot">
+          {% if entry.sprint %}<span class="hms-chip">Sprint {{ entry.sprint }}</span>{% else %}<span class="hms-chip hms-chip--live">Open</span>{% endif %}
+          <i class="bi bi-arrow-right" aria-hidden="true"></i>
+        </span>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

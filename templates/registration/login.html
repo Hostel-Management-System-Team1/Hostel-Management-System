@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Sign in · Hostel Management System{% endblock %}
+
+{% block body %}
+<main class="hm-login" id="main">
+  <div class="hm-login__box">
+    <div class="hm-login__brand">
+      <span class="hm-logo" aria-hidden="true"><i class="bi bi-building"></i></span>
+      <span>Hostel Management System</span>
+    </div>
+
+    <form method="post" class="hm-login__card" novalidate>
+      {% csrf_token %}
+      <h1>Sign in</h1>
+      {% if form.errors %}
+        <div class="hm-alert hm-alert--danger" role="alert"><div class="hm-alert__body">Incorrect username or password.</div></div>
+      {% endif %}
+      <div class="mb-3">
+        <label class="form-label" for="id_username">Username</label>
+        <input class="form-control{% if form.errors %} is-invalid{% endif %}" id="id_username" name="username" type="text"
+               autocomplete="username" value="{{ form.username.value|default:'' }}" required autofocus>
+      </div>
+      <div class="mb-4">
+        <label class="form-label" for="id_password">Password</label>
+        <div class="input-group">
+          <input class="form-control{% if form.errors %} is-invalid{% endif %}" id="id_password" name="password" type="password" autocomplete="current-password" required>
+          <button class="btn btn-outline-secondary" type="button" data-hm-reveal="#id_password" aria-pressed="false">Show</button>
+        </div>
+      </div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-primary w-100" type="submit">Sign in</button>
+    </form>
+  </div>
+</main>
+{% endblock %}
