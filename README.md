@@ -75,6 +75,20 @@ offered, matching the requested room type and preferred block; the gender rule i
 allocation is saved. `POST /api/v1/allocations` does the same for one application (201, 404, or 409 when no
 bed matches).
 
+## Fees, payment and receipts (HMS-F-010 – F-012)
+
+When a bed is allocated the system raises an itemised invoice from the **fee structure** (administrator:
+Masters → Fee structure; a starting structure is installed). The resident opens **Fees & receipts**, chooses a
+payment method and is sent to the payment gateway's page. A successful signed callback marks the invoice Paid and
+issues a receipt with a unique number (`RCT-2026-000001`), downloadable as a PDF; a failed or cancelled payment
+leaves the invoice Unpaid.
+
+The gateway here is a bundled stand-in that asks for no card details (see DEVIATIONS.md). The callback endpoint
+`POST /api/v1/payments/callback` accepts only requests signed with `HMS_PAYMENT_SECRET`; set a real secret outside
+development. `POST /api/v1/invoices/{id}/payments` starts a payment (201, 404, 409, or 502 when the gateway is down).
+
+`python manage.py expire_payments` marks payment sessions nobody finished as Abandoned.
+
 ## UI design
 
 The portal and admin use one light theme on Bootstrap 5: `static/css/hostel.css` (portal) and

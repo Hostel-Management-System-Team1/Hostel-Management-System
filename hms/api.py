@@ -56,8 +56,10 @@ def exception_handler(exc, context):
         return None  # unexpected errors stay Django's 500, which shows no detail when DEBUG is off
     request = context["request"]
     if isinstance(exc, exceptions.ValidationError):
-        details = response.data
-        message = "Validation failed."
+        if isinstance(response.data, list):  # a single plain message, e.g. "Invalid signature."
+            details, message = None, " ".join(str(item) for item in response.data)
+        else:
+            details, message = response.data, "Validation failed."
     else:
         details = None
         message = str(getattr(exc, "detail", exc))
