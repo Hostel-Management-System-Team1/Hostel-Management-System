@@ -75,6 +75,13 @@ offered, matching the requested room type and preferred block; the gender rule i
 allocation is saved. `POST /api/v1/allocations` does the same for one application (201, 404, or 409 when no
 bed matches).
 
+## Room transfer (HMS-F-003)
+
+The warden opens **Residents**, picks a resident and chooses a vacant bed (only beds in a block for the resident's
+gender are listed) with a required reason. The old bed becomes vacant, the new one occupied and the move is
+recorded with the reason, the warden and the time, all in one database transaction. The resident's history of
+moves is shown on the same page.
+
 ## Fees, payment and receipts (HMS-F-010 – F-012)
 
 When a bed is allocated the system raises an itemised invoice from the **fee structure** (administrator:

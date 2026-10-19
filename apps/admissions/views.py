@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.core.exceptions import ValidationError
-from django.db.models import Count
+from django.db.models import Count, Q
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -11,7 +11,7 @@ from apps.accounts.permissions import role_required
 
 from . import allocation as allocator
 from . import services
-from .forms import ApplicationForm, DecisionForm
+from .forms import ApplicationForm, DecisionForm, TransferForm
 from .models import Allocation, AllocationPolicy, Application, Bed, Block, Room
 
 R = User.Role
@@ -167,4 +167,49 @@ def room_list(request):
         })
     return render(request, "admissions/room_list.html", {
         "rows": rows, "blocks": Block.objects.all(), "block_id": block_id,
+    })
+
+
+@role_required(R.WARDEN)
+def resident_list(request):
+    """Everyone with a bed, for transfers and a look at who lives where."""
+    allocations = Allocation.objects.filter(status=Allocation.Status.ACTIVE).select_related(
+        "resident", "application", "bed__room__block")
+    query = request.GET.get("q", "").strip()
+    if query:
+        allocations = allocations.filter(
+            Q(resident__first_name__icontains=query) | Q(resident__last_name__icontains=query)
+            | Q(resident__username__icontains=query)
+            | Q(application__enrolment_number__icontains=query)
+            | Q(bed__room__number__icontains=query))
+    return render(request, "admissions/resident_list.html", {
+        "allocations": allocations.order_by("bed__room__block__name", "bed__room__number",
+                                            "bed__label"),
+        "query": query,
+    })
+
+
+@role_required(R.WARDEN)
+def resident_detail(request, pk):
+    """One resident's bed, with the transfer form and the history of earlier moves."""
+    allocation = get_object_or_404(
+        Allocation.objects.select_related("resident", "application", "bed__room__block"),
+        pk=pk, status=Allocation.Status.ACTIVE,
+    )
+    form = TransferForm(request.POST or None, allocation=allocation)
+    if request.method == "POST" and form.is_valid():
+        try:
+            record = allocator.transfer(
+                allocation, form.cleaned_data["bed"], form.cleaned_data["reason"], request.user)
+        except allocator.TransferError as error:
+            form.add_error(None, str(error))
+        else:
+            messages.success(
+                request, f"{allocation.resident.get_full_name() or allocation.resident.username} "
+                f"moved from {record.from_bed} to {record.to_bed}.")
+            return redirect("admissions:resident_detail", pk=pk)
+    transfers = allocation.transfers.select_related("from_bed__room__block",
+                                                    "to_bed__room__block", "performed_by")
+    return render(request, "admissions/resident_detail.html", {
+        "allocation": allocation, "form": form, "transfers": transfers,
     })

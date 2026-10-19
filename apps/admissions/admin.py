@@ -2,7 +2,7 @@ from django import forms
 from django.contrib import admin
 from django.db.models import ProtectedError
 
-from .models import Allocation, AllocationPolicy, Application, Bed, Block, Room
+from .models import Allocation, AllocationPolicy, Application, Bed, Block, Room, Transfer
 
 
 @admin.register(Block)
@@ -122,6 +122,23 @@ class AllocationAdmin(admin.ModelAdmin):
     list_display = ("resident", "bed", "status", "allocated_at", "allocated_by")
     list_filter = ("status", "bed__room__block")
     search_fields = ("resident__username", "resident__first_name", "resident__last_name")
+    actions = None
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(Transfer)
+class TransferAdmin(admin.ModelAdmin):
+    list_display = ("allocation", "from_bed", "to_bed", "reason", "performed_by", "performed_at")
+    list_filter = ("performed_at",)
+    search_fields = ("allocation__resident__username", "reason")
     actions = None
 
     def has_add_permission(self, request):

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Residents · Hostel Management System{% endblock %}
+
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>Residents</li>
+      <li aria-current="page">Residents</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Residents</h1>
+      <p class="hm-sub">Everyone with a bed. Open a resident to move them to another room.</p>
+    </div>
+    <form method="get" class="hm-page-header__actions" role="search">
+      <label class="visually-hidden" for="id_q">Search residents</label>
+      <input class="form-control" id="id_q" name="q" type="search" value="{{ query }}" placeholder="Name, enrolment or room">
+      <button class="btn btn-outline-secondary" type="submit">Search</button>
+    </form>
+  </div>
+
+  <section class="hm-panel hm-panel--flush" aria-label="Residents">
+    {% if allocations %}
+      <div class="table-responsive">
+        <table class="table hm-table hm-table-stack">
+          <thead><tr><th scope="col">Resident</th><th scope="col">Enrolment</th><th scope="col">Block</th><th scope="col">Room</th><th scope="col">Bed</th><th scope="col">Since</th></tr></thead>
+          <tbody>
+            {% for a in allocations %}
+              <tr>
+                <td class="hm-cell-primary"><a class="hm-row-link" href="{% url 'admissions:resident_detail' a.pk %}">{{ a.resident.get_full_name|default:a.resident.username }}</a></td>
+                <td data-label="Enrolment">{{ a.application.enrolment_number }}</td>
+                <td data-label="Block">{{ a.bed.room.block.name }}</td>
+                <td data-label="Room">{{ a.bed.room.number }}</td>
+                <td data-label="Bed">{{ a.bed.label }}</td>
+                <td data-label="Since">{{ a.allocated_at|date:"j M Y" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="hm-empty"><i class="bi bi-people" aria-hidden="true"></i><h3>{% if query %}No match{% else %}No residents yet{% endif %}</h3><p>{% if query %}No resident matches “{{ query }}”.{% else %}Residents appear here once the warden has allocated them a bed.{% endif %}</p></div>
+    {% endif %}
+  </section>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{{ allocation.resident.get_full_name|default:allocation.resident.username }} · Hostel Management System{% endblock %}
+
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li><a href="{% url 'admissions:resident_list' %}">Residents</a></li>
+      <li aria-current="page">{{ allocation.resident.get_full_name|default:allocation.resident.username }}</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>{{ allocation.resident.get_full_name|default:allocation.resident.username }}</h1>
+      <p class="hm-sub">{{ allocation.application.enrolment_number }} · {{ allocation.application.get_gender_display }} · {{ allocation.application.application_number }}</p>
+    </div>
+  </div>
+
+  <div class="hm-detail-grid">
+    <div>
+      <section class="hm-panel hm-panel--flush" aria-labelledby="h-now">
+        <div class="hm-panel__head"><h2 id="h-now">Current bed</h2></div>
+        <dl class="hm-facts">
+          <div><dt>Block</dt><dd>{{ allocation.bed.room.block.name }}</dd></div>
+          <div><dt>Room</dt><dd>{{ allocation.bed.room.number }} · floor {{ allocation.bed.room.floor }} · {{ allocation.bed.room.get_room_type_display }}</dd></div>
+          <div><dt>Bed</dt><dd>{{ allocation.bed.label }}</dd></div>
+          <div><dt>Allocated</dt><dd>{{ allocation.allocated_at|date:"j M Y, H:i" }}</dd></div>
+        </dl>
+      </section>
+
+      <section class="hm-panel hm-panel--flush" aria-labelledby="h-hist">
+        <div class="hm-panel__head"><h2 id="h-hist">Transfer history</h2></div>
+        {% if transfers %}
+          <div class="table-responsive">
+            <table class="table hm-table hm-table-stack">
+              <thead><tr><th scope="col">When</th><th scope="col">From</th><th scope="col">To</th><th scope="col">Reason</th><th scope="col">By</th></tr></thead>
+              <tbody>
+                {% for t in transfers %}
+                  <tr>
+                    <td class="hm-cell-primary">{{ t.performed_at|date:"j M Y, H:i" }}</td>
+                    <td data-label="From">{{ t.from_bed.room.block.name }} · {{ t.from_bed.room.number }}{{ t.from_bed.label }}</td>
+                    <td data-label="To">{{ t.to_bed.room.block.name }} · {{ t.to_bed.room.number }}{{ t.to_bed.label }}</td>
+                    <td data-label="Reason">{{ t.reason }}</td>
+                    <td data-label="By">{{ t.performed_by.get_full_name|default:t.performed_by.username }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="hm-empty"><i class="bi bi-arrow-left-right" aria-hidden="true"></i><h3>No transfers</h3><p>This resident has not been moved since the bed was allocated.</p></div>
+        {% endif %}
+      </section>
+    </div>
+
+    <section class="hm-panel" aria-labelledby="h-move">
+      <div class="hm-panel__head"><h2 id="h-move">Move to another bed</h2></div>
+      <form method="post" class="hm-panel__body" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="hm-alert hm-alert--danger" role="alert"><div class="hm-alert__body">{{ form.non_field_errors|join:" " }}</div></div>{% endif %}
+        <div class="mb-3">{% include "_field.html" with field=form.bed %}</div>
+        <div class="mb-3">{% include "_field.html" with field=form.reason %}</div>
+        <button class="btn btn-primary w-100" type="submit"><i class="bi bi-arrow-left-right" aria-hidden="true"></i> Transfer resident</button>
+        <p class="hm-note mt-3 mb-0">The old bed becomes vacant and the new bed occupied in one step. If the room types differ, the fee invoice already raised is not changed.</p>
+      </form>
+    </section>
+  </div>
+{% endblock %}

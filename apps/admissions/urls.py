@@ -14,4 +14,6 @@ urlpatterns = [
          name="application_allocate"),
     path("applications/allocate-all/", views.allocate_all, name="allocate_all"),
     path("rooms/", views.room_list, name="room_list"),
+    path("residents/", views.resident_list, name="resident_list"),
+    path("residents/<int:pk>/", views.resident_detail, name="resident_detail"),
 ]

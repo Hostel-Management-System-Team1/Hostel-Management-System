@@ -3,7 +3,7 @@
 from django.db import transaction
 from django.utils import timezone
 
-from .models import Allocation, AllocationPolicy, Application, Bed, Room
+from .models import Allocation, AllocationPolicy, Application, Bed, Room, Transfer
 from .signals import allocation_confirmed
 
 
@@ -101,3 +101,43 @@ def end_allocation(allocation):
         allocation.save(update_fields=["status", "ended_at"])
         allocation.bed.status = Bed.Status.VACANT
         allocation.bed.save(update_fields=["status"])
+
+
+class TransferError(Exception):
+    """The transfer cannot be made (no reason, bed unsuitable, or the resident has no bed)."""
+
+
+@transaction.atomic
+def transfer(allocation, to_bed, reason, actor):
+    """Move a resident to another bed (HMS-F-003).
+
+    The source bed becomes vacant, the target bed occupied and the transfer is recorded with
+    its reason, actor and time, all in one database transaction: if any step fails, none of
+    them happen.
+    """
+    reason = (reason or "").strip()
+    if not reason:
+        raise TransferError("Give a reason for the transfer.")
+    allocation = Allocation.objects.select_for_update().select_related(
+        "application", "bed").get(pk=allocation.pk)
+    if allocation.status != Allocation.Status.ACTIVE:
+        raise TransferError("This resident no longer has a bed.")
+    # Lock both beds in a fixed order so two simultaneous transfers cannot deadlock.
+    ids = sorted({allocation.bed_id, to_bed.pk})
+    beds = {b.pk: b for b in Bed.objects.select_for_update().filter(pk__in=ids)}
+    source, target = beds[allocation.bed_id], beds.get(to_bed.pk)
+    if target is None or target.pk == source.pk:
+        raise TransferError("Choose a different bed.")
+    suitable = vacant_beds(allocation.application.gender).filter(pk=target.pk).exists()
+    if not suitable:
+        raise TransferError("That bed is not vacant or is not in a block for this gender.")
+
+    source.status = Bed.Status.VACANT
+    source.save(update_fields=["status"])
+    target.status = Bed.Status.OCCUPIED
+    target.save(update_fields=["status"])
+    allocation.bed = target
+    allocation.save(update_fields=["bed"])
+    return Transfer.objects.create(
+        allocation=allocation, from_bed=source, to_bed=target, reason=reason, performed_by=actor
+    )
