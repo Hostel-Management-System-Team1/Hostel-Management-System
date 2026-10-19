@@ -3,6 +3,8 @@
 from django.db import transaction
 from django.utils import timezone
 
+from apps.audit import service as audit
+
 from .models import Allocation, AllocationPolicy, Application, Bed, Room, Transfer
 from .signals import allocation_confirmed
 
@@ -45,13 +47,26 @@ def ranked_waiting_applications():
     return waiting.order_by(*order, "pk").select_related("preferred_block")
 
 
-@transaction.atomic
 def allocate(application, actor, bed=None):
     """Give an approved application a bed and confirm the allocation.
 
     Without ``bed`` the first matching vacant bed is used. With ``bed`` the warden's own choice
-    is used, which must still be vacant and in a block for the applicant's gender.
+    is used, which must still be vacant and in a block for the applicant's gender. Every
+    outcome, including a refusal, is written to the audit log (HMS-SR-004).
     """
+    try:
+        return _allocate(application, actor, bed)
+    except AllocationError as error:
+        audit.record(
+            "allocation.failed", target=application, actor=actor,
+            outcome=audit.AuditEntry.Outcome.FAILURE,
+            detail={"application": application.application_number, "reason": str(error)},
+        )
+        raise
+
+
+@transaction.atomic
+def _allocate(application, actor, bed):
     application = Application.objects.select_for_update().get(pk=application.pk)
     if application.status != Application.Status.APPROVED:
         raise AllocationError("Only an approved application without a bed can be allocated.")
@@ -74,6 +89,10 @@ def allocate(application, actor, bed=None):
     chosen.save(update_fields=["status"])
     application.status = Application.Status.ALLOCATED
     application.save(update_fields=["status"])
+    audit.record(
+        "allocation.confirmed", target=allocation, actor=actor,
+        detail={"application": application.application_number, "bed": str(chosen)},
+    )
     allocation_confirmed.send(sender=Allocation, allocation=allocation)
     return allocation
 
@@ -107,14 +126,26 @@ class TransferError(Exception):
     """The transfer cannot be made (no reason, bed unsuitable, or the resident has no bed)."""
 
 
-@transaction.atomic
 def transfer(allocation, to_bed, reason, actor):
     """Move a resident to another bed (HMS-F-003).
 
     The source bed becomes vacant, the target bed occupied and the transfer is recorded with
     its reason, actor and time, all in one database transaction: if any step fails, none of
-    them happen.
+    them happen. A refused transfer is written to the audit log as well.
     """
+    try:
+        return _transfer(allocation, to_bed, reason, actor)
+    except TransferError as error:
+        audit.record(
+            "allocation.transfer_failed", target=allocation, actor=actor,
+            outcome=audit.AuditEntry.Outcome.FAILURE,
+            detail={"to": str(to_bed), "reason": str(error)},
+        )
+        raise
+
+
+@transaction.atomic
+def _transfer(allocation, to_bed, reason, actor):
     reason = (reason or "").strip()
     if not reason:
         raise TransferError("Give a reason for the transfer.")
@@ -138,6 +169,11 @@ def transfer(allocation, to_bed, reason, actor):
     target.save(update_fields=["status"])
     allocation.bed = target
     allocation.save(update_fields=["bed"])
-    return Transfer.objects.create(
+    record = Transfer.objects.create(
         allocation=allocation, from_bed=source, to_bed=target, reason=reason, performed_by=actor
     )
+    audit.record(
+        "allocation.transferred", target=allocation, actor=actor,
+        detail={"from": str(source), "to": str(target), "reason": reason},
+    )
+    return record

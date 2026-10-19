@@ -1,0 +1,19 @@
+{% extends "admin/change_list.html" %}
+{# Audit log: a banner says whether the hash chain still verifies (AuditEntryAdmin.changelist_view). #}
+
+{% block content_title %}
+<div class="hms-pagehead">
+  <div>
+    <h1>Audit log</h1>
+    <p>Allocations, transfers, payments, approvals, overrides and account changes. Entries can’t be edited or deleted.</p>
+  </div>
+</div>
+{% if chain_problems %}
+  <div class="hms-note hms-note--danger" role="alert"><strong>The audit log has been tampered with.</strong>
+    <ul>{% for problem in chain_problems|slice:":5" %}<li>{{ problem }}</li>{% endfor %}</ul></div>
+{% else %}
+  <div class="hms-note hms-note--ok" role="status"><i class="bi bi-shield-check" aria-hidden="true"></i> Integrity check passed: {{ chain_checked }} entr{{ chain_checked|pluralize:"y,ies" }} verified, none changed or missing.</div>
+{% endif %}
+{% endblock %}
+
+{% block object-tools %}{% endblock %}

@@ -125,8 +125,8 @@ ADMIN_NAV = [
         item("Users & roles", "bi-person-gear", "admin:accounts_user_changelist",
              hint="Accounts, roles and access"),
         item("Reports", "bi-bar-chart", sprint=2, hint="PDF and XLSX exports", issue=13),
-        item("Audit log", "bi-journal-text", sprint=1,
-             hint="Allocations, fees, approvals", issue=5),
+        item("Audit log", "bi-journal-text", "admin:audit_auditentry_changelist",
+             hint="Allocations, fees, approvals"),
     ]),
 ]
 

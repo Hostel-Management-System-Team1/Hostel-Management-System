@@ -50,15 +50,18 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "hms.api.TraceIdMiddleware",
+    "hms.security.InputGuardMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django_otp.middleware.OTPMiddleware",
+    "apps.audit.context.AuditContextMiddleware",
     "apps.accounts.middleware.MFARequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "hms.security.SecurityHeadersMiddleware",
 ]
 
 ROOT_URLCONF = "hms.urls"
@@ -151,6 +154,25 @@ REST_FRAMEWORK = {
     ],
 }
 
+
+# HTTPS (HMS-SR-001). Outside development every request must arrive over TLS: plain HTTP is
+# redirected, browsers are told to stay on HTTPS, and cookies are never sent over HTTP. The
+# TLS handshake itself, with TLS 1.2 as the minimum, is configured on the web server in front
+# of Django (deploy/nginx.conf.example). Set HMS_BEHIND_PROXY when that server terminates TLS.
+FORCE_HTTPS = env_bool("HMS_FORCE_HTTPS", not DEBUG) and "test" not in sys.argv
+SECURE_SSL_REDIRECT = FORCE_HTTPS
+SECURE_HSTS_SECONDS = 31536000 if FORCE_HTTPS else 0
+SECURE_HSTS_INCLUDE_SUBDOMAINS = FORCE_HTTPS
+SESSION_COOKIE_SECURE = FORCE_HTTPS
+CSRF_COOKIE_SECURE = FORCE_HTTPS
+if env_bool("HMS_BEHIND_PROXY", False):
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# Not asking browsers to preload the domain: that is a one-way commitment for the institution.
+SILENCED_SYSTEM_CHECKS = ["security.W021"]
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
+CSRF_COOKIE_HTTPONLY = True
 
 LANGUAGE_CODE = "en-in"
 TIME_ZONE = "Asia/Kolkata"

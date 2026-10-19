@@ -18,6 +18,16 @@ from django.contrib.auth.views import redirect_to_login
 from django.core.exceptions import PermissionDenied
 from rest_framework import permissions
 
+from apps.audit import service as audit
+
+
+def log_denied(request):
+    """Record a refused request in the audit log (HMS-SR-004)."""
+    audit.record(
+        "access.denied", outcome=audit.AuditEntry.Outcome.DENIED,
+        detail={"path": request.path, "method": request.method},
+    )
+
 
 def role_required(*roles):
     allowed = frozenset(roles)
@@ -28,6 +38,7 @@ def role_required(*roles):
             if not request.user.is_authenticated:
                 return redirect_to_login(request.get_full_path())
             if request.user.role not in allowed:
+                log_denied(request)
                 raise PermissionDenied
             return view(request, *args, **kwargs)
 
@@ -46,6 +57,7 @@ class RoleRequiredMixin:
         if not request.user.is_authenticated:
             return redirect_to_login(request.get_full_path())
         if request.user.role not in self.allowed_roles:
+            log_denied(request)
             raise PermissionDenied
         return super().dispatch(request, *args, **kwargs)
 
@@ -58,7 +70,10 @@ def roles(*allowed):
 
         def has_permission(self, request, view):
             user = request.user
-            return bool(user and user.is_authenticated and user.role in self.allowed_roles)
+            allowed = bool(user and user.is_authenticated and user.role in self.allowed_roles)
+            if not allowed and user and user.is_authenticated:
+                log_denied(request)
+            return allowed
 
     return HasRole
 

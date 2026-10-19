@@ -9,6 +9,7 @@ import uuid
 from http import HTTPStatus
 
 from django.core.exceptions import PermissionDenied
+from django.db import DataError
 from django.http import Http404
 from django.utils import timezone
 from rest_framework import exceptions
@@ -51,6 +52,8 @@ def exception_handler(exc, context):
         exc = exceptions.NotFound()
     elif isinstance(exc, PermissionDenied):
         exc = exceptions.PermissionDenied()
+    elif isinstance(exc, DataError):  # input the database cannot store, e.g. a NUL character
+        exc = exceptions.ValidationError("Invalid input.")
     response = drf_exception_handler(exc, context)
     if response is None:
         return None  # unexpected errors stay Django's 500, which shows no detail when DEBUG is off
