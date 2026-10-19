@@ -6,6 +6,7 @@ developer laptop, in CI and in the demo. The database is PostgreSQL (SAD 3.6).
 """
 
 import os
+import sys
 from pathlib import Path
 
 from django.contrib.messages import constants as messages
@@ -32,6 +33,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "django_otp",
+    "django_otp.plugins.otp_totp",
     # One Django app per service module (SAD 3.4, 3.5)
     "apps.accounts",
     "apps.admissions",
@@ -45,11 +48,14 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "hms.api.TraceIdMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_otp.middleware.OTPMiddleware",
+    "apps.accounts.middleware.MFARequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -93,6 +99,27 @@ LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"
 LOGOUT_REDIRECT_URL = "login"
 
+# Passwords are stored only as salted Argon2 hashes (HMS-SR-003). PBKDF2 stays in the
+# list so an older hash still verifies and is upgraded to Argon2 on the next sign-in.
+PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.Argon2PasswordHasher",
+    "django.contrib.auth.hashers.PBKDF2PasswordHasher",
+]
+if "test" in sys.argv:
+    # Argon2 is deliberately slow; tests that check hashing override this setting.
+    PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
+# A session ends after 15 minutes without a request, and logout deletes it on the
+# server so a copied session cookie stops working (HMS-SR-002).
+SESSION_COOKIE_AGE = 15 * 60
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = "Lax"
+
+# Warden and Administrator sign-ins need a TOTP code from an authenticator app (HMS-SR-003).
+OTP_TOTP_ISSUER = "Hostel Management System"
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -101,6 +128,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 REST_FRAMEWORK = {
+    "EXCEPTION_HANDLER": "hms.api.exception_handler",
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
     ],

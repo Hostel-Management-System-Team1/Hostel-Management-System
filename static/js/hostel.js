@@ -9,7 +9,9 @@
     var show = input.type === 'password';
     input.type = show ? 'text' : 'password';
     b.setAttribute('aria-pressed', show);
-    b.textContent = show ? 'Hide' : 'Show';
+    b.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    var icon = b.querySelector('i');
+    if (icon) icon.className = 'bi ' + (show ? 'bi-eye-slash' : 'bi-eye');
   });
 
   /* Live filter: <input data-hm-filter="#list"> hides [data-filter-item] not matching */

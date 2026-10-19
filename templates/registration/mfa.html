@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Verify it's you · Hostel Management System{% endblock %}
+
+{% block body %}
+<main class="hm-login" id="main">
+  <div class="hm-login__box">
+    <div class="hm-login__brand">
+      <span class="hm-logo" aria-hidden="true"><i class="bi bi-building"></i></span>
+      <span>Hostel Management System</span>
+    </div>
+
+    <form method="post" class="hm-login__card" novalidate>
+      {% csrf_token %}
+      <h1>{% if enrolling %}Set up your authenticator app{% else %}Enter your code{% endif %}</h1>
+      {% if enrolling %}
+        <p class="text-secondary">Warden and Administrator accounts need a second step when signing in.
+          Scan this code with an authenticator app (Google Authenticator, Microsoft Authenticator, Aegis, …),
+          then type the 6-digit code it shows.</p>
+        <div class="hm-qr" role="img" aria-label="QR code for your authenticator app">{{ qr }}</div>
+        <p class="small text-secondary">Can’t scan it? Enter this key in the app instead:<br>
+          <code class="hm-secret">{{ secret }}</code></p>
+      {% else %}
+        <p class="text-secondary">Open your authenticator app and type the 6-digit code for Hostel Management System.</p>
+      {% endif %}
+      {% if form.token.errors %}
+        <div class="hm-alert hm-alert--danger" role="alert"><div class="hm-alert__body">{{ form.token.errors.0 }}</div></div>
+      {% endif %}
+      <div class="mb-4">
+        <label class="form-label" for="{{ form.token.id_for_label }}">6-digit code</label>
+        {{ form.token }}
+      </div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-primary w-100" type="submit">{% if enrolling %}Link app and continue{% else %}Verify{% endif %}</button>
+    </form>
+    <form method="post" action="{% url 'logout' %}" class="text-center mt-3">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-link">Sign out</button>
+    </form>
+  </div>
+</main>
+{% endblock %}
