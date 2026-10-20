@@ -317,3 +317,22 @@ class Allocation(models.Model):
         if self.bed.room.block.gender != self.application.gender:
             raise ValidationError("A resident cannot be placed in a block for the other gender.")
         super().save(*args, **kwargs)
+
+
+class Transfer(models.Model):
+    """A resident moved from one bed to another, with who, when and why (HMS-F-003)."""
+
+    allocation = models.ForeignKey(Allocation, on_delete=models.PROTECT, related_name="transfers")
+    from_bed = models.ForeignKey(Bed, on_delete=models.PROTECT, related_name="+")
+    to_bed = models.ForeignKey(Bed, on_delete=models.PROTECT, related_name="+")
+    reason = models.CharField(max_length=300)
+    performed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="+"
+    )
+    performed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-performed_at"]
+
+    def __str__(self):
+        return f"{self.allocation.resident}: {self.from_bed} → {self.to_bed}"

@@ -2,6 +2,7 @@ from django import forms
 
 from hms.forms import BootstrapFormMixin
 
+from .allocation import vacant_beds
 from .models import Application, Block, Gender, RoomType
 
 SECTIONS = [
@@ -47,3 +48,33 @@ class DecisionForm(BootstrapFormMixin, forms.Form):
         label="Reason (required when rejecting)", required=False, max_length=300,
         widget=forms.Textarea(attrs={"rows": 2}),
     )
+
+
+class TransferForm(BootstrapFormMixin, forms.Form):
+    bed = forms.ModelChoiceField(
+        queryset=None, label="Move to", empty_label="Select a vacant bed",
+        help_text="Only vacant beds in a block for this resident's gender are listed.",
+    )
+    reason = forms.CharField(
+        label="Reason for the transfer", max_length=300,
+        widget=forms.Textarea(attrs={"rows": 2}),
+        help_text="Recorded with your name and the time.",
+    )
+
+    def __init__(self, *args, allocation, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.allocation = allocation
+        self.fields["bed"].queryset = vacant_beds(allocation.application.gender).order_by(
+            "room__block__name", "room__floor", "room__number", "label")
+        self.fields["bed"].label_from_instance = lambda bed: (
+            f"{bed.room.block.name} · room {bed.room.number} · bed {bed.label} "
+            f"({bed.room.get_room_type_display()}, floor {bed.room.floor})"
+        )
+
+    def clean_reason(self):
+        reason = self.cleaned_data["reason"].strip()
+        if not reason:
+            raise forms.ValidationError("Give a reason for the transfer.")
+        if "<" in reason or ">" in reason:
+            raise forms.ValidationError("Angle brackets are not allowed.")
+        return reason

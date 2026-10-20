@@ -63,12 +63,17 @@ def approved_application(resident, **overrides):
     return services.decide(application, warden, True)
 
 
-def allocated_resident(username="r1", room=None, **overrides):
-    """A resident with an approved application and an active allocation; returns the allocation."""
+def allocated_resident(username="r1", room=None, bed=None, **overrides):
+    """A resident with an approved application and an active allocation; returns the allocation.
+
+    Pass ``bed`` to put them in a particular bed, or ``room`` for the type and gender to match.
+    """
+    if bed is not None:
+        room = bed.room
     resident = make_resident(username, first_name=overrides.pop("first_name", username.title()))
     room = room or Room.objects.first() or make_room()
     overrides.setdefault("gender", room.block.gender)
     overrides.setdefault("room_type", room.room_type)
     application = approved_application(resident, **overrides)
     warden = User.objects.filter(role=User.Role.WARDEN).first()
-    return allocation.allocate(Application.objects.get(pk=application.pk), warden)
+    return allocation.allocate(Application.objects.get(pk=application.pk), warden, bed=bed)
