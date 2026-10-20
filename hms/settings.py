@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.humanize",
     "rest_framework",
     "django_otp",
     "django_otp.plugins.otp_totp",
@@ -74,6 +75,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "hms.navigation.navigation",
             ],
+            "builtins": ["hms.templatetags.hms_extras"],
         },
     },
 ]
@@ -97,6 +99,14 @@ DATABASES = {
 # The academic session new applications belong to, and the student-records adapter (SRS 3.3).
 ACADEMIC_SESSION = os.environ.get("HMS_ACADEMIC_SESSION", "2026-27")
 HMS_ERP_ADAPTER = os.environ.get("HMS_ERP_ADAPTER", "apps.admissions.erp.StubERP")
+
+# Fees: invoices fall due this many days after they are issued (HMS-F-013).
+FEE_DUE_DAYS = int(os.environ.get("HMS_FEE_DUE_DAYS", "15"))
+
+# The payment gateway. The shared secret signs the callback it sends us (HMS-SR-005); the
+# bundled gateway is a stand-in for a real PCI-DSS provider (see DEVIATIONS.md).
+PAYMENT_GATEWAY_SECRET = os.environ.get("HMS_PAYMENT_SECRET", "dev-only-gateway-secret")
+PAYMENT_GATEWAY_ENABLED = env_bool("HMS_PAYMENT_GATEWAY_ENABLED", True)
 
 AUTH_USER_MODEL = "accounts.User"
 LOGIN_URL = "login"

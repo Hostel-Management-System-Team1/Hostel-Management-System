@@ -705,17 +705,17 @@ a.button.hms-button-secondary:hover { background: var(--hm-bg); border-color: va
 .hms-pagehead .button { min-height: 36px; padding: 6px 14px; font-size: 0.85rem; }
 
 /* Users & roles: role tabs */
-.hms-tabs { display: flex; gap: 4px; padding: 0 12px; border-bottom: 1px solid var(--hm-border); overflow-x: auto; }
+.hms-tabs { display: flex; gap: 2px; padding: 0 8px; border-bottom: 1px solid var(--hm-border); overflow-x: auto; }
 .hms-tab {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 10px 10px;
+  gap: 5px;
+  padding: 12px 7px 10px;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
   color: var(--hm-muted) !important;
   font-weight: 600;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   white-space: nowrap;
   text-decoration: none;
 }
@@ -836,3 +836,18 @@ thead th, #content #result_list thead th, .hms-brand small {
 
 /* Let a wide change list shrink beside its filter instead of pushing the filter off-screen */
 .main > .content { min-width: 0; }
+
+/* Reference numbers stay on one line in lists */
+#content #changelist .field-number, #content #changelist .field-ticket,
+#content #changelist .field-application_number { white-space: nowrap; }
+/* Django never wraps date columns; let them take two lines so the list fits beside its filter */
+#content #changelist td.nowrap { white-space: normal; }
+
+/* Slimmer filter column so wide lists keep their last columns visible */
+#content #changelist-filter { flex-basis: 200px; margin-left: 0; }
+#content #changelist td, #content #changelist th { padding-left: 8px; padding-right: 8px; }
+#content #changelist thead th { padding-left: 0; padding-right: 0; }
+
+/* Date drill-down strip above a list */
+#content #changelist .xfull { padding: 0; }
+#content #changelist ul.toplinks { margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--hm-border); font-size: 0.85rem; }

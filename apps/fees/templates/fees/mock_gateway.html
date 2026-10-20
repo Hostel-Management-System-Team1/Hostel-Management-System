@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Demo payment gateway{% endblock %}
+
+{% block body %}
+<main class="hm-login" id="main">
+  <div class="hm-login__box">
+    <div class="hm-login__brand">
+      <span class="hm-logo" aria-hidden="true"><i class="bi bi-credit-card-2-front"></i></span>
+      <span>Demo payment gateway</span>
+    </div>
+    <form method="post" class="hm-login__card">
+      {% csrf_token %}
+      <h1>Pay {{ payment.amount|inr }}</h1>
+      <p class="text-secondary mb-1">Invoice {{ payment.invoice.number }} · {{ payment.get_method_display }}</p>
+      <div class="hm-alert hm-alert--info mt-3" role="note"><div class="hm-alert__body">This page stands in for a real PCI-DSS payment gateway. It asks for no card or bank details. Choose how the payment should end.</div></div>
+      <div class="d-grid gap-2">
+        <button class="btn btn-success" type="submit" name="outcome" value="pay"><i class="bi bi-check-lg" aria-hidden="true"></i> Pay successfully</button>
+        <button class="btn btn-danger" type="submit" name="outcome" value="fail"><i class="bi bi-x-lg" aria-hidden="true"></i> Simulate a failed payment</button>
+        <button class="btn btn-outline-secondary" type="submit" name="outcome" value="cancel">Cancel and go back</button>
+      </div>
+    </form>
+  </div>
+</main>
+{% endblock %}

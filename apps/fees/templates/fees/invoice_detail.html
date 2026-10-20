@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}{{ invoice.number }} · Hostel Management System{% endblock %}
+
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li><a href="{% url 'fees:invoice_list' %}">Fees &amp; receipts</a></li>
+      <li aria-current="page">{{ invoice.number }}</li>
+    </ol>
+  </nav>
+
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <article class="hm-paper" aria-labelledby="inv-title">
+        <div class="hm-paper__head">
+          <div>
+            <p class="hm-eyebrow mb-1">Invoice</p>
+            <h1 class="hm-paper__title" id="inv-title">{{ invoice.number }}</h1>
+          </div>
+          <div class="text-end">
+            <span class="hm-badge hm-badge--{{ invoice.status|lower }}">{{ invoice.get_status_display }}</span>
+          </div>
+        </div>
+        <dl class="hm-paper__meta">
+          <div><dt>Billed to</dt><dd>{{ invoice.resident.get_full_name|default:invoice.resident.username }}</dd></div>
+          <div><dt>Issued</dt><dd>{{ invoice.issue_date|date:"j M Y" }}</dd></div>
+          <div><dt>Due</dt><dd{% if invoice.status == "OVERDUE" %} class="hm-overdue"{% endif %}>{{ invoice.due_date|date:"j M Y" }}</dd></div>
+          <div><dt>For</dt><dd>{{ invoice.description }}</dd></div>
+        </dl>
+        <table class="hm-ledger">
+          <caption class="visually-hidden">Items on this invoice</caption>
+          <thead><tr><th scope="col">Item</th><th scope="col" class="amt">Amount</th></tr></thead>
+          <tbody>
+            {% for item in invoice.items.all %}
+              <tr><td>{{ item.description }}{% if item.refundable %}<small>Refundable when you vacate</small>{% endif %}</td><td class="amt">{{ item.amount|inr }}</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot><tr class="total"><td>Total</td><td class="amt">{{ invoice.total|inr }}</td></tr></tfoot>
+        </table>
+      </article>
+    </div>
+
+    <div class="col-lg-4">
+      <section class="hm-panel hm-pay-box" aria-labelledby="h-pay">
+        <div class="hm-panel__head"><h2 id="h-pay">{% if invoice.is_payable %}Pay online{% else %}Paid{% endif %}</h2></div>
+        <div class="hm-panel__body">
+          {% if invoice.is_payable %}
+            <p class="hm-eyebrow mb-1">Amount due</p>
+            <p class="hm-pay-box__amt">{{ invoice.total|inr }}</p>
+            <form method="post" action="{% url 'fees:invoice_pay' invoice.pk %}" class="mt-3">
+              {% csrf_token %}
+              <label class="form-label" for="id_method">Pay with</label>
+              <select class="form-select mb-3" id="id_method" name="method" required>
+                {% for value, label in methods %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+              </select>
+              <button class="btn btn-primary w-100" type="submit"><i class="bi bi-lock" aria-hidden="true"></i> Pay {{ invoice.total|inr }}</button>
+            </form>
+            <p class="hm-note mt-3 mb-0">You pay on the payment gateway’s secure page. The hostel office never sees or stores your card or bank details.</p>
+          {% else %}
+            <span class="hm-stamp mb-3">Paid</span>
+            <p class="mb-1">Paid on {{ invoice.paid_at|date:"j M Y, H:i" }}.</p>
+            {% if receipt %}
+              <p class="hm-note">Receipt {{ receipt.number }}</p>
+              <a class="btn btn-primary w-100" href="{% url 'fees:receipt_pdf' receipt.pk %}"><i class="bi bi-download" aria-hidden="true"></i> Download receipt (PDF)</a>
+            {% endif %}
+          {% endif %}
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}
