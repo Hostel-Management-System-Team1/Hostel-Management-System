@@ -1,0 +1,21 @@
+{% load i18n %}
+<details class="hms-menu">
+  <summary class="hms-menu__toggle">
+    <span class="hms-avatar" aria-hidden="true">{{ user_initials }}</span>
+    <span class="hms-menu__who"><strong>{% firstof user.get_full_name user.get_username %}</strong><small>{{ user.get_role_display }}</small></span>
+    <i class="bi bi-chevron-down hms-menu__caret" aria-hidden="true"></i>
+    <span class="visually-hidden">Account menu</span>
+  </summary>
+  <div class="hms-menu__panel">
+    <div class="hms-menu__head">
+      <strong>{% firstof user.get_full_name user.get_username %}</strong>
+      <small>{{ user.email|default:user.get_username }}</small>
+    </div>
+    <a href="{% url 'admin:accounts_user_change' user.pk %}"><i class="bi bi-person" aria-hidden="true"></i>My profile</a>
+    {% if user.has_usable_password %}<a href="{% url 'admin:password_change' %}"><i class="bi bi-key" aria-hidden="true"></i>{% translate 'Change password' %}</a>{% endif %}
+    <form id="logout-form" method="post" action="{% url 'logout' %}">
+      {% csrf_token %}
+      <button type="submit"><i class="bi bi-box-arrow-right" aria-hidden="true"></i>{% translate 'Log out' %}</button>
+    </form>
+  </div>
+</details>

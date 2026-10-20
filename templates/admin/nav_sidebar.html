@@ -1,0 +1,16 @@
+{% load i18n %}
+{# HMS navigation (hms/navigation.py ADMIN_NAV) in place of Django's raw app list. #}
+<nav class="sticky hms-side" id="nav-sidebar" aria-label="{% translate 'Sidebar' %}">
+  <input type="search" id="nav-filter" hidden aria-hidden="true">{# Django's sidebar script expects it #}
+  {% for group_label, items in admin_nav %}
+    <div class="hms-side__group" role="group" aria-labelledby="hsg{{ forloop.counter }}">
+      <div class="hms-side__label" id="hsg{{ forloop.counter }}">{{ group_label }}</div>
+      {% for entry in items %}
+        <a class="hms-side__link{% if entry.active %} is-active{% endif %}" href="{{ entry.url }}"{% if entry.active %} aria-current="page"{% endif %}>
+          <i class="bi {{ entry.icon }}" aria-hidden="true"></i><span>{{ entry.label }}</span>
+          {% if entry.sprint %}<span class="hms-side__soon">S{{ entry.sprint }}<span class="visually-hidden"> (coming in Sprint {{ entry.sprint }})</span></span>{% endif %}
+        </a>
+      {% endfor %}
+    </div>
+  {% endfor %}
+</nav>

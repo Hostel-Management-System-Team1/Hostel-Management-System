@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}{{ entry.label }} · Hostel Management System{% endblock %}
+
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>{{ entry.group }}</li>
+      <li aria-current="page">{{ entry.label }}</li>
+    </ol>
+  </nav>
+
+  <div class="hm-soon">
+    <span class="hm-soon__glass" aria-hidden="true"><i class="bi bi-hourglass-split"></i></span>
+    <p class="hm-soon__page">{{ entry.label }}</p>
+    <h1 class="hm-soon__title">Coming soon</h1>
+    <span class="hm-soon__sprint">Sprint {{ entry.sprint }}{% if entry.sprint_dates %} · {{ entry.sprint_dates }}{% endif %}</span>
+    {% if entry.issue %}<p class="hm-soon__issue">Tracked in <a href="{{ entry.issue_url }}" target="_blank" rel="noopener">backlog issue #{{ entry.issue }}</a></p>{% endif %}
+  </div>
+{% endblock %}
