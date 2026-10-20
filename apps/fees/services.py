@@ -8,6 +8,8 @@ from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
 
+from apps.audit import service as audit
+
 from . import gateway
 from .models import FeeHead, Invoice, InvoiceItem, Payment, Receipt
 
@@ -61,6 +63,10 @@ def generate_invoice(allocation):
         ])
         invoice.total = sum((head.amount for head in heads), Decimal("0.00"))
         invoice.save(update_fields=["total"])
+        audit.record(
+            "invoice.raised", target=invoice, actor=allocation.allocated_by,
+            detail={"invoice": invoice.number, "total": invoice.total},
+        )
     return invoice
 
 
@@ -72,18 +78,30 @@ def start_payment(invoice, method, return_url=""):
                       return_url=return_url[:200])
     redirect_url = gateway.get_gateway().create_session(payment)  # may raise GatewayUnavailable
     payment.save()
+    audit.record("payment.started", target=payment, detail={
+        "invoice": invoice.number, "method": method, "amount": payment.amount})
     return payment, redirect_url
 
 
-@transaction.atomic
 def handle_callback(payload):
     """Apply the gateway's signed callback to its payment (HMS-F-011).
 
     SUCCESS marks the invoice Paid and issues the receipt; FAILED and ABANDONED leave the
-    invoice as it was. Repeating a callback changes nothing.
+    invoice as it was. Repeating a callback changes nothing. A callback with a bad signature
+    changes nothing and is written to the audit log.
     """
     if not gateway.signature_is_valid(payload):
+        audit.record(
+            "payment.callback_rejected", actor=None, label="payment gateway",
+            outcome=audit.AuditEntry.Outcome.DENIED,
+            detail={"session": str(payload.get("paymentSessionId", ""))[:32]},
+        )
         raise InvalidSignature("Invalid signature.")
+    return _apply_callback(payload)
+
+
+@transaction.atomic
+def _apply_callback(payload):
     try:
         payment = Payment.objects.select_for_update().select_related("invoice").get(
             session_id=payload["paymentSessionId"])
@@ -104,13 +122,24 @@ def handle_callback(payload):
             invoice.paid_at = payment.completed_at
             invoice.save(update_fields=["status", "paid_at"])
             payment.save()
-            Receipt.objects.create(invoice=invoice, payment=payment, amount=payment.amount)
+            receipt = Receipt.objects.create(
+                invoice=invoice, payment=payment, amount=payment.amount)
+            audit.record(
+                "payment.succeeded", target=payment, actor=None, label="payment gateway",
+                detail={"invoice": invoice.number, "receipt": receipt.number,
+                        "amount": payment.amount, "gatewayRef": payment.gateway_ref},
+            )
             return payment
     elif status == "FAILED":
         payment.status = Payment.Status.FAILED
     else:
         payment.status = Payment.Status.ABANDONED
     payment.save()
+    audit.record(
+        f"payment.{payment.status.lower()}", target=payment, actor=None, label="payment gateway",
+        outcome=audit.AuditEntry.Outcome.FAILURE,
+        detail={"invoice": payment.invoice.number, "gatewayRef": payment.gateway_ref},
+    )
     return payment
 
 

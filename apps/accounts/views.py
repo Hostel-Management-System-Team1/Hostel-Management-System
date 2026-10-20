@@ -11,6 +11,8 @@ from django.utils.safestring import mark_safe
 from django_otp import login as otp_login
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
+from apps.audit import service as audit
+
 from .forms import OTPTokenForm
 from .middleware import MFA_ROLES
 
@@ -57,8 +59,13 @@ def mfa(request):
                 device.confirmed = True
                 device.save(update_fields=["confirmed"])
                 messages.success(request, "Authenticator app linked.")
+                audit.record("auth.mfa_enrolled", target=user)
             otp_login(request, device)
+            audit.record("auth.mfa_verified", target=user)
             return redirect(target or "home")
+        audit.record(
+            "auth.mfa_failed", target=user, outcome=audit.AuditEntry.Outcome.FAILURE
+        )
         form.add_error("token", "That code is not right, or it has expired. Try the next one.")
 
     context = {"form": form, "enrolling": enrolling, "next": target}

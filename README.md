@@ -96,6 +96,27 @@ development. `POST /api/v1/invoices/{id}/payments` starts a payment (201, 404, 4
 
 `python manage.py expire_payments` marks payment sessions nobody finished as Abandoned.
 
+## Audit log and security protections (HMS-SR-001, SR-004 – SR-006)
+
+- **Audit log** (administrator: *Audit log* in the admin site). Every allocation and transfer, invoice and
+  payment, application decision, account change (created, role or status changed, password changed, deleted),
+  sign-in, sign-out, failed sign-in, second-step result and refused request writes an entry
+  with actor, action, time, target and outcome. Entries are append-only: the application offers no way to edit
+  or delete them and the database refuses `UPDATE` and `DELETE` on the table. Each entry also stores a hash chained
+  to the one before it, so a change made behind the application's back is detected: the page shows an integrity
+  banner, and `python manage.py verify_audit` (suitable for cron) fails if anything was changed or removed. Keep the
+  head hash it prints somewhere else too; it also exposes entries cut off the end of the log. The log never holds
+  medical, guardian or identity details, passwords or card data.
+- **TLS.** Outside development (`DJANGO_DEBUG=false`) Django redirects HTTP to HTTPS, sends HSTS and marks cookies
+  secure. The TLS 1.2 minimum is set on the web server: see `deploy/nginx.conf.example`; set `HMS_BEHIND_PROXY=true`
+  behind it. CI runs `manage.py check --deploy`.
+- **Payments.** No card number, CVV or bank credential is stored: the payment models have no such fields, and a test
+  checks it.
+- **Input.** Forms validate every field and refuse markup in free text; templates escape output; a
+  Content-Security-Policy forbids inline script; all queries go through the ORM (a test fails if raw SQL is added);
+  input the database cannot store is a 400, not a crash. Failed sign-ins are written to the audit log; limiting
+  how fast requests arrive is left to the web server (`limit_req` in `deploy/nginx.conf.example`).
+
 ## UI design
 
 The portal and admin use one light theme on Bootstrap 5: `static/css/hostel.css` (portal) and

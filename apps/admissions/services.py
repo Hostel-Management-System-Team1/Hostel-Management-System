@@ -5,6 +5,8 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
+from apps.audit import service as audit
+
 from . import erp
 from .models import Application
 
@@ -68,4 +70,8 @@ def decide(application, actor, approve, note=""):
     application.decided_at = timezone.now()
     application.decision_note = note
     application.save(update_fields=["status", "decided_by", "decided_at", "decision_note"])
+    audit.record(
+        "application.approved" if approve else "application.rejected",
+        target=application, actor=actor, detail={"application": application.application_number},
+    )
     return application

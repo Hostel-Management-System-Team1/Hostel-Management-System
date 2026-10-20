@@ -5,3 +5,6 @@ class AccountsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "apps.accounts"
     verbose_name = "Auth & RBAC Service"
+
+    def ready(self):
+        from . import signals  # noqa: F401  (audit-log hooks)

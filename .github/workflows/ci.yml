@@ -56,5 +56,11 @@ jobs:
       - name: Check for missing migrations
         run: python manage.py makemigrations --check --dry-run
 
+      - name: Deployment security checks
+        env:
+          DJANGO_SECRET_KEY: ci-deployment-check-key-0123456789-abcdefghijklmnopqrstuvwxyz
+          HMS_BEHIND_PROXY: "true"
+        run: python manage.py check --deploy --fail-level WARNING
+
       - name: Run tests
         run: python manage.py test

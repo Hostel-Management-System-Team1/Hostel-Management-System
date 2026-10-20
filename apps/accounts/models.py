@@ -1,5 +1,8 @@
 from django.contrib.auth.models import AbstractUser, UserManager
+from django.core.exceptions import ValidationError
 from django.db import models
+
+from hms.validators import phone_number
 
 
 class HMSUserManager(UserManager):
@@ -26,9 +29,30 @@ class User(AbstractUser):
         help_text="A Resident is a student living in the hostel. Hostel Administrators use "
         "this admin site; every other role signs in to the portal.",
     )
-    phone = models.CharField(max_length=15, blank=True)
+    phone = models.CharField(max_length=15, blank=True, validators=[phone_number])
 
     objects = HMSUserManager()
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        user = super().from_db(db, field_names, values)
+        # What the row held when loaded, so the audit log can say what an edit changed.
+        user._loaded = {"role": user.role, "is_active": user.is_active}
+        return user
+
+    def set_password(self, raw_password):
+        super().set_password(raw_password)
+        self._password_changed = True
+
+    def clean(self):
+        super().clean()
+        errors = {
+            field: "Angle brackets are not allowed."
+            for field in ("first_name", "last_name")
+            if "<" in getattr(self, field) or ">" in getattr(self, field)
+        }
+        if errors:
+            raise ValidationError(errors)
 
     def save(self, *args, **kwargs):
         # The role decides access: Hostel Administrators work in the admin site with

@@ -8,7 +8,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from apps.accounts.models import User
-from apps.accounts.permissions import role_required
+from apps.accounts.permissions import log_denied, role_required
 
 from . import gateway, services
 from .models import Invoice, Payment, Receipt
@@ -20,6 +20,7 @@ R = User.Role
 def own_invoice(request, pk):
     invoice = get_object_or_404(Invoice.objects.prefetch_related("items"), pk=pk)
     if invoice.resident_id != request.user.pk:
+        log_denied(request)
         raise PermissionDenied
     return invoice
 
@@ -101,6 +102,7 @@ def receipt_download(request, pk):
     receipt = get_object_or_404(Receipt.objects.select_related("invoice__resident"), pk=pk)
     owner = receipt.invoice.resident_id == request.user.pk
     if not (owner or request.user.role == R.ADMINISTRATOR):
+        log_denied(request)
         raise PermissionDenied
     response = FileResponse(
         iter([receipt_pdf(receipt)]), content_type="application/pdf",
