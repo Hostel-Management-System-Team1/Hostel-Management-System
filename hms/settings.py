@@ -94,6 +94,10 @@ DATABASES = {
 }
 
 
+# The academic session new applications belong to, and the student-records adapter (SRS 3.3).
+ACADEMIC_SESSION = os.environ.get("HMS_ACADEMIC_SESSION", "2026-27")
+HMS_ERP_ADAPTER = os.environ.get("HMS_ERP_ADAPTER", "apps.admissions.erp.StubERP")
+
 AUTH_USER_MODEL = "accounts.User"
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "home"

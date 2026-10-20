@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}My application · Hostel Management System{% endblock %}
+
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>My hostel</li>
+      <li aria-current="page">Room application</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Application {{ application.application_number }}</h1>
+      <p class="hm-sub">Session {{ application.academic_session }} · submitted {{ application.submitted_at|date:"j M Y" }}</p>
+    </div>
+    <span class="hm-badge hm-badge--{{ application.status|lower }}">{{ application.get_status_display }}</span>
+  </div>
+
+  <div class="hm-detail-grid">
+    <section class="hm-panel" aria-labelledby="h-prog">
+      <div class="hm-panel__head"><h2 id="h-prog">Progress</h2></div>
+      <div class="hm-panel__body">
+        <ol class="hm-timeline">
+          <li class="is-done"><div class="hm-timeline__title">Application submitted</div><div class="hm-timeline__meta">{{ application.submitted_at|date:"j M Y, H:i" }}</div></li>
+          {% if application.status == "SUBMITTED" %}
+            <li class="is-current"><div class="hm-timeline__title">Waiting for the warden’s review</div><div class="hm-timeline__meta">You will see the decision here.</div></li>
+          {% elif application.status == "APPROVED" %}
+            <li class="is-done"><div class="hm-timeline__title">Approved</div><div class="hm-timeline__meta">{{ application.decided_at|date:"j M Y, H:i" }}</div>{% if application.decision_note %}<p class="hm-timeline__note">{{ application.decision_note }}</p>{% endif %}</li>
+            <li class="is-todo"><div class="hm-timeline__title">Bed allocation</div><div class="hm-timeline__meta">The warden allocates a bed once your application is approved.</div></li>
+          {% else %}
+            <li class="is-alert"><div class="hm-timeline__title">Rejected</div><div class="hm-timeline__meta">{{ application.decided_at|date:"j M Y, H:i" }}</div><p class="hm-timeline__note">{{ application.decision_note }}</p></li>
+          {% endif %}
+        </ol>
+      </div>
+    </section>
+
+    <section class="hm-panel hm-panel--flush" aria-labelledby="h-sum">
+      <div class="hm-panel__head"><h2 id="h-sum">What you applied for</h2></div>
+      <dl class="hm-facts">
+        <div><dt>Name</dt><dd>{{ application.full_name }}</dd></div>
+        <div><dt>Enrolment</dt><dd>{{ application.enrolment_number }}</dd></div>
+        <div><dt>Room type</dt><dd>{{ application.get_room_type_display }}</dd></div>
+        <div><dt>Preferred block</dt><dd>{{ application.preferred_block|default:"No preference" }}</dd></div>
+      </dl>
+    </section>
+  </div>
+{% endblock %}

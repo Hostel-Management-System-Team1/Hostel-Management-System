@@ -9,27 +9,7 @@
     </div>
   </div>
 
-  <section class="hm-panel hm-panel--flush mb-4" aria-labelledby="h-main">
-    <div class="hm-panel__head"><h2 id="h-main">{{ desk.panel }}</h2></div>
-    <div class="hm-empty">
-      <i class="bi {{ desk.empty_icon }}" aria-hidden="true"></i>
-      <h3>{{ desk.empty_title }}</h3>
-      <p>{{ desk.empty_text }}</p>
-    </div>
-  </section>
-
-  <h2 class="hm-section-title" id="h-act">Quick actions</h2>
-  <div class="hm-cards" aria-labelledby="h-act">
-    {% for entry in actions %}
-      <a class="hm-card" href="{{ entry.url }}">
-        <span class="hm-card__icon" aria-hidden="true"><i class="bi {{ entry.icon }}"></i></span>
-        <span class="hm-card__title">{{ entry.label }}</span>
-        <span class="hm-card__text">{{ entry.hint }}</span>
-        <span class="hm-card__foot">
-          {% if entry.sprint %}<span class="hm-chip">Sprint {{ entry.sprint }}</span>{% else %}<span class="hm-chip hm-chip--live">Open</span>{% endif %}
-          <i class="bi bi-arrow-right" aria-hidden="true"></i>
-        </span>
-      </a>
-    {% endfor %}
+  <div class="hm-dash">
+    {% for panel in panels %}{% include "_panel.html" %}{% endfor %}
   </div>
 {% endblock %}

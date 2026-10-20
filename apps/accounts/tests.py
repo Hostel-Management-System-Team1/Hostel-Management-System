@@ -50,7 +50,7 @@ class PageTests(TestCase):
         self.login_as(User.Role.RESIDENT)
         response = self.client.get(reverse("home"))
         self.assertContains(response, "Fees &amp; receipts")
-        self.assertContains(response, "No room allocated yet")
+        self.assertContains(response, "No application yet")
         self.assertNotContains(response, "Audit log")
         self.assertNotContains(response, "Visitors")
 
@@ -77,15 +77,15 @@ class NavigationTests(TestCase):
 
     def test_unbuilt_item_opens_its_sprint_page(self):
         self.login_as(User.Role.RESIDENT)
-        response = self.client.get(reverse("module", args=["room-application"]))
+        response = self.client.get(reverse("module", args=["outpass"]))
         self.assertContains(response, "Coming soon")
-        self.assertContains(response, "Sprint 1")
-        self.assertContains(response, "issue #1")
+        self.assertContains(response, "Sprint 2")
+        self.assertContains(response, "issue #9")
         self.assertContains(response, 'aria-current="page"')
 
     def test_role_cannot_open_another_roles_page(self):
         self.login_as(User.Role.WARDEN)
-        response = self.client.get(reverse("module", args=["room-application"]))
+        response = self.client.get(reverse("module", args=["outpass"]))
         self.assertEqual(response.status_code, 404)
 
     def test_dashboard_cards_link_to_pages(self):

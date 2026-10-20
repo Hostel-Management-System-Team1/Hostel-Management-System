@@ -37,8 +37,8 @@ NAV = {
     R.RESIDENT: [
         ("Overview", [item("Home", "bi-house", "home")]),
         ("My hostel", [
-            item("Room application", "bi-file-earmark-text", sprint=1,
-                 hint="Apply for a room", issue=1),
+            item("Room application", "bi-file-earmark-text", "admissions:my_application",
+                 hint="Apply for a room"),
             item("Fees & receipts", "bi-receipt", sprint=1,
                  hint="Invoices, payment and receipts", issue=3),
             item("Outpass", "bi-box-arrow-up-right", sprint=2,
@@ -53,7 +53,8 @@ NAV = {
     R.WARDEN: [
         ("Overview", [DASHBOARD]),
         ("Residents", [
-            item("Applications", "bi-inbox", sprint=1, hint="Review and allocate beds", issue=2),
+            item("Applications", "bi-inbox", "admissions:application_list",
+                 hint="Review and allocate beds"),
             item("Residents", "bi-people", sprint=1, hint="Rooms and transfers", issue=6),
             item("Outpasses", "bi-box-arrow-up-right", sprint=2,
                  hint="Approve or reject requests", issue=9),
@@ -94,7 +95,8 @@ NAV = {
 ADMIN_NAV = [
     ("Overview", [item("Dashboard", "bi-grid-1x2", "admin:index")]),
     ("Residents", [
-        item("Applications", "bi-inbox", sprint=1, hint="Review and allocate beds", issue=2),
+        item("Applications", "bi-inbox", "admin:admissions_application_changelist",
+             hint="Look up applications"),
         item("Residents", "bi-people", sprint=1, hint="Rooms and transfers", issue=6),
         item("Fees", "bi-receipt", sprint=1, hint="Invoices and payments", issue=3),
     ]),
@@ -102,6 +104,10 @@ ADMIN_NAV = [
         item("Complaints", "bi-tools", sprint=2, hint="Escalations and SLA", issue=11),
         item("Mess", "bi-cup-hot", sprint=2, hint="Menu and billing", issue=10),
         item("Visitors", "bi-person-badge", sprint=2, hint="Visitor records", issue=12),
+    ]),
+    ("Masters", [
+        item("Hostel blocks", "bi-buildings", "admin:admissions_block_changelist",
+             hint="Blocks and the gender each is for"),
     ]),
     ("Administration", [
         item("Users & roles", "bi-person-gear", "admin:accounts_user_changelist",

@@ -1,0 +1,5 @@
+{# One labelled form field. Use: {% include "_field.html" with field=form.name %} #}
+<label class="form-label{% if field.field.required %} hm-req{% endif %}" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %}<span class="visually-hidden"> (required)</span>{% endif %}</label>
+{{ field }}
+{% if field.help_text %}<div class="form-text" id="{{ field.id_for_label }}_help">{{ field.help_text }}</div>{% endif %}
+{% if field.errors %}<div class="invalid-feedback d-block" id="{{ field.id_for_label }}_err">{{ field.errors|join:" " }}</div>{% endif %}

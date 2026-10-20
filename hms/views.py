@@ -8,7 +8,8 @@ from django.shortcuts import redirect, render
 from apps.accounts.forms import ProfileForm
 from apps.accounts.models import User
 
-from .navigation import find_item, nav_for
+from .dashboard import empty, panels_for, table_panel
+from .navigation import find_item
 
 R = User.Role
 
@@ -71,17 +72,14 @@ def portal_view(view):
 def home(request):
     user = request.user
     desk = DESKS.get(user.role, DESKS[R.RESIDENT])
-    # Everything in the sidebar except the dashboard itself, as quick-action cards.
-    actions = [
-        entry
-        for _, items in nav_for(user)
-        for entry in items
-        if entry["url_name"] != "home"
+    panels = panels_for(user) or [
+        table_panel(desk["panel"], [], [], empty=empty(
+            desk["empty_icon"], desk["empty_title"], desk["empty_text"]))
     ]
     context = {
         "desk": desk,
+        "panels": panels,
         "page_title": desk["title"] or user.get_full_name() or user.username,
-        "actions": actions,
     }
     return render(request, "home.html", context)
 

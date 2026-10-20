@@ -458,6 +458,7 @@ h1, h2, h3, .hm-serif { font-weight: 600; letter-spacing: -0.01em; }
 /* Form sections and page-level helpers */
 .hm-form-section { margin-bottom: 1.25rem; }
 .hm-form-section .hm-panel__body { padding-top: 1.25rem; }
+.hm-detail-grid > .hm-panel + .hm-panel { margin-top: 0; }
 .hm-detail-grid { display: grid; gap: 1.25rem; grid-template-columns: 1fr; }
 @media (min-width: 992px) { .hm-detail-grid { grid-template-columns: 2fr 1fr; align-items: start; } }
 .hm-kv-panel { padding: 1.125rem; }

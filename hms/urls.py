@@ -9,6 +9,7 @@ urlpatterns = [
     path("", views.home, name="home"),
     path("m/<slug:slug>/", views.module_page, name="module"),
     path("profile/", views.profile, name="profile"),
+    path("", include("apps.admissions.urls")),
     path("accounts/", include("apps.accounts.urls")),
     path("accounts/", include("django.contrib.auth.urls")),
     path("api/v1/", include("hms.api_urls")),
