@@ -37,6 +37,21 @@ view and the sidebar, dashboard cards and breadcrumbs update with it.
 
 To add people, sign in as an administrator and use **Users & roles → Add user**.
 
+### Sign-in security (HMS-SR-002, HMS-SR-003)
+
+- **Passwords** are stored only as salted Argon2 hashes.
+- **Sessions** end after 15 minutes without a request, and signing out deletes the session on the
+  server, so a copied session cookie stops working.
+- **Warden and Administrator** accounts need a second step: after the password, a 6-digit code from an
+  authenticator app (TOTP). The first sign-in shows a QR code to link the app; after that only the code
+  is asked. An administrator can reset a lost device by deleting it under *TOTP devices* in the admin site.
+- **Access control**: every restricted screen and API endpoint lists the roles allowed to use it
+  (`apps/accounts/permissions.py`); anyone else gets HTTP 403. `apps/accounts/test_rbac.py` walks the URL
+  configuration and tries every role against every restricted URL.
+- For demos and local testing, `python manage.py totp_code <username>` prints the current code for an
+  account that has linked an app. It refuses to run unless `DJANGO_DEBUG` is on.
+- API errors use one envelope, `{timestamp, path, status, error, message, traceId}` (SAD 4.4).
+
 ## UI design
 
 The portal and admin use one light theme on Bootstrap 5: `static/css/hostel.css` (portal) and

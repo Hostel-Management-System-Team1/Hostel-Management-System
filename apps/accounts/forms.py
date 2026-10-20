@@ -47,3 +47,23 @@ class ProfileForm(forms.ModelForm):
         model = User
         fields = ("first_name", "last_name", "email", "phone")
         labels = {"phone": "Phone number"}
+
+
+class OTPTokenForm(forms.Form):
+    token = forms.RegexField(
+        regex=r"^\s*\d{6}\s*$",
+        label="6-digit code",
+        error_messages={"invalid": "Enter the 6-digit code from your authenticator app."},
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "inputmode": "numeric",
+                "autocomplete": "one-time-code",
+                "autofocus": True,
+                "maxlength": 8,
+            }
+        ),
+    )
+
+    def clean_token(self):
+        return self.cleaned_data["token"].strip()

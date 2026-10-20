@@ -24,7 +24,7 @@
         <label class="form-label" for="id_password">Password</label>
         <div class="input-group">
           <input class="form-control{% if form.errors %} is-invalid{% endif %}" id="id_password" name="password" type="password" autocomplete="current-password" required>
-          <button class="btn btn-outline-secondary" type="button" data-hm-reveal="#id_password" aria-pressed="false">Show</button>
+          <button class="btn btn-outline-secondary hm-reveal" type="button" data-hm-reveal="#id_password" aria-pressed="false" aria-label="Show password"><i class="bi bi-eye" aria-hidden="true"></i></button>
         </div>
       </div>
       <input type="hidden" name="next" value="{{ next }}">

@@ -2,8 +2,9 @@ from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.urls import reverse
 
+from .testutils import PASSWORD, login, verify_mfa
+
 User = get_user_model()
-PASSWORD = "x-Strong-pass-1"
 
 
 class UserModelTests(TestCase):
@@ -32,7 +33,7 @@ class UserModelTests(TestCase):
 class PageTests(TestCase):
     def login_as(self, role, **extra):
         User.objects.create_user(username="u1", password=PASSWORD, role=role, **extra)
-        self.client.login(username="u1", password=PASSWORD)
+        login(self.client, "u1")
 
     def test_login_page_loads(self):
         self.assertEqual(self.client.get(reverse("login")).status_code, 200)
@@ -72,7 +73,7 @@ class PageTests(TestCase):
 class NavigationTests(TestCase):
     def login_as(self, role, **extra):
         User.objects.create_user(username="u1", password=PASSWORD, role=role, **extra)
-        self.client.login(username="u1", password=PASSWORD)
+        login(self.client, "u1")
 
     def test_unbuilt_item_opens_its_sprint_page(self):
         self.login_as(User.Role.RESIDENT)
@@ -100,7 +101,7 @@ class NavigationTests(TestCase):
 
     def test_admin_password_change_uses_admin_layout(self):
         User.objects.create_superuser(username="a1", password=PASSWORD)
-        self.client.login(username="a1", password=PASSWORD)
+        login(self.client, "a1")
         response = self.client.get(reverse("admin:password_change"))
         self.assertTemplateUsed(response, "admin/hms_password_change_form.html")
         self.assertContains(response, "Account menu")
@@ -114,7 +115,7 @@ class AdminSiteTests(TestCase):
         User.objects.create_user(username="r2", password=PASSWORD, is_active=False)
 
     def test_dashboard_shows_live_counts_and_hms_navigation(self):
-        self.client.login(username="a1", password=PASSWORD)
+        login(self.client, "a1")
         response = self.client.get(reverse("admin:index"))
         self.assertEqual(
             response.context["stats"], {"total": 3, "residents": 2, "staff": 1, "inactive": 1}
@@ -123,14 +124,14 @@ class AdminSiteTests(TestCase):
         self.assertContains(response, "People by role")
 
     def test_admin_placeholder_page(self):
-        self.client.login(username="a1", password=PASSWORD)
+        login(self.client, "a1")
         response = self.client.get(reverse("admin:hms_module", args=["audit-log"]))
         self.assertContains(response, "Coming soon")
         self.assertContains(response, "Sprint 1")
         self.assertContains(response, "issue #5")
 
     def test_portal_roles_cannot_open_admin(self):
-        self.client.login(username="r1", password=PASSWORD)
+        login(self.client, "r1")
         response = self.client.get(reverse("admin:index"), follow=True)
         self.assertEqual(response.redirect_chain[-1][0], reverse("home"))
 
@@ -141,13 +142,14 @@ class AdminSiteTests(TestCase):
         )
 
     def test_administrator_signs_in_once_and_lands_in_admin(self):
-        response = self.client.post(
-            reverse("login"), {"username": "a1", "password": PASSWORD}, follow=True
-        )
+        # The password step leads to the second step; once verified the admin site opens.
+        self.client.post(reverse("login"), {"username": "a1", "password": PASSWORD})
+        verify_mfa(self.client, User.objects.get(username="a1"))
+        response = self.client.get(reverse("home"), follow=True)
         self.assertEqual(response.redirect_chain[-1][0], reverse("admin:index"))
 
     def test_user_list_role_tabs_and_status_filter(self):
-        self.client.login(username="a1", password=PASSWORD)
+        login(self.client, "a1")
         url = reverse("admin:accounts_user_changelist")
         response = self.client.get(url, {"role__exact": "RESIDENT"})
         self.assertEqual(response.context["cl"].result_count, 2)
@@ -158,18 +160,18 @@ class AdminSiteTests(TestCase):
         self.assertEqual(response.context["cl"].result_count, 1)
 
     def test_user_list_has_no_bulk_actions(self):
-        self.client.login(username="a1", password=PASSWORD)
+        login(self.client, "a1")
         response = self.client.get(reverse("admin:accounts_user_changelist"))
         self.assertNotContains(response, 'name="action"')
         self.assertNotContains(response, "action-checkbox")
 
     def test_app_overview_page_opens_its_list(self):
-        self.client.login(username="a1", password=PASSWORD)
+        login(self.client, "a1")
         response = self.client.get(reverse("admin:app_list", args=["accounts"]))
         self.assertRedirects(response, reverse("admin:accounts_user_changelist"))
 
     def test_breadcrumbs_leave_out_the_app_name(self):
-        self.client.login(username="a1", password=PASSWORD)
+        login(self.client, "a1")
         user = User.objects.get(username="r1")
         for url in [
             reverse("admin:accounts_user_changelist"),
@@ -184,7 +186,7 @@ class AdminSiteTests(TestCase):
             self.assertNotContains(response, "Auth &amp; RBAC Service", msg_prefix=url)
 
     def test_add_user_is_one_form_with_role(self):
-        self.client.login(username="a1", password=PASSWORD)
+        login(self.client, "a1")
         url = reverse("admin:accounts_user_add")
         response = self.client.get(url)
         self.assertEqual(response.content.decode().count('<fieldset class="module aligned'), 1)
@@ -199,7 +201,7 @@ class AdminSiteTests(TestCase):
         self.assertTrue(created.check_password("Strong-pass-77"))
 
     def test_password_shows_status_not_hash(self):
-        self.client.login(username="a1", password=PASSWORD)
+        login(self.client, "a1")
         user = User.objects.get(username="r1")
         response = self.client.get(reverse("admin:accounts_user_change", args=[user.pk]))
         self.assertNotContains(response, "pbkdf2")
@@ -210,7 +212,7 @@ class AdminSiteTests(TestCase):
 class ProfileTests(TestCase):
     def test_resident_edits_own_contact_details_only(self):
         user = User.objects.create_user(username="r1", password=PASSWORD)
-        self.client.login(username="r1", password=PASSWORD)
+        login(self.client, "r1")
         self.assertEqual(self.client.get(reverse("profile")).status_code, 200)
         response = self.client.post(reverse("profile"), {
             "first_name": "Aarav", "last_name": "Sharma", "email": "aarav@example.edu",

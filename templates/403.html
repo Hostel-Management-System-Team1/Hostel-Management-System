@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Not allowed · Hostel Management System{% endblock %}
+
+{% block body %}
+<main class="hm-login" id="main">
+  <div class="hm-login__box">
+    <div class="hm-login__card text-center">
+      <span class="hm-soon__glass" aria-hidden="true"><i class="bi bi-shield-lock"></i></span>
+      <h1>You don’t have access to this page</h1>
+      <p class="text-secondary">Your role doesn’t include this screen. If you think it should, ask the Hostel Administrator.</p>
+      <a class="btn btn-primary" href="{% url 'home' %}">Back to home</a>
+    </div>
+  </div>
+</main>
+{% endblock %}
