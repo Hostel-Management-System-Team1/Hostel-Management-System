@@ -498,3 +498,7 @@ h1, h2, h3, .hm-serif { font-weight: 600; letter-spacing: -0.01em; }
 
 /* Password show/hide: an icon-only button */
 .hm-reveal { min-width: 44px; font-size: 1.125rem; padding-left: .75rem; padding-right: .75rem; }
+
+/* Search box in a page header: fixed width beside the button instead of full width */
+.hm-page-header__actions { flex-wrap: nowrap; }
+.hm-page-header__actions .form-control { width: 16rem; max-width: 100%; }

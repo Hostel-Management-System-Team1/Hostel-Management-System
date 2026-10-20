@@ -3,14 +3,16 @@ from django.core.exceptions import ValidationError
 from django.db.models import Count
 from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from apps.accounts.models import User
 from apps.accounts.permissions import role_required
 
+from . import allocation as allocator
 from . import services
 from .forms import ApplicationForm, DecisionForm
-from .models import Application
+from .models import Allocation, AllocationPolicy, Application, Bed, Block, Room
 
 R = User.Role
 
@@ -45,7 +47,12 @@ def apply(request):
     return render(request, "admissions/apply.html", {"form": form})
 
 
-STATUS_TABS = [("SUBMITTED", "Waiting"), ("APPROVED", "Approved"), ("REJECTED", "Rejected")]
+STATUS_TABS = [
+    ("SUBMITTED", "Waiting for review"),
+    ("APPROVED", "Approved, no bed yet"),
+    ("ALLOCATED", "Bed allocated"),
+    ("REJECTED", "Rejected"),
+]
 
 
 @role_required(R.WARDEN)
@@ -58,18 +65,27 @@ def application_list(request):
         {"value": value, "label": label, "count": counts.get(value, 0), "active": value == status}
         for value, label in STATUS_TABS
     ]
-    applications = Application.objects.filter(status=status).select_related("preferred_block")
+    if status == Application.Status.APPROVED:
+        applications = allocator.ranked_waiting_applications()  # in allocation order
+    else:
+        applications = Application.objects.filter(status=status).select_related("preferred_block")
     return render(request, "admissions/application_list.html", {
         "tabs": tabs, "applications": applications, "status": status,
+        "policy": AllocationPolicy.current(),
     })
 
 
 @role_required(R.WARDEN)
 def application_detail(request, pk):
     application = get_object_or_404(Application.objects.select_related("preferred_block"), pk=pk)
-    return render(request, "admissions/application_detail.html", {
-        "application": application, "decision_form": DecisionForm(),
-    })
+    context = {"application": application, "decision_form": DecisionForm()}
+    if application.status == Application.Status.APPROVED:
+        context["suggested"] = allocator.candidate_beds(application).first()
+        context["eligible_beds"] = allocator.vacant_beds(application.gender).order_by(
+            "room__block__name", "room__floor", "room__number", "label")
+    elif application.status == Application.Status.ALLOCATED:
+        context["allocation"] = application.allocation
+    return render(request, "admissions/application_detail.html", context)
 
 
 @role_required(R.WARDEN)
@@ -90,3 +106,65 @@ def application_decide(request, pk):
             verb = "approved" if action == "approve" else "rejected"
             messages.success(request, f"Application {application.application_number} {verb}.")
     return redirect("admissions:application_detail", pk=pk)
+
+
+@role_required(R.WARDEN)
+@require_POST
+def application_allocate(request, pk):
+    """Allocate the suggested bed, or the one the warden picked."""
+    application = get_object_or_404(Application, pk=pk)
+    bed = None
+    if request.POST.get("bed"):
+        bed = get_object_or_404(Bed, pk=request.POST["bed"])
+    try:
+        allocation = allocator.allocate(application, request.user, bed=bed)
+    except allocator.AllocationError as error:
+        messages.error(request, str(error))
+    else:
+        messages.success(
+            request, f"{application.full_name} is allocated {allocation.bed}."
+        )
+    return redirect("admissions:application_detail", pk=pk)
+
+
+@role_required(R.WARDEN)
+@require_POST
+def allocate_all(request):
+    allocations, skipped = allocator.allocate_all(request.user)
+    if allocations:
+        messages.success(request, f"{len(allocations)} applicants were allocated beds.")
+    for application, reason in skipped:
+        messages.warning(request, f"{application.full_name}: {reason}")
+    if not allocations and not skipped:
+        messages.info(request, "No approved applications are waiting for a bed.")
+    return redirect(f"{reverse('admissions:application_list')}?status=APPROVED")
+
+
+@role_required(R.WARDEN)
+def room_list(request):
+    """Occupancy by room, with who sleeps in each bed."""
+    block_id = request.GET.get("block", "")
+    rooms = Room.objects.select_related("block").prefetch_related(
+        "beds", "beds__allocations__resident"
+    )
+    if block_id.isdigit():
+        rooms = rooms.filter(block_id=block_id)
+    rows = []
+    for room in rooms:
+        beds = list(room.beds.all())
+        occupants = []
+        for bed in beds:
+            for allocation in bed.allocations.all():
+                if allocation.status == Allocation.Status.ACTIVE:
+                    occupants.append(allocation.resident.get_full_name()
+                                     or allocation.resident.username)
+        rows.append({
+            "room": room,
+            "beds": len(beds),
+            "occupied": sum(b.status == Bed.Status.OCCUPIED for b in beds),
+            "vacant": sum(b.status == Bed.Status.VACANT for b in beds),
+            "occupants": occupants,
+        })
+    return render(request, "admissions/room_list.html", {
+        "rows": rows, "blocks": Block.objects.all(), "block_id": block_id,
+    })

@@ -3,7 +3,7 @@ from django.urls import reverse
 from apps.accounts.models import User
 from hms.dashboard import empty, facts_panel, provider, table_panel
 
-from .models import Application
+from .models import Allocation, Application
 
 R = User.Role
 
@@ -15,6 +15,21 @@ def panels(user):
     if user.role == R.RESIDENT:
         application = Application.objects.filter(applicant=user).first()
         link = ("View", reverse("admissions:my_application"))
+        allocation = Allocation.objects.filter(
+            resident=user, status=Allocation.Status.ACTIVE).select_related(
+            "bed__room__block").first()
+        if allocation:
+            bed = allocation.bed
+            mates = Allocation.objects.filter(
+                bed__room=bed.room, status=Allocation.Status.ACTIVE).exclude(
+                pk=allocation.pk).select_related("resident")
+            names = ", ".join(a.resident.get_full_name() or a.resident.username for a in mates)
+            return [facts_panel("Your room", [
+                ("Block", bed.room.block.name),
+                ("Room", f"{bed.room.number} (floor {bed.room.floor})"),
+                ("Bed", bed.label),
+                ("Roommates", names or "None yet"),
+            ], link=link)]
         if application is None:
             return [table_panel("Your application", [], [], empty=empty(
                 "bi-file-earmark-text", "No application yet",

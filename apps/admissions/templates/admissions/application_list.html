@@ -12,9 +12,14 @@
   <div class="hm-page-header">
     <div>
       <h1>Applications</h1>
-      <p class="hm-sub">Review hostel applications{% block list_sub %}{% endblock %}.</p>
+      <p class="hm-sub">Review hostel applications and allocate beds.</p>
     </div>
-    {% block header_actions %}{% endblock %}
+    {% if status == "APPROVED" and applications %}
+      <form method="post" action="{% url 'admissions:allocate_all' %}" class="hm-page-header__actions">
+        {% csrf_token %}
+        <button class="btn btn-primary" type="submit"><i class="bi bi-magic" aria-hidden="true"></i> Allocate all in ranked order</button>
+      </form>
+    {% endif %}
   </div>
 
   <nav class="hm-tabs" aria-label="Filter by status">
@@ -23,14 +28,19 @@
     {% endfor %}
   </nav>
 
+  {% if status == "APPROVED" %}
+    <p class="hm-note">Listed in allocation order — {{ policy.get_ranking_display|lower }}. The administrator sets the order.</p>
+  {% endif %}
+
   <section class="hm-panel hm-panel--flush" aria-label="Applications">
     {% if applications %}
       <div class="table-responsive">
         <table class="table hm-table hm-table-stack">
-          <thead><tr><th scope="col">Applicant</th><th scope="col">Enrolment</th><th scope="col">Gender</th><th scope="col">Room type</th><th scope="col">Block</th><th scope="col">Applied</th><th scope="col">Status</th></tr></thead>
+          <thead><tr>{% if status == "APPROVED" %}<th scope="col">#</th>{% endif %}<th scope="col">Applicant</th><th scope="col">Enrolment</th><th scope="col">Gender</th><th scope="col">Room type</th><th scope="col">Block</th><th scope="col">Applied</th><th scope="col">Status</th></tr></thead>
           <tbody>
             {% for a in applications %}
               <tr>
+                {% if status == "APPROVED" %}<td data-label="Rank" class="hm-num">{{ forloop.counter }}</td>{% endif %}
                 <td class="hm-cell-primary"><a class="hm-row-link" href="{% url 'admissions:application_detail' a.pk %}">{{ a.full_name }}</a><span class="hm-sub">{{ a.application_number }}</span></td>
                 <td data-label="Enrolment">{{ a.enrolment_number }}</td>
                 <td data-label="Gender">{{ a.get_gender_display }}</td>

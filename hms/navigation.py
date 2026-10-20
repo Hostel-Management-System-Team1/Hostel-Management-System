@@ -55,6 +55,8 @@ NAV = {
         ("Residents", [
             item("Applications", "bi-inbox", "admissions:application_list",
                  hint="Review and allocate beds"),
+            item("Rooms", "bi-door-closed", "admissions:room_list",
+                 hint="Occupancy by room"),
             item("Residents", "bi-people", sprint=1, hint="Rooms and transfers", issue=6),
             item("Outpasses", "bi-box-arrow-up-right", sprint=2,
                  hint="Approve or reject requests", issue=9),
@@ -108,6 +110,11 @@ ADMIN_NAV = [
     ("Masters", [
         item("Hostel blocks", "bi-buildings", "admin:admissions_block_changelist",
              hint="Blocks and the gender each is for"),
+        item("Rooms & beds", "bi-door-closed", "admin:admissions_room_changelist",
+             hint="Room inventory: floor, type, capacity, status"),
+        item("Allocation order", "bi-sort-numeric-down",
+             "admin:admissions_allocationpolicy_changelist",
+             hint="Merit, seniority or first come"),
     ]),
     ("Administration", [
         item("Users & roles", "bi-person-gear", "admin:accounts_user_changelist",

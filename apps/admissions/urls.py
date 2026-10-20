@@ -10,4 +10,8 @@ urlpatterns = [
     path("applications/", views.application_list, name="application_list"),
     path("applications/<int:pk>/", views.application_detail, name="application_detail"),
     path("applications/<int:pk>/decide/", views.application_decide, name="application_decide"),
+    path("applications/<int:pk>/allocate/", views.application_allocate,
+         name="application_allocate"),
+    path("applications/allocate-all/", views.allocate_all, name="allocate_all"),
+    path("rooms/", views.room_list, name="room_list"),
 ]

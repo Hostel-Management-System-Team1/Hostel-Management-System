@@ -806,3 +806,33 @@ thead th, #content #result_list thead th, .hms-brand small {
 /* Password field on the user form: "Set" + Reset password, no hash details */
 .hms-pw { display: flex; align-items: center; gap: 14px; }
 .hms-pw .button { min-height: 32px; padding: 4px 12px; font-size: 0.8rem; }
+
+/* Audit log integrity banner */
+.hms-note { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 0 0 1rem; padding: .75rem 1rem; border: 1px solid var(--hms-border, #d5d9e0); border-radius: 6px; }
+.hms-note--ok { background: #e3f1e8; border-color: #1e6b3e; color: #18202e; }
+.hms-note--ok .bi { color: #1e6b3e; }
+.hms-note--danger { background: #f9e2e0; border-color: #b3261e; color: #18202e; }
+.hms-note ul { margin: .25rem 0 0; }
+.hms-attention { margin-bottom: 16px; border-color: #b3261e; }
+.hms-attention a { font-weight: 600; }
+
+/* Reports in the admin site */
+.hms-note-form { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin: 0 0 16px; }
+.hm-report { margin-bottom: 16px; background: #fff; border: 1px solid #d5d9e0; border-radius: 6px; }
+.hm-report .hm-panel__head { padding: 10px 16px; border-bottom: 1px solid #d5d9e0; }
+.hm-report .hm-panel__head h2 { margin: 0; font-size: 1rem; }
+.hm-report table { width: 100%; border-collapse: collapse; }
+.hm-report th, .hm-report td { padding: 8px 16px; text-align: left; border-bottom: 1px solid #e8ebf0; }
+.hm-report .hm-cell-num { text-align: right; font-variant-numeric: tabular-nums; }
+.hm-report tfoot th { border-top: 2px solid #18202e; }
+.hm-empty { padding: 28px 16px; text-align: center; color: #556070; }
+.hm-note { color: #556070; font-size: .875rem; }
+
+.hm-empty__title { font-weight: 600; margin: 8px 0 4px; }
+
+/* Inline rows: hide Django's "original object" caption above each row */
+#content .inline-group td.original p { display: none; }
+#content .inline-group td.original { padding: 0; width: 0; }
+
+/* Let a wide change list shrink beside its filter instead of pushing the filter off-screen */
+.main > .content { min-width: 0; }
