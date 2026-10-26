@@ -1,0 +1,130 @@
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-4">
+    <h1>Management Reports</h1>
+    <p>Current operational summaries from the hostel database.</p>
+
+    <section aria-labelledby="occupancy-heading">
+        <h2 id="occupancy-heading">Hostel Occupancy</h2>
+        <p>Total beds: {{ total_beds }}</p>
+        <p>Occupied beds: {{ occupied_beds }}</p>
+        <p>Vacant beds: {{ vacant_beds }}</p>
+        <p>Occupancy rate: {{ occupancy_percent }}%</p>
+
+        <a href="{% url 'reporting:export_occupancy' %}">CSV</a>
+        <a href="{% url 'reporting:export_occupancy_xlsx' %}">Excel</a>
+        <a href="{% url 'reporting:export_occupancy_pdf' %}">PDF</a>
+    </section>
+
+    <hr>
+
+    <section aria-labelledby="dues-heading">
+        <h2 id="dues-heading">Outstanding Fees and Dues</h2>
+        <p>Total outstanding: {{ outstanding_total }}</p>
+
+        <a href="{% url 'reporting:export_dues' %}">CSV</a>
+        <a href="{% url 'reporting:export_dues_xlsx' %}">Excel</a>
+        <a href="{% url 'reporting:export_dues_pdf' %}">PDF</a>
+
+        <table class="table">
+            <caption>Unpaid and overdue invoices</caption>
+            <thead>
+                <tr>
+                    <th>Invoice</th>
+                    <th>Resident</th>
+                    <th>Due date</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for invoice in unpaid_invoices %}
+                <tr>
+                    <td>{{ invoice.number }}</td>
+                    <td>{{ invoice.resident }}</td>
+                    <td>{{ invoice.due_date }}</td>
+                    <td>{{ invoice.get_status_display }}</td>
+                    <td>{{ invoice.total }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No outstanding invoices.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <hr>
+
+    <section aria-labelledby="complaints-heading">
+        <h2 id="complaints-heading">Complaint Ageing</h2>
+        <p>Open complaints: {{ open_complaints }}</p>
+
+        <a href="{% url 'reporting:export_complaints' %}">CSV</a>
+        <a href="{% url 'reporting:export_complaints_xlsx' %}">Excel</a>
+        <a href="{% url 'reporting:export_complaints_pdf' %}">PDF</a>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Complaint</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Age (days)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for complaint in complaints %}
+                <tr>
+                    <td>{{ complaint.title }}</td>
+                    <td>{{ complaint.get_category_display }}</td>
+                    <td>{{ complaint.get_status_display }}</td>
+                    <td>{{ complaint.created_at|date:"Y-m-d H:i" }}</td>
+                    <td>{{ complaint.age_days }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No complaints recorded.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <hr>
+
+    <section aria-labelledby="mess-heading">
+        <h2 id="mess-heading">Mess Activities</h2>
+        <p>Total meals served (recorded): {{ total_meals_served }}</p>
+
+        <a href="{% url 'reporting:export_mess' %}">CSV</a>
+        <a href="{% url 'reporting:export_mess_xlsx' %}">Excel</a>
+        <a href="{% url 'reporting:export_mess_pdf' %}">PDF</a>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Meal</th>
+                    <th>Meals served</th>
+                    <th>Notes</th>
+                    <th>Recorded by</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in mess_activities %}
+                <tr>
+                    <td>{{ activity.activity_date }}</td>
+                    <td>{{ activity.get_meal_type_display }}</td>
+                    <td>{{ activity.meals_served }}</td>
+                    <td>{{ activity.notes|default:"—" }}</td>
+                    <td>{{ activity.recorded_by }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5">No mess activities recorded.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+</div>
+{% endblock %}
