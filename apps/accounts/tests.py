@@ -123,7 +123,7 @@ class AdminSiteTests(TestCase):
         self.assertContains(response, "Users &amp; roles")
         self.assertContains(response, "People by role")
 
-    
+
     def test_admin_reports_page_opens(self):
         login(self.client, "a1")
         response = self.client.get(reverse("reporting:dashboard"))
