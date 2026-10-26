@@ -154,9 +154,8 @@ NAV = {
             item(
                 "Reports",
                 "bi-bar-chart",
-                sprint=2,
+                "reporting:dashboard",
                 hint="Occupancy, dues, complaints",
-                issue=13,
             ),
         ]),
     ],
@@ -300,9 +299,8 @@ ADMIN_NAV = [
         item(
             "Reports",
             "bi-bar-chart",
-            sprint=2,
+            "reporting:dashboard",
             hint="PDF and XLSX exports",
-            issue=13,
         ),
         item(
             "Audit log",
