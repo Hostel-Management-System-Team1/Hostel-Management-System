@@ -1,0 +1,68 @@
+
+{% extends "base.html" %}
+
+{% block title %}Vacating Requests{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="h3 mb-3">Hostel Vacating Requests</h1>
+
+  <form method="get" class="mb-3">
+    <label for="status" class="form-label">Filter by status</label>
+    <div class="d-flex gap-2">
+      <select id="status" name="status" class="form-select">
+        <option value="">All statuses</option>
+        {% for value, label in statuses %}
+          <option value="{{ value }}"
+            {% if selected_status == value %}selected{% endif %}>
+            {{ label }}
+          </option>
+        {% endfor %}
+      </select>
+      <button class="btn btn-outline-primary" type="submit">Filter</button>
+    </div>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Request</th>
+          <th>Resident</th>
+          <th>Room / Bed</th>
+          <th>Status</th>
+          <th>Submitted</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in vacating_requests %}
+          <tr>
+            <td>#{{ item.pk }}</td>
+            <td>
+              {{ item.resident.get_full_name|default:item.resident.username }}
+            </td>
+            <td>
+              {{ item.allocation.bed.room.block.name }} /
+              {{ item.allocation.bed.room.number }} /
+              {{ item.allocation.bed.label }}
+            </td>
+            <td>{{ item.get_status_display }}</td>
+            <td>{{ item.requested_at|date:"d M Y, H:i" }}</td>
+            <td>
+              <a class="btn btn-sm btn-outline-primary"
+                 href="{% url 'admissions:vacating_detail' item.pk %}">
+                Review
+              </a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="6">No vacating requests found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

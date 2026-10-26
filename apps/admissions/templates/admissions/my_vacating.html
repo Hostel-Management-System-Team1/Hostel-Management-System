@@ -1,0 +1,73 @@
+
+{% extends "base.html" %}
+
+{% block title %}My Vacating Request{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+  <h1 class="h3 mb-3">Hostel Vacating</h1>
+  <p class="text-muted">
+    Submit a request to vacate your allocated bed. Hostel, mess, and maintenance
+    clearances must all be completed before vacating can be finalized.
+  </p>
+
+  {% if allocation %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h5">Current allocation</h2>
+        <p class="mb-1">
+          <strong>Block:</strong> {{ allocation.bed.room.block.name }}
+        </p>
+        <p class="mb-1">
+          <strong>Room:</strong> {{ allocation.bed.room.number }}
+        </p>
+        <p class="mb-0">
+          <strong>Bed:</strong> {{ allocation.bed.label }}
+        </p>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-body">
+        <h2 class="h5">Submit a vacating request</h2>
+        <form method="post" action="{% url 'admissions:submit_vacating' %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="reason" class="form-label">Reason (optional)</label>
+            <textarea id="reason" name="reason" class="form-control"
+                      rows="3" maxlength="2000"></textarea>
+          </div>
+          <button class="btn btn-primary" type="submit">
+            Submit request
+          </button>
+        </form>
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-info">
+      You do not currently have an active bed allocation.
+    </div>
+  {% endif %}
+
+  <h2 class="h5 mb-3">Your requests</h2>
+  {% for item in vacating_requests %}
+    <div class="card mb-3">
+      <div class="card-body">
+        <p class="mb-1">
+          <strong>Request #{{ item.pk }}</strong>
+          <span class="badge bg-secondary">{{ item.get_status_display }}</span>
+        </p>
+        <p class="text-muted small mb-2">
+          Submitted: {{ item.requested_at|date:"d M Y, H:i" }}
+        </p>
+        <a class="btn btn-outline-primary btn-sm"
+           href="{% url 'admissions:vacating_detail' item.pk %}">
+          View request
+        </a>
+      </div>
+    </div>
+  {% empty %}
+    <p>You have not submitted a vacating request.</p>
+  {% endfor %}
+</div>
+{% endblock %}
