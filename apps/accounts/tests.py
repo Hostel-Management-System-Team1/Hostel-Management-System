@@ -123,12 +123,12 @@ class AdminSiteTests(TestCase):
         self.assertContains(response, "Users &amp; roles")
         self.assertContains(response, "People by role")
 
-    def test_admin_placeholder_page(self):
+
+    def test_admin_reports_page_opens(self):
         login(self.client, "a1")
-        response = self.client.get(reverse("admin:hms_module", args=["reports"]))
-        self.assertContains(response, "Coming soon")
-        self.assertContains(response, "Sprint 2")
-        self.assertContains(response, "issue #13")
+        response = self.client.get(reverse("reporting:dashboard"))
+        self.assertEqual(response.status_code, 200)
+
 
     def test_portal_roles_cannot_open_admin(self):
         login(self.client, "r1")
