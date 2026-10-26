@@ -336,3 +336,154 @@ class Transfer(models.Model):
 
     def __str__(self):
         return f"{self.allocation.resident}: {self.from_bed} → {self.to_bed}"
+class VacatingRequest(models.Model):
+    """A resident's request to vacate their currently allocated bed (HMS-F-062)."""
+
+    class Status(models.TextChoices):
+        REQUESTED = "REQUESTED", "Requested"
+        APPROVED = "APPROVED", "Approved"
+        REJECTED = "REJECTED", "Rejected"
+        COMPLETED = "COMPLETED", "Completed"
+
+    allocation = models.ForeignKey(
+        Allocation,
+        on_delete=models.PROTECT,
+        related_name="vacating_requests",
+    )
+    resident = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="vacating_requests",
+    )
+    status = models.CharField(
+        max_length=12,
+        choices=Status.choices,
+        default=Status.REQUESTED,
+    )
+    reason = models.TextField(blank=True)
+    requested_at = models.DateTimeField(auto_now_add=True)
+
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="approved_vacating_requests",
+        null=True,
+        blank=True,
+    )
+    approved_at = models.DateTimeField(null=True, blank=True)
+    vacated_at = models.DateTimeField(null=True, blank=True)
+
+    security_deposit = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default="0.00",
+    )
+    outstanding_dues = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default="0.00",
+    )
+    damage_deduction = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default="0.00",
+    )
+    refund_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default="0.00",
+    )
+    staff_notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-requested_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["allocation"],
+                condition=models.Q(status__in=["REQUESTED", "APPROVED"]),
+                name="one_open_vacating_request_per_allocation",
+            )
+        ]
+
+    def __str__(self):
+        return f"Vacating request #{self.pk} - {self.resident}"
+
+
+class NoDuesClearance(models.Model):
+    """Tracks required departmental clearances before a resident vacates."""
+
+    class Department(models.TextChoices):
+        HOSTEL = "HOSTEL", "Hostel fees"
+        MESS = "MESS", "Mess dues"
+        MAINTENANCE = "MAINTENANCE", "Maintenance dues"
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        CLEARED = "CLEARED", "Cleared"
+
+    vacating_request = models.ForeignKey(
+        VacatingRequest,
+        on_delete=models.CASCADE,
+        related_name="clearances",
+    )
+    department = models.CharField(
+        max_length=12,
+        choices=Department.choices,
+    )
+    status = models.CharField(
+        max_length=8,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    cleared_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="recorded_no_dues_clearances",
+    )
+    cleared_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["department"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["vacating_request", "department"],
+                name="unique_department_clearance_per_vacating",
+            )
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.get_department_display()} - "
+            f"{self.get_status_display()}"
+        )
+
+
+class DamageCharge(models.Model):
+    """An itemized damage charge assessed during the vacating process."""
+
+    vacating_request = models.ForeignKey(
+        VacatingRequest,
+        on_delete=models.CASCADE,
+        related_name="damage_charges",
+    )
+    description = models.CharField(max_length=200)
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+    )
+    assessed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="assessed_vacating_damages",
+    )
+    assessed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["assessed_at", "pk"]
+
+    def __str__(self):
+        return f"{self.description}: {self.amount}"
