@@ -218,7 +218,7 @@ class QueryStyleTests(SimpleTestCase):
     def test_templates_never_turn_escaping_off(self):
         paths = [*(ROOT / "templates").rglob("*.html"), *(ROOT / "apps").rglob("*.html")]
         for path in paths:
-            text = path.read_text()
+            text = path.read_text(encoding="utf-8")
             # Django's own password-rule help text is server-generated HTML, the one allowed use.
             text = text.replace("help_text|safe", "")
             self.assertNotRegex(text, r"\|\s*safe\b|autoescape\s+off", path.as_posix())
