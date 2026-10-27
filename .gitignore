@@ -18,3 +18,23 @@ staticfiles/
 
 # Local databases
 *.sqlite3
+
+# Performance test credentials
+locust_users.csv
+
+# Generated performance test results
+independent_smoke*_stats.csv
+independent_smoke*_stats_history.csv
+independent_smoke*_failures.csv
+independent_smoke*_exceptions.csv
+load_test_*_stats.csv
+load_test_*_stats_history.csv
+load_test_*_failures.csv
+load_test_*_exceptions.csv
+smoke_test_stats.csv
+smoke_test_stats_history.csv
+smoke_test_failures.csv
+smoke_test_exceptions.csv
+
+# Generated monitoring logs
+monitoring/uptime.csv

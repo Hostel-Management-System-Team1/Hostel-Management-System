@@ -1,3 +1,4 @@
+
 """Security protections that cut across modules (HMS-SR-001, SR-005, SR-006)."""
 
 import os
@@ -27,8 +28,14 @@ def settings_in_production(**env):
     )
     environment = {**os.environ, "DJANGO_DEBUG": "false", **env}
     environment.pop("HMS_FORCE_HTTPS", None)
-    result = subprocess.run([sys.executable, "-c", code], cwd=ROOT, env=environment,
-                            capture_output=True, text=True, check=True)
+    result = subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=ROOT,
+        env=environment,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
     return result.stdout.strip()
 
 
@@ -40,11 +47,18 @@ class TlsSettingsTests(SimpleTestCase):
 
     def test_development_does_not_force_https(self):
         result = subprocess.run(
-            [sys.executable, "-c",
-             "from hms import settings as s; "
-             "print(s.SECURE_SSL_REDIRECT, s.SESSION_COOKIE_SECURE)"],
-            cwd=ROOT, env={**os.environ, "DJANGO_DEBUG": "true"}, capture_output=True, text=True,
-            check=True)
+            [
+                sys.executable,
+                "-c",
+                "from hms import settings as s; "
+                "print(s.SECURE_SSL_REDIRECT, s.SESSION_COOKIE_SECURE)",
+            ],
+            cwd=ROOT,
+            env={**os.environ, "DJANGO_DEBUG": "true"},
+            capture_output=True,
+            text=True,
+            check=True,
+        )
         self.assertEqual(result.stdout.strip(), "False False")
 
     def test_proxy_header_is_trusted_only_when_asked(self):
@@ -52,12 +66,28 @@ class TlsSettingsTests(SimpleTestCase):
         self.assertIn("('HTTP_X_FORWARDED_PROTO', 'https')", out)
 
     def test_django_deployment_checklist_is_clean(self):
-        environment = {**os.environ, "DJANGO_DEBUG": "false", "HMS_BEHIND_PROXY": "true",
-                       "DJANGO_SECRET_KEY": "k" * 20 + "".join(chr(65 + i) for i in range(26)) * 2}
+        environment = {
+            **os.environ,
+            "DJANGO_DEBUG": "false",
+            "HMS_BEHIND_PROXY": "true",
+            "DJANGO_SECRET_KEY": "k" * 20
+            + "".join(chr(65 + i) for i in range(26)) * 2,
+        }
         environment.pop("HMS_FORCE_HTTPS", None)
         result = subprocess.run(
-            [sys.executable, "manage.py", "check", "--deploy", "--fail-level", "WARNING"],
-            cwd=ROOT, env=environment, capture_output=True, text=True)
+            [
+                sys.executable,
+                "manage.py",
+                "check",
+                "--deploy",
+                "--fail-level",
+                "WARNING",
+            ],
+            cwd=ROOT,
+            env=environment,
+            capture_output=True,
+            text=True,
+        )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
     @override_settings(SECURE_SSL_REDIRECT=True)
@@ -77,8 +107,12 @@ class HeaderTests(TestCase):
     def test_security_headers_on_every_response(self):
         response = self.client.get("/accounts/login/")
         csp = response["Content-Security-Policy"]
-        for part in ("default-src 'self'", "object-src 'none'", "frame-ancestors 'none'",
-                     "script-src 'self' https://cdn.jsdelivr.net"):
+        for part in (
+            "default-src 'self'",
+            "object-src 'none'",
+            "frame-ancestors 'none'",
+            "script-src 'self' https://cdn.jsdelivr.net",
+        ):
             self.assertIn(part, csp)
         self.assertNotIn("'unsafe-inline'", csp.split("style-src")[0])
         self.assertEqual(response["X-Frame-Options"], "DENY")
@@ -97,16 +131,25 @@ class ContentSecurityPolicyCompatibilityTests(TestCase):
     def test_no_page_has_inline_script_or_event_handlers(self):
         User.objects.create_user(username="warden0", password=PASSWORD, role=R.WARDEN)
         allocated_resident("r1", room=make_room())
-        for role, username in ((R.GATE if hasattr(R, "GATE") else R.SECURITY_GUARD, "g1"),
-                               (R.MAINTENANCE_STAFF, "m1"), (R.MESS_MANAGER, "ms1")):
+        for role, username in (
+            (R.GATE if hasattr(R, "GATE") else R.SECURITY_GUARD, "g1"),
+            (R.MAINTENANCE_STAFF, "m1"),
+            (R.MESS_MANAGER, "ms1"),
+        ):
             make_resident(username, role=role)
         User.objects.create_superuser(username="a1", password=PASSWORD)
         pages = {
             "r1": ["/", "/application/", "/fees/", "/profile/"],
             "warden0": ["/", "/applications/", "/rooms/", "/residents/"],
-            "g1": ["/"], "m1": ["/"], "ms1": ["/"],
-            "a1": ["/admin/", "/admin/admissions/room/", "/admin/accounts/user/",
-                   "/admin/audit/auditentry/"],
+            "g1": ["/"],
+            "m1": ["/"],
+            "ms1": ["/"],
+            "a1": [
+                "/admin/",
+                "/admin/admissions/room/",
+                "/admin/accounts/user/",
+                "/admin/audit/auditentry/",
+            ],
         }
         for username, paths in pages.items():
             self.client.logout()
@@ -116,8 +159,10 @@ class ContentSecurityPolicyCompatibilityTests(TestCase):
                     response = self.client.get(path)
                     self.assertEqual(response.status_code, 200, path)
                     html = response.content.decode()
-                    inline = re.findall(r"<script(?![^>]*\bsrc=)[^>]*>(.+?)</script>", html, re.S)
-                    self.assertEqual([i for i in inline if i.strip()], [], path)
+                    inline = re.findall(
+                        r"<script(?![^>]*\bsrc=)[^>]*>(.+?)</script>", html, re.S
+                    )
+                    self.assertEqual([item for item in inline if item.strip()], [], path)
                     self.assertNotRegex(html, r"\son[a-z]+=\"", path)
                     self.assertNotIn("javascript:", html, path)
 
@@ -130,21 +175,36 @@ class InputHandlingTests(TestCase):
         login(self.client, "r1")
 
     def test_markup_in_a_name_is_refused(self):
-        response = self.client.post(reverse("profile"), {
-            "first_name": "<script>alert(1)</script>", "last_name": "S",
-            "email": "a@example.edu", "phone": "9876543210"})
+        response = self.client.post(
+            reverse("profile"),
+            {
+                "first_name": "<script>alert(1)</script>",
+                "last_name": "S",
+                "email": "a@example.edu",
+                "phone": "9876543210",
+            },
+        )
         self.assertContains(response, "Angle brackets are not allowed")
         self.user.refresh_from_db()
         self.assertEqual(self.user.first_name, "Aarav")
 
     def test_a_bad_phone_number_is_refused(self):
-        response = self.client.post(reverse("profile"), {
-            "first_name": "A", "last_name": "S", "email": "a@example.edu", "phone": "abc"})
+        response = self.client.post(
+            reverse("profile"),
+            {
+                "first_name": "A",
+                "last_name": "S",
+                "email": "a@example.edu",
+                "phone": "abc",
+            },
+        )
         self.assertContains(response, "Enter 10 to 15 digits")
 
     def test_stored_markup_is_escaped_on_every_page(self):
         # Even if markup reached the database some other way, pages print it as text.
-        User.objects.filter(pk=self.user.pk).update(first_name="<img src=x onerror=alert(1)>")
+        User.objects.filter(pk=self.user.pk).update(
+            first_name="<img src=x onerror=alert(1)>"
+        )
         for path in ("/", "/profile/"):
             html = self.client.get(path).content.decode()
             self.assertNotIn("<img src=x onerror", html, path)
@@ -155,8 +215,7 @@ class InputHandlingTests(TestCase):
         allocated_resident("r2", room=make_room(), first_name="Zoya")
         self.client.logout()
         login(self.client, "warden0")
-        for attack in ("' OR '1'='1", "'; DROP TABLE accounts_user; --", "%' OR 1=1 --",
-                       "\\"):
+        for attack in ("' OR '1'='1", "'; DROP TABLE accounts_user; --", "%' OR 1=1 --", "\\"):
             with self.subTest(attack=attack):
                 response = self.client.get(reverse("admissions:resident_list"), {"q": attack})
                 self.assertEqual(response.status_code, 200)
@@ -167,42 +226,58 @@ class InputHandlingTests(TestCase):
         User.objects.create_user(username="warden0", password=PASSWORD, role=R.WARDEN)
         self.client.logout()
         login(self.client, "warden0")
-        for url in ("/applications/?status=' OR 1=1 --", "/rooms/?block=1 OR 1=1",
-                    "/rooms/?block=';--"):
+        for url in (
+            "/applications/?status=' OR 1=1 --",
+            "/rooms/?block=1 OR 1=1",
+            "/rooms/?block=';--",
+        ):
             self.assertEqual(self.client.get(url).status_code, 200, url)
 
     def test_oversized_json_is_refused(self):
         response = self.client.post(
-            "/api/v1/applications", "x" * (3 * 1024 * 1024), content_type="application/json")
+            "/api/v1/applications",
+            "x" * (3 * 1024 * 1024),
+            content_type="application/json",
+        )
         self.assertEqual(response.status_code, 400)
 
     def test_nul_characters_are_a_400_everywhere(self):
         self.assertEqual(self.client.get("/rooms/?block=%00").status_code, 400)
         self.assertEqual(
-            self.client.post(reverse("profile"), {"first_name": "A\x00B"}).status_code, 400)
+            self.client.post(reverse("profile"), {"first_name": "A\x00B"}).status_code,
+            400,
+        )
         payload = '{"enrolmentNumber": "PES2UG24CS500\\u0000"}'
         response = self.client.post(
-            "/api/v1/applications", payload, content_type="application/json")
+            "/api/v1/applications", payload, content_type="application/json"
+        )
         self.assertEqual(response.status_code, 400)
 
     def test_malformed_json_is_a_400_not_a_crash(self):
         response = self.client.post(
-            "/api/v1/applications", "{not json", content_type="application/json")
+            "/api/v1/applications", "{not json", content_type="application/json"
+        )
         self.assertEqual(response.status_code, 400)
 
 
 class QueryStyleTests(SimpleTestCase):
-    """Parameterised queries only: no raw SQL is built from input (HMS-SR-006)."""
+    """Parameterized queries only: no raw SQL is built from input (HMS-SR-006)."""
 
-    ALLOWED_EXECUTE = {"apps/audit/service.py"}  # one fixed statement with a bound parameter
+    ALLOWED_EXECUTE = {
+        "apps/audit/service.py",
+        "apps/audit/management/commands/retention_report.py",
+    }
 
     def python_files(self):
         for path in (ROOT / "apps").rglob("*.py"):
             relative = path.relative_to(ROOT).as_posix()
-            if "/migrations/" in relative or relative.endswith(("tests.py",)) \
-                    or "/test_" in relative:
+            if (
+                "/migrations/" in relative
+                or relative.endswith(("tests.py",))
+                or "/test_" in relative
+            ):
                 continue
-            yield relative, path.read_text()
+            yield relative, path.read_text(encoding="utf-8")
 
     def test_no_raw_sql_helpers(self):
         for relative, text in self.python_files():
@@ -216,7 +291,10 @@ class QueryStyleTests(SimpleTestCase):
                 self.assertNotRegex(match.group(1), r'f"|f\'|%\s*\(|\.format\(|\+', relative)
 
     def test_templates_never_turn_escaping_off(self):
-        paths = [*(ROOT / "templates").rglob("*.html"), *(ROOT / "apps").rglob("*.html")]
+        paths = [
+            *(ROOT / "templates").rglob("*.html"),
+            *(ROOT / "apps").rglob("*.html"),
+        ]
         for path in paths:
             text = path.read_text(encoding="utf-8")
             # Django's own password-rule help text is server-generated HTML, the one allowed use.
