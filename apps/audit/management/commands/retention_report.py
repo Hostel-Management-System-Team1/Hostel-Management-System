@@ -7,7 +7,7 @@ This command is report-only. It never deletes, archives, or anonymizes records.
 from datetime import date
 
 from dateutil.relativedelta import relativedelta
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import connection
 
 
@@ -20,6 +20,7 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
+        """Add command-line arguments."""
         parser.add_argument(
             "--years",
             type=int,
@@ -28,15 +29,17 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """Report counts of potentially aged records without changing data."""
         years = options["years"]
+
         if years < 1:
-            self.stderr.write("--years must be at least 1.")
-            return
+            raise CommandError("--years must be at least 1.")
 
         cutoff = date.today() - relativedelta(years=years)
+
         self.stdout.write(
             self.style.WARNING(
-                f"REPORT ONLY — threshold date: {cutoff}; "
+                f"REPORT ONLY - threshold date: {cutoff}; "
                 "no records will be changed."
             )
         )
