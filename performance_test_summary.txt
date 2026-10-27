@@ -1,0 +1,37 @@
+# Hostel Management System — Performance Test Summary
+
+## 1. Test Environment
+- Application server: Waitress
+- Database: PostgreSQL (`hms_perf_test`)
+- Load testing tool: Locust
+- Target response time: p95 <= 2,000 ms
+- Target dataset: 2,000 records
+
+## 2. Verified Test Dataset
+- Performance residents: 2,000
+- Applications: 2,000
+- Active allocations: 2,000
+- Rooms: 680
+- Beds: 2,032
+
+## 3. Locust Results
+- Total requests: 3,743
+- Failed requests: 0
+- Aggregate p95 response time: 1,600 ms
+
+### Endpoint p95 Results
+| Endpoint | p95 |
+|---|---:|
+| Login GET | 1,400 ms |
+| Login POST | 1,900 ms |
+| MFA GET | 1,900 ms |
+| MFA POST | 2,000 ms |
+| Resident search | 1,600 ms |
+| Room list | 1,500 ms |
+
+## 4. Conclusion
+The measured aggregate and endpoint p95 response times are at or below the 2,000 ms target, with zero failed requests. The database contains the verified 2,000 performance residents, 2,000 applications, and 2,000 active allocations.
+
+The maximum concurrent-user count must be verified from the Locust history CSV before claiming that the 200-concurrent-user acceptance criterion has been conclusively demonstrated.
+
+These results represent a load test, not a long-duration availability test.
