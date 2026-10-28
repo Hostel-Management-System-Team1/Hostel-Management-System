@@ -26,4 +26,8 @@ class BootstrapFormMixin:
                 widget = self.fields[name].widget
                 widget.attrs["aria-invalid"] = "true"
                 widget.attrs["class"] = f"{widget.attrs.get('class', '')} is-invalid".strip()
-                widget.attrs["aria-describedby"] = f"id_{self.add_prefix(name)}_err"
+                descriptions = []
+                if self.fields[name].help_text:
+                    descriptions.append(f"id_{self.add_prefix(name)}_help")
+                descriptions.append(f"id_{self.add_prefix(name)}_err")
+                widget.attrs["aria-describedby"] = " ".join(descriptions)
