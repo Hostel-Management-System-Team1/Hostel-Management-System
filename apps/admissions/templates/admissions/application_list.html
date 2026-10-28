@@ -17,7 +17,8 @@
     {% if status == "APPROVED" and applications %}
       <form method="post" action="{% url 'admissions:allocate_all' %}" class="hm-page-header__actions">
         {% csrf_token %}
-        <button class="btn btn-primary" type="submit"><i class="bi bi-magic" aria-hidden="true"></i> Allocate all in ranked order</button>
+        <button class="btn btn-primary" type="submit" aria-describedby="allocate-all-help"><i class="bi bi-magic" aria-hidden="true"></i> Allocate all in ranked order</button>
+        <p class="hm-note mb-0" id="allocate-all-help">This action attempts allocation for all listed approved applications in ranked order. Review the list before continuing.</p>
       </form>
     {% endif %}
   </div>
