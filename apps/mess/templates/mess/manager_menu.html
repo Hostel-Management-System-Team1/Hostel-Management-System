@@ -1,0 +1,121 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Weekly Mess Menu</title>
+</head>
+<body>
+    <h1>Weekly Mess Menu</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    <h2>Publish a meal</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Publish Menu</button>
+    </form>
+
+    <hr>
+
+    <h2>Generate Monthly Mess Bills</h2>
+
+    <p>Price per meal: ₹50</p>
+
+    <form method="POST">
+        {% csrf_token %}
+
+        <input type="hidden" name="action" value="generate_bills">
+
+        <label for="month">Select Month:</label>
+        <select name="month" id="month" required>
+            <option value="1">January</option>
+            <option value="2">February</option>
+            <option value="3">March</option>
+            <option value="4">April</option>
+            <option value="5">May</option>
+            <option value="6">June</option>
+            <option value="7">July</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
+        </select>
+
+        <br><br>
+
+        <label for="year">Enter Year:</label>
+        <input
+            type="number"
+            name="year"
+            id="year"
+            value="2026"
+            min="2020"
+            max="2100"
+            required
+        >
+
+        <br><br>
+
+        <button type="submit">Generate Monthly Bills</button>
+    </form>
+
+    <hr>
+
+    <h2>Menu Items and Meal Opt-outs</h2>
+
+    {% for item in menu_items %}
+        <div>
+            <h3>
+                {{ item.menu_date }} -
+                {{ item.get_meal_type_display }}
+            </h3>
+
+            <p>{{ item.description }}</p>
+
+            <p>
+                <strong>Scheduled Meal Time:</strong>
+                {% if item.meal_datetime %}
+                    {{ item.meal_datetime|date:"d M Y, h:i A" }}
+                {% else %}
+                    Not scheduled
+                {% endif %}
+            </p>
+
+            {% if item.is_published %}
+                <p><strong>Status: Published</strong></p>
+            {% else %}
+                <p><strong>Status: Draft</strong></p>
+            {% endif %}
+
+            <h4>Resident Opt-outs</h4>
+
+            <p>Total opt-outs: {{ item.opt_outs.count }}</p>
+
+            {% for optout in item.opt_outs.all %}
+                <p>
+                    Resident: {{ optout.resident.username }}
+                    <br>
+                    Requested: {{ optout.requested_at }}
+                    <br>
+                    Reason: {{ optout.reason|default:"Not provided" }}
+                </p>
+            {% empty %}
+                <p>No residents have opted out.</p>
+            {% endfor %}
+        </div>
+
+        <hr>
+
+    {% empty %}
+        <p>No menu items available.</p>
+    {% endfor %}
+
+</body>
+</html>
