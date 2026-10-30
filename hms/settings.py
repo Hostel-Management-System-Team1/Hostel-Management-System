@@ -23,6 +23,10 @@ EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").strip().lower() in ("1", "true", "yes", "on")
 DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "hostel-management@localhost")
 
+# Shared credential for authenticated RFID/biometric gate devices.
+# Never commit the actual secret.
+GATE_DEVICE_API_KEY = os.environ.get("GATE_DEVICE_API_KEY", "")
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
