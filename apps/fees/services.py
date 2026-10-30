@@ -3,7 +3,7 @@
 
 import calendar
 import logging
-from datetime import timedelta, date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.conf import settings

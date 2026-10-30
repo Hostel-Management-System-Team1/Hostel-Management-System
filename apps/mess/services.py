@@ -1,7 +1,6 @@
 from django.db import transaction
 
 from apps.accounts.models import User
-from .models import MessMenuItem
 
 
 def publish_menu(menu_item, actor):

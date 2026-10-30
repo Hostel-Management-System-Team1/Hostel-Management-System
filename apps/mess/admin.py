@@ -1,7 +1,7 @@
 
 from django.contrib import admin
 
-from .models import MessActivity, MessMenuItem, MealOptOut
+from .models import MealOptOut, MessActivity, MessMenuItem
 
 
 @admin.register(MessActivity)
