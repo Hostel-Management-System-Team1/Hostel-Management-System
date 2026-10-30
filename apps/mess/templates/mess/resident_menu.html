@@ -1,0 +1,71 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mess Menu</title>
+</head>
+<body>
+    <h1>Weekly Mess Menu</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    {% for item in menu_items %}
+        <div>
+            <h3>
+                {{ item.menu_date }} -
+                {{ item.get_meal_type_display }}
+            </h3>
+
+            <p>{{ item.description }}</p>
+
+            {% if item.meal_datetime %}
+                <p>
+                    <strong>Meal Time:</strong>
+                    {{ item.meal_datetime|date:"d M Y, h:i A" }}
+                </p>
+            {% else %}
+                <p><strong>Meal time not scheduled yet.</strong></p>
+            {% endif %}
+
+            {% if item.id in opted_out_ids %}
+                <p>
+                    <strong>You have opted out of this meal.</strong>
+                </p>
+
+            {% elif item.meal_datetime %}
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <input
+                        type="hidden"
+                        name="menu_item_id"
+                        value="{{ item.id }}"
+                    >
+
+                    <button type="submit">Opt Out</button>
+                </form>
+
+                <p>
+                    <small>
+                        Opt-out requests must be submitted more than
+                        24 hours before the meal.
+                    </small>
+                </p>
+
+            {% else %}
+                <p>Opt-out unavailable until the meal is scheduled.</p>
+            {% endif %}
+        </div>
+
+        <hr>
+
+    {% empty %}
+        <p>No published menu available.</p>
+    {% endfor %}
+
+</body>
+</html>

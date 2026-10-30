@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 {% block title %}Fees & receipts · Hostel Management System{% endblock %}
 
@@ -9,10 +10,11 @@
       <li aria-current="page">Fees &amp; receipts</li>
     </ol>
   </nav>
+
   <div class="hm-page-header">
     <div>
       <h1>Fees &amp; receipts</h1>
-      <p class="hm-sub">Your invoices, payments and receipts.</p>
+      <p class="hm-sub">Your hostel fees, monthly mess bills, payments and receipts.</p>
     </div>
   </div>
 
@@ -20,26 +22,78 @@
     {% if invoices %}
       <div class="table-responsive">
         <table class="table hm-table hm-table-stack">
-          <thead><tr><th scope="col">Invoice</th><th scope="col">For</th><th scope="col">Amount</th><th scope="col">Due</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+          <thead>
+            <tr>
+              <th scope="col">Invoice</th>
+              <th scope="col">Invoice Type</th>
+              <th scope="col">Description</th>
+              <th scope="col">Amount</th>
+              <th scope="col">Due</th>
+              <th scope="col">Status</th>
+              <th scope="col"><span class="visually-hidden">Actions</span></th>
+            </tr>
+          </thead>
+
           <tbody>
             {% for invoice in invoices %}
               <tr>
-                <td class="hm-cell-primary"><a class="hm-row-link" href="{% url 'fees:invoice_detail' invoice.pk %}">{{ invoice.number }}</a></td>
-                <td data-label="For">{{ invoice.description }}</td>
-                <td data-label="Amount" class="hm-cell-num">{{ invoice.total|inr }}</td>
-                <td data-label="Due">{{ invoice.due_date|date:"j M Y" }}</td>
-                <td data-label="Status"><span class="hm-badge hm-badge--{{ invoice.status|lower }}">{{ invoice.get_status_display }}</span></td>
-                <td data-label="">{% if invoice.is_payable %}<a class="btn btn-sm btn-primary" href="{% url 'fees:invoice_detail' invoice.pk %}">Pay now</a>{% else %}<a class="btn btn-sm btn-outline-secondary" href="{% url 'fees:receipt_pdf' invoice.receipt.pk %}"><i class="bi bi-download" aria-hidden="true"></i> Receipt</a>{% endif %}</td>
+                <td class="hm-cell-primary">
+                  <a class="hm-row-link" href="{% url 'fees:invoice_detail' invoice.pk %}">
+                    {{ invoice.number }}
+                  </a>
+                </td>
+
+                <td data-label="Invoice Type">
+                  {% if invoice.kind == "MESS" %}
+                    <span class="hm-badge">Mess Bill</span>
+                  {% else %}
+                    <span class="hm-badge">Hostel Fees</span>
+                  {% endif %}
+                </td>
+
+                <td data-label="Description">
+                  {{ invoice.description }}
+                </td>
+
+                <td data-label="Amount" class="hm-cell-num">
+                  {{ invoice.total|inr }}
+                </td>
+
+                <td data-label="Due">
+                  {{ invoice.due_date|date:"j M Y" }}
+                </td>
+
+                <td data-label="Status">
+                  <span class="hm-badge hm-badge--{{ invoice.status|lower }}">
+                    {{ invoice.get_status_display }}
+                  </span>
+                </td>
+
+                <td data-label="">
+                  {% if invoice.is_payable %}
+                    <a class="btn btn-sm btn-primary"
+                       href="{% url 'fees:invoice_detail' invoice.pk %}">
+                      Pay now
+                    </a>
+                  {% else %}
+                    <a class="btn btn-sm btn-outline-secondary"
+                       href="{% url 'fees:receipt_pdf' invoice.receipt.pk %}">
+                      <i class="bi bi-download" aria-hidden="true"></i>
+                      Receipt
+                    </a>
+                  {% endif %}
+                </td>
               </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
+
     {% else %}
       <div class="hm-empty">
         <i class="bi bi-receipt" aria-hidden="true"></i>
         <h3>No invoices yet</h3>
-        <p>Your hostel fee invoice is raised as soon as the warden allocates your bed.</p>
+        <p>Your hostel and mess invoices will appear here when they are generated.</p>
       </div>
     {% endif %}
   </section>

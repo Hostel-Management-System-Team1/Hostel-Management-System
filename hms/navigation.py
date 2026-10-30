@@ -1,11 +1,4 @@
-
-"""Sidebar navigation per role (SRS 2.3), rendered by templates/base.html.
-
-Every item links somewhere. Items whose screen is not built yet have
-url_name=None and open a "coming in Sprint N" page for their backlog issue
-(hms.views.module_page). When a feature lands, set its url_name to the real
-view and the sidebar, dashboard cards and breadcrumbs pick it up.
-"""
+"""Sidebar navigation per role (SRS 2.3)."""
 
 from django.urls import reverse
 from django.utils.text import slugify
@@ -71,7 +64,7 @@ NAV = {
             item(
                 "Meals",
                 "bi-cup-hot",
-                sprint=2,
+                "mess:home",
                 hint="Menu and meal opt-outs",
                 issue=10,
             ),
@@ -199,7 +192,7 @@ NAV = {
             item(
                 "Weekly menu",
                 "bi-calendar-week",
-                sprint=2,
+                "mess:home",
                 hint="Publish the menu",
                 issue=10,
             ),
@@ -215,7 +208,6 @@ NAV = {
 }
 
 
-# Hostel Administrators work in the admin site (hms/admin_site.py).
 ADMIN_NAV = [
     ("Overview", [
         item("Dashboard", "bi-grid-1x2", "admin:index"),
@@ -369,7 +361,7 @@ def initials(user):
 
 
 def navigation(request):
-    """Provide sidebar groups and avatar initials for signed-in users."""
+    """Provide navigation groups and avatar initials for signed-in users."""
     user = getattr(request, "user", None)
 
     if not user or not user.is_authenticated:
