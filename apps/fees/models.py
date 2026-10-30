@@ -65,6 +65,9 @@ class Invoice(models.Model):
     status = models.CharField(max_length=8, choices=Status.choices, default=Status.UNPAID)
     total = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     paid_at = models.DateTimeField(null=True, blank=True)
+    reminder_sent_at = models.DateTimeField(
+        null=True, blank=True, help_text="When the overdue reminder was successfully dispatched."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

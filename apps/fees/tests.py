@@ -1,8 +1,9 @@
 import time
-from datetime import timedelta
+from datetime import date, timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
@@ -466,6 +467,90 @@ class FeeAdminTests(TestCase):
         self.assertContains(response, "Fee structure")
         self.assertContains(response, reverse("admin:fees_invoice_changelist"))
         make_block()
+
+
+@override_settings(
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+    DEFAULT_FROM_EMAIL="hostel-management@example.edu",
+)
+class OverdueInvoiceTests(TestCase):
+    """TC-FEE-04 / HMS-F-013: overdue flags and resident/guardian reminders."""
+
+    def setUp(self):
+        User.objects.create_user(username="warden0", password=PASSWORD, role=R.WARDEN)
+        self.allocation = allocated_resident("r1", room=make_room())
+        self.invoice = Invoice.objects.get(allocation=self.allocation)
+        self.today = date(2026, 10, 29)
+
+    def test_invoice_is_not_overdue_on_its_due_date(self):
+        self.invoice.due_date = self.today
+        self.invoice.save(update_fields=["due_date"])
+
+        result = services.process_overdue_invoices(today=self.today)
+
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.status, Invoice.Status.UNPAID)
+        self.assertEqual(result["marked_overdue"], 0)
+        self.assertEqual(mail.outbox, [])
+
+    def test_past_due_invoice_is_flagged_and_reminder_goes_to_resident_and_guardian(self):
+        self.invoice.due_date = self.today - timedelta(days=1)
+        self.invoice.save(update_fields=["due_date"])
+
+        result = services.process_overdue_invoices(today=self.today)
+
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.status, Invoice.Status.OVERDUE)
+        self.assertIsNotNone(self.invoice.reminder_sent_at)
+        self.assertEqual(result["marked_overdue"], 1)
+        self.assertEqual(result["reminders_sent"], 1)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["aarav@example.edu"])
+        self.assertEqual(mail.outbox[0].bcc, ["rakesh@example.com"])
+        self.assertIn(self.invoice.number, mail.outbox[0].subject)
+        self.assertIn(str(self.invoice.total), mail.outbox[0].body)
+
+    def test_reminder_is_not_sent_twice_on_later_runs(self):
+        self.invoice.due_date = self.today - timedelta(days=1)
+        self.invoice.save(update_fields=["due_date"])
+
+        services.process_overdue_invoices(today=self.today)
+        result = services.process_overdue_invoices(today=self.today + timedelta(days=1))
+
+        self.assertEqual(result["reminders_sent"], 0)
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_paid_invoice_is_never_marked_overdue_or_reminded(self):
+        self.invoice.status = Invoice.Status.PAID
+        self.invoice.due_date = self.today - timedelta(days=1)
+        self.invoice.save(update_fields=["status", "due_date"])
+
+        result = services.process_overdue_invoices(today=self.today)
+
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.status, Invoice.Status.PAID)
+        self.assertEqual(result["marked_overdue"], 0)
+        self.assertEqual(mail.outbox, [])
+
+    def test_failed_email_is_left_pending_for_retry(self):
+        from unittest.mock import patch
+
+        self.invoice.due_date = self.today - timedelta(days=1)
+        self.invoice.save(update_fields=["due_date"])
+
+        with patch("apps.fees.services.EmailMessage.send", side_effect=RuntimeError("SMTP down")):
+            result = services.process_overdue_invoices(today=self.today)
+
+        self.invoice.refresh_from_db()
+        self.assertEqual(self.invoice.status, Invoice.Status.OVERDUE)
+        self.assertIsNone(self.invoice.reminder_sent_at)
+        self.assertEqual(result["reminders_failed"], 1)
+
+        result = services.process_overdue_invoices(today=self.today)
+        self.invoice.refresh_from_db()
+        self.assertIsNotNone(self.invoice.reminder_sent_at)
+        self.assertEqual(result["reminders_sent"], 1)
+
 
 
 class CommandTests(TestCase):

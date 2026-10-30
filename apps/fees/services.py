@@ -5,6 +5,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.mail import EmailMessage
 from django.db import transaction
 from django.utils import timezone
 
@@ -149,3 +150,97 @@ def abandon_stale_payments(minutes=30):
     return Payment.objects.filter(
         status=Payment.Status.INITIATED, created_at__lt=cutoff
     ).update(status=Payment.Status.ABANDONED, completed_at=timezone.now())
+
+
+def _send_overdue_reminder(invoice):
+    """Send one overdue notice to the resident and, when available, their guardian."""
+    application = None
+    if invoice.allocation_id:
+        application = invoice.allocation.application
+    else:
+        # Mess invoices may not be linked to a hostel allocation. Use the resident's
+        # most recently submitted application to obtain their contact and guardian details.
+        application = invoice.resident.applications.order_by("-submitted_at").first()
+
+    resident_email = (
+        getattr(application, "email", "") or invoice.resident.email
+    ).strip()
+    guardian_email = (getattr(application, "guardian_email", "") or "").strip()
+
+    # Prefer the resident in To and the guardian in BCC so their email addresses are not
+    # disclosed to one another. If only one address is available, send to that address.
+    to = [resident_email] if resident_email else []
+    bcc = [guardian_email] if resident_email and guardian_email else []
+    if not to and guardian_email:
+        to = [guardian_email]
+    if not to:
+        logger.warning(
+            "Cannot send overdue reminder for invoice %s: no resident or guardian email",
+            invoice.number,
+        )
+        return False
+
+    subject = f"Overdue hostel fee reminder — {invoice.number}"
+    resident_name = (
+        getattr(application, "full_name", "")
+        or invoice.resident.get_full_name()
+        or invoice.resident.username
+    )
+    body = (
+        f"Dear {resident_name},\n\n"
+        f"Our records show that invoice {invoice.number} ({invoice.description}) is overdue.\n"
+        f"Amount due: ₹{invoice.total}\n"
+        f"Due date: {invoice.due_date:%d %b %Y}\n\n"
+        "Please sign in to the Hostel Management System to review the invoice and "
+        "complete payment.\n\n"
+        "If you have already paid, please contact the hostel office with your payment details.\n\n"
+        "Regards,\nHostel Management System"
+    )
+    message = EmailMessage(
+        subject=subject, body=body, from_email=settings.DEFAULT_FROM_EMAIL, to=to, bcc=bcc
+    )
+    return message.send(fail_silently=False) == 1
+
+
+def process_overdue_invoices(today=None):
+    """Mark past-due unpaid invoices Overdue and send each one reminder at most once.
+
+    The command invoking this service should be scheduled for 00:00 daily. Using
+    ``due_date__lt=today`` means an invoice is not overdue on its due date; it becomes
+    overdue on the following calendar day, as required by HMS-F-013.
+    """
+    today = today or timezone.localdate()
+    overdue_candidates = Invoice.objects.filter(
+        due_date__lt=today, status=Invoice.Status.UNPAID
+    )
+    marked_overdue = overdue_candidates.update(status=Invoice.Status.OVERDUE)
+
+    reminders_sent = 0
+    reminders_failed = 0
+    reminders_skipped = 0
+    pending = Invoice.objects.filter(
+        due_date__lt=today, status=Invoice.Status.OVERDUE, reminder_sent_at__isnull=True
+    ).select_related(
+        "resident", "allocation__application"
+    ).order_by("pk")
+
+    for invoice in pending:
+        try:
+            if _send_overdue_reminder(invoice):
+                invoice.reminder_sent_at = timezone.now()
+                invoice.save(update_fields=["reminder_sent_at"])
+                reminders_sent += 1
+            else:
+                reminders_skipped += 1
+        except Exception:
+            # One provider failure should not prevent reminders for other residents. Leave
+            # reminder_sent_at empty so the next scheduled run can retry this invoice.
+            logger.exception("Failed to send overdue reminder for invoice %s", invoice.number)
+            reminders_failed += 1
+
+    return {
+        "marked_overdue": marked_overdue,
+        "reminders_sent": reminders_sent,
+        "reminders_failed": reminders_failed,
+        "reminders_skipped": reminders_skipped,
+    }

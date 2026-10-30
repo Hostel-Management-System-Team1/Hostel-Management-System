@@ -11,6 +11,18 @@ from pathlib import Path
 
 from django.contrib.messages import constants as messages
 
+# Email defaults to the console in development; configure SMTP through environment variables
+# in deployment. Secrets belong in the untracked .env file, never in source control.
+EMAIL_BACKEND = os.environ.get(
+    "EMAIL_BACKEND", "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "localhost")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").strip().lower() in ("1", "true", "yes", "on")
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "hostel-management@localhost")
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
