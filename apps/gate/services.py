@@ -1,7 +1,11 @@
 
 """Gate movement recording and processing (HMS-F-020)."""
 
-from django.core.exceptions import ValidationError
+import logging
+from datetime import datetime, timedelta
+
+from django.conf import settings
+from django.core.mail import EmailMessage
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -9,7 +13,11 @@ from apps.accounts.models import User
 from apps.admissions.models import Allocation
 from apps.audit import service as audit
 
-from .models import GateMovement
+from .models import (
+    CurfewAlert,
+    CurfewConfiguration,
+    GateMovement,
+)
 
 
 class InvalidGateMovement(Exception):
@@ -83,19 +91,6 @@ def record_movement(
     return movement
 
 
-import logging
-from datetime import datetime, timedelta
-
-from django.conf import settings
-from django.core.mail import EmailMessage
-from django.db import transaction
-from django.utils import timezone
-
-from apps.accounts.models import User
-from apps.admissions.models import Allocation
-
-from .models import CurfewAlert, CurfewConfiguration, GateMovement
-
 logger = logging.getLogger(__name__)
 
 CURFEW_GRACE_MINUTES = 30
@@ -165,13 +160,12 @@ def _notify_wardens(alert):
     return message.send(fail_silently=False) == 1
 
 
-
 def process_curfew_alerts(now=None):
     """Detect residents still outside after curfew and notify wardens.
 
     Checks both today's and yesterday's curfew so overnight violations
     are not missed after midnight. The scheduled command should run
-    every minute to meet the five-minute notification requirement.
+    every five minutes to meet the notification requirement.
     """
     now = timezone.localtime(now or timezone.now())
     today = now.date()

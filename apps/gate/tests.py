@@ -1,22 +1,17 @@
 
-from django.contrib.auth import get_user_model
-from django.test import TestCase
-from django.utils import timezone
-from .models import GateMovement
-from . import services
-from django.test import override_settings
-from rest_framework.test import APIClient
-
-from apps.admissions.testutils import allocated_resident
-
-from . import services
-from .models import GateMovement
 from datetime import datetime, time, timedelta
 from unittest.mock import patch
 
+from django.contrib.auth import get_user_model
+from django.test import TestCase, override_settings
 from django.utils import timezone
+from rest_framework.test import APIClient
 
-from apps.gate.models import CurfewConfiguration, CurfewAlert
+from apps.admissions.testutils import allocated_resident
+from apps.gate.models import CurfewAlert, CurfewConfiguration
+
+from . import services
+from .models import GateMovement
 
 User = get_user_model()
 
