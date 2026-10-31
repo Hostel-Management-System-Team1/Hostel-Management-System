@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Complaints</title>
+</head>
+<body>
+    <h1>My Complaints</h1>
+
+    <p>
+        <a href="{% url 'complaints:submit_complaint' %}">
+            Submit New Complaint
+        </a>
+    </p>
+
+    {% for complaint in complaints %}
+        <hr>
+
+        <h3>{{ complaint.title }}</h3>
+
+        <p>Category: {{ complaint.get_category_display }}</p>
+        <p>Priority: {{ complaint.get_priority_display }}</p>
+        <p>Status: {{ complaint.get_status_display }}</p>
+        <p>Description: {{ complaint.description }}</p>
+        <p>Submitted: {{ complaint.created_at }}</p>
+
+        {% if complaint.photo %}
+            <img src="{{ complaint.photo.url }}" alt="Complaint photo" width="200">
+        {% endif %}
+
+        {% if complaint.status == "RESOLVED" and not complaint.resolution_confirmed %}
+            <form method="POST" action="{% url 'complaints:confirm_resolution' complaint.id %}">
+                {% csrf_token %}
+                <button type="submit">Confirm Resolution</button>
+            </form>
+        {% endif %}
+
+    {% empty %}
+        <p>You have not submitted any complaints yet.</p>
+    {% endfor %}
+</body>
+</html>

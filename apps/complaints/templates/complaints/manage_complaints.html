@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Complaints</title>
+</head>
+<body>
+    <h1>Manage Hostel Complaints</h1>
+
+    {% for complaint in complaints %}
+        <hr>
+
+        <h3>{{ complaint.title }}</h3>
+        <p>Resident: {{ complaint.created_by }}</p>
+        <p>Category: {{ complaint.get_category_display }}</p>
+        <p>Priority: {{ complaint.get_priority_display }}</p>
+        <p>Status: {{ complaint.get_status_display }}</p>
+        <p>Assigned staff: {{ complaint.assigned_to|default:"Not assigned" }}</p>
+        <p>SLA overdue: {{ complaint.is_sla_overdue|yesno:"Yes,No" }}</p>
+
+        {% if complaint.photo %}
+            <img src="{{ complaint.photo.url }}" alt="Complaint photo" width="200">
+        {% endif %}
+
+        <h4>Assign Maintenance Staff</h4>
+
+        <form method="POST" action="{% url 'complaints:assign_complaint' complaint.id %}">
+            {% csrf_token %}
+
+            <select name="assigned_to" required>
+                <option value="">Select staff</option>
+                {% for staff in maintenance_staff %}
+                    <option value="{{ staff.id }}"
+                        {% if complaint.assigned_to_id == staff.id %}selected{% endif %}>
+                        {{ staff.username }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">Assign</button>
+        </form>
+
+        <h4>Update Status</h4>
+
+        <form method="POST" action="{% url 'complaints:update_complaint_status' complaint.id %}">
+            {% csrf_token %}
+
+            <select name="status">
+                <option value="IN_PROGRESS">In progress</option>
+                <option value="RESOLVED">Resolved</option>
+            </select>
+
+            <button type="submit">Update Status</button>
+        </form>
+
+    {% empty %}
+        <p>No complaints have been submitted.</p>
+    {% endfor %}
+</body>
+</html>
