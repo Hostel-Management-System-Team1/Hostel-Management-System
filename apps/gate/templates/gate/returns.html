@@ -1,0 +1,47 @@
+
+{% extends "base.html" %}
+{% block title %}Record Resident Returns{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="h3 mb-3">Record resident returns</h1>
+
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Resident</th>
+          <th>Room</th>
+          <th>Destination</th>
+          <th>Expected return</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in outpasses %}
+        <tr>
+          <td>{{ item.resident.get_full_name|default:item.resident.username }}</td>
+          <td>{{ item.allocation.bed.room }}</td>
+          <td>{{ item.destination }}</td>
+          <td>{{ item.expected_return_at }}</td>
+          <td>
+            <form method="post">
+              {% csrf_token %}
+              <input type="hidden" name="outpass_id" value="{{ item.pk }}">
+              <button class="btn btn-sm btn-success" type="submit">
+                Record return
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-muted">
+            No approved outpasses are awaiting return.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

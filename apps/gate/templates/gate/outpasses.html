@@ -1,0 +1,59 @@
+
+{% extends "base.html" %}
+{% block title %}My Outpasses{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="h3 mb-3">My outpasses</h1>
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h5">Request an outpass</h2>
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label" for="destination">Destination</label>
+          <input class="form-control" id="destination" name="destination"
+                 maxlength="200" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="contact_number">Contact number</label>
+          <input class="form-control" id="contact_number" name="contact_number"
+                 maxlength="16" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="expected_return_at">
+            Expected return date and time
+          </label>
+          <input class="form-control" type="datetime-local"
+                 id="expected_return_at" name="expected_return_at" required>
+        </div>
+        <button class="btn btn-primary" type="submit">Submit request</button>
+      </form>
+    </div>
+  </div>
+
+  <h2 class="h5 mb-3">Request history</h2>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Destination</th><th>Expected return</th>
+          <th>Status</th><th>Decision</th><th>Actual return</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in outpasses %}
+        <tr>
+          <td>{{ item.destination }}</td>
+          <td>{{ item.expected_return_at }}</td>
+          <td>{{ item.get_status_display }}</td>
+          <td>{{ item.decision_reason|default:"—" }}</td>
+          <td>{{ item.returned_at|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-muted">No outpass requests yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
