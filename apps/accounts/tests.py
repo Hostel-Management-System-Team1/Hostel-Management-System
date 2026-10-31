@@ -75,14 +75,15 @@ class NavigationTests(TestCase):
         User.objects.create_user(username="u1", password=PASSWORD, role=role, **extra)
         login(self.client, "u1")
 
-    def test_unbuilt_item_opens_its_sprint_page(self):
+    def test_built_outpass_item_opens_its_page(self):
         self.login_as(User.Role.RESIDENT)
-        response = self.client.get(reverse("module", args=["outpass"]))
-        self.assertContains(response, "Coming soon")
-        self.assertContains(response, "Sprint 2")
-        self.assertContains(response, "issue #9")
-        self.assertContains(response, 'aria-current="page"')
+        response = self.client.get(reverse("gate:outpasses"))
 
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "My outpasses")
+        self.assertContains(response, "Request an outpass")
+        self.assertContains(response, 'aria-current="page"')
+        
     def test_role_cannot_open_another_roles_page(self):
         self.login_as(User.Role.WARDEN)
         response = self.client.get(reverse("module", args=["outpass"]))
