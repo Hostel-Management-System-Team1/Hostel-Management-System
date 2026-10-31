@@ -1,0 +1,21 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Visitor Override</title>
+</head>
+<body>
+    <h1>Warden Visitor Override</h1>
+
+    <p>Visitor: {{ visitor.visitor_name }}</p>
+    <p>Resident: {{ visitor.resident }}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <label for="reason">Reason for allowing this visitor:</label>
+        <textarea id="reason" name="reason" required></textarea>
+        <button type="submit">Approve Override</button>
+    </form>
+
+    <a href="{% url 'visitors:list' %}">Back to Visitor Records</a>
+</body>
+</html>
