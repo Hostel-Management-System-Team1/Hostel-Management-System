@@ -50,6 +50,10 @@ class BackupDatabaseCommandTests(SimpleTestCase):
                     "apps.audit.management.commands.backup_database.connections"
                 ) as connections,
                 patch(
+                    "apps.audit.management.commands.backup_database.shutil.which",
+                    return_value=str(fake_dump),
+                ),
+                patch(
                     "apps.audit.management.commands.backup_database.subprocess.run"
                 ) as run,
             ):
