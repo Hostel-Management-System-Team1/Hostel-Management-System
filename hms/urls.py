@@ -19,6 +19,8 @@ urlpatterns = [
     path("api/v1/", include("hms.api_urls")),
 
     path("mess/", include("apps.mess.urls")),
+    path("complaints/", include("apps.complaints.urls")),
+
     path("reports/", include("apps.reporting.urls")),
 
     path("admin/", admin.site.urls),
