@@ -54,7 +54,10 @@ class GateMovement(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.resident} - {self.get_direction_display()} at {self.occurred_at}"
+        return (
+            f"{self.resident} - "
+            f"{self.get_direction_display()} at {self.occurred_at}"
+        )
 
 
 class CurfewConfiguration(models.Model):
@@ -100,3 +103,104 @@ class CurfewAlert(models.Model):
 
     def __str__(self):
         return f"Curfew alert: {self.resident} ({self.curfew_date})"
+
+
+class OutpassRequest(models.Model):
+    """Resident leave request and warden decision (HMS-F-021)."""
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        APPROVED = "APPROVED", "Approved"
+        REJECTED = "REJECTED", "Rejected"
+
+    resident = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="outpass_requests",
+    )
+    allocation = models.ForeignKey(
+        "admissions.Allocation",
+        on_delete=models.PROTECT,
+        related_name="outpass_requests",
+    )
+    destination = models.CharField(max_length=200)
+    contact_number = models.CharField(max_length=16)
+    expected_return_at = models.DateTimeField()
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    decided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="decided_outpasses",
+        null=True,
+        blank=True,
+    )
+    decided_at = models.DateTimeField(null=True, blank=True)
+    decision_reason = models.CharField(max_length=300, blank=True)
+    returned_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-requested_at"]
+        indexes = [
+            models.Index(fields=["status", "expected_return_at"]),
+            models.Index(fields=["resident", "status"]),
+        ]
+
+    def __str__(self):
+        return f"Outpass #{self.pk} - {self.resident} ({self.status})"
+
+
+class NightAttendance(models.Model):
+    """Room-wise daily night attendance (HMS-F-023)."""
+
+    class Status(models.TextChoices):
+        PRESENT = "PRESENT", "Present"
+        ON_LEAVE = "ON_LEAVE", "On-leave"
+        ABSENT = "ABSENT", "Absent"
+
+    resident = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="night_attendance",
+    )
+    room = models.ForeignKey(
+        "admissions.Room",
+        on_delete=models.PROTECT,
+        related_name="night_attendance",
+    )
+    attendance_date = models.DateField()
+    status = models.CharField(max_length=10, choices=Status.choices)
+    recorded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="recorded_night_attendance",
+        null=True,
+        blank=True,
+    )
+    recorded_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = [
+            "room__block__name",
+            "room__number",
+            "resident__username",
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["resident", "attendance_date"],
+                name="unique_resident_night_attendance",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["attendance_date", "room"]),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.resident} - {self.attendance_date} "
+            f"({self.get_status_display()})"
+        )

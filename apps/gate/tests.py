@@ -3,18 +3,25 @@ from datetime import datetime, time, timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.core import mail
+from django.core.exceptions import PermissionDenied
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.admissions.testutils import allocated_resident
-from apps.gate.models import CurfewAlert, CurfewConfiguration
 
 from . import services
-from .models import GateMovement
+from .models import (
+    CurfewAlert,
+    CurfewConfiguration,
+    GateMovement,
+    NightAttendance,
+    OutpassRequest,
+)
 
 User = get_user_model()
-
+R = User.Role
 
 class GateMovementServiceTests(TestCase):
     def setUp(self):
@@ -348,3 +355,175 @@ class GateAPITests(TestCase):
         response = self.client.get("/api/v1/gate/curfew-alerts")
 
         self.assertEqual(response.status_code, 403)
+
+@override_settings(
+    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
+)
+class OutpassAndAttendanceTests(TestCase):
+    def setUp(self):
+        self.allocation = allocated_resident("outpass_resident")
+        self.resident = self.allocation.resident
+        self.application = self.allocation.application
+        self.application.guardian_email = "guardian@example.com"
+        self.application.guardian_name = "Resident Guardian"
+        self.application.save(
+            update_fields=["guardian_email", "guardian_name"]
+        )
+
+        self.warden = User.objects.create_user(
+            username="outpass_warden",
+            password="test-password",
+            role=User.Role.WARDEN,
+        )
+        self.guard = User.objects.create_user(
+            username="outpass_guard",
+            password="test-password",
+            role=User.Role.SECURITY_GUARD,
+        )
+
+        self.expected_return = timezone.now() + timedelta(days=1)
+
+    def create_outpass(self):
+        return services.submit_outpass(
+            resident=self.resident,
+            destination="Bengaluru",
+            contact_number="9876543210",
+            expected_return_at=self.expected_return,
+        )
+
+    def test_resident_can_submit_pending_outpass(self):
+        outpass = self.create_outpass()
+
+        self.assertEqual(outpass.status, OutpassRequest.Status.PENDING)
+        self.assertEqual(outpass.destination, "Bengaluru")
+        self.assertEqual(outpass.resident, self.resident)
+
+    def test_non_resident_cannot_submit_outpass(self):
+        with self.assertRaises(services.OutpassError):
+            services.submit_outpass(
+                resident=self.warden,
+                destination="Bengaluru",
+                contact_number="9876543210",
+                expected_return_at=self.expected_return,
+            )
+
+    def test_past_return_time_is_rejected(self):
+        with self.assertRaises(services.OutpassError):
+            services.submit_outpass(
+                resident=self.resident,
+                destination="Bengaluru",
+                contact_number="9876543210",
+                expected_return_at=timezone.now() - timedelta(hours=1),
+            )
+
+    def test_warden_approval_notifies_guardian(self):
+        outpass = self.create_outpass()
+
+        decided = services.decide_outpass(
+            outpass.pk,
+            self.warden,
+            OutpassRequest.Status.APPROVED,
+            "Approved for family visit.",
+        )
+
+        self.assertEqual(decided.status, OutpassRequest.Status.APPROVED)
+        self.assertEqual(decided.decided_by, self.warden)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ["guardian@example.com"])
+
+    def test_rejection_does_not_send_approval_email(self):
+        outpass = self.create_outpass()
+
+        decided = services.decide_outpass(
+            outpass.pk,
+            self.warden,
+            OutpassRequest.Status.REJECTED,
+            "Insufficient details.",
+        )
+
+        self.assertEqual(decided.status, OutpassRequest.Status.REJECTED)
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_second_decision_is_rejected(self):
+        outpass = self.create_outpass()
+
+        services.decide_outpass(
+            outpass.pk,
+            self.warden,
+            OutpassRequest.Status.APPROVED,
+        )
+
+        with self.assertRaises(services.OutpassError):
+            services.decide_outpass(
+                outpass.pk,
+                self.warden,
+                OutpassRequest.Status.REJECTED,
+            )
+
+    def test_non_warden_cannot_decide_outpass(self):
+        outpass = self.create_outpass()
+
+        with self.assertRaises(PermissionDenied):
+            services.decide_outpass(
+                outpass.pk,
+                self.guard,
+                OutpassRequest.Status.APPROVED,
+            )
+
+    def test_return_records_gate_entry_and_notifies_guardian(self):
+        outpass = self.create_outpass()
+        services.decide_outpass(
+            outpass.pk,
+            self.warden,
+            OutpassRequest.Status.APPROVED,
+        )
+        mail.outbox.clear()
+
+        returned = services.record_outpass_return(outpass.pk, self.guard)
+
+        self.assertIsNotNone(returned.returned_at)
+        self.assertEqual(
+            GateMovement.objects.filter(
+                resident=self.resident,
+                direction=GateMovement.Direction.IN,
+                recorded_by=self.guard,
+            ).count(),
+            1,
+        )
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("returned", mail.outbox[0].subject.lower())
+
+    def test_return_cannot_be_recorded_twice(self):
+        outpass = self.create_outpass()
+        services.decide_outpass(
+            outpass.pk,
+            self.warden,
+            OutpassRequest.Status.APPROVED,
+        )
+        services.record_outpass_return(outpass.pk, self.guard)
+
+        with self.assertRaises(services.OutpassError):
+            services.record_outpass_return(outpass.pk, self.guard)
+
+    def test_attendance_is_generated_for_active_resident(self):
+        CurfewConfiguration.objects.create(
+            block=self.allocation.bed.room.block,
+            curfew_time=timezone.localtime().time().replace(
+                hour=22, minute=0, second=0, microsecond=0
+            ),
+        )
+
+        attendance_date = timezone.localdate()
+        result = services.generate_night_attendance(attendance_date)
+
+        self.assertEqual(result["created"], 1)
+        attendance = NightAttendance.objects.get(
+            resident=self.resident,
+            attendance_date=attendance_date,
+        )
+        self.assertEqual(attendance.room, self.allocation.bed.room)
+        self.assertIn(
+            attendance.status,
+            NightAttendance.Status.values,
+        )
+

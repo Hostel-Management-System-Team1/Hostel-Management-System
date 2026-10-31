@@ -57,6 +57,7 @@ NAV = {
             item(
                 "Outpass",
                 "bi-box-arrow-up-right",
+                "gate:outpasses",
                 sprint=2,
                 hint="Leave the hostel overnight",
                 issue=9,
@@ -110,6 +111,7 @@ NAV = {
             item(
                 "Outpasses",
                 "bi-box-arrow-up-right",
+                "gate:warden_outpasses",
                 sprint=2,
                 hint="Approve or reject requests",
                 issue=9,
@@ -117,6 +119,7 @@ NAV = {
             item(
                 "Night attendance",
                 "bi-moon",
+                "gate:attendance",
                 sprint=2,
                 hint="Daily register per room",
                 issue=9,
@@ -169,6 +172,13 @@ NAV = {
                 sprint=2,
                 hint="Register visitors",
                 issue=12,
+            ),
+            item(
+                "Resident returns",
+                "bi-box-arrow-in-left",
+                "gate:returns",
+                hint="Record residents returning from approved outpasses",
+                issue=9,
             ),
         ]),
     ],

@@ -1,0 +1,45 @@
+
+{% extends "base.html" %}
+{% block title %}Night attendance{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="h3 mb-3">Night attendance register</h1>
+
+  <form method="post" class="card card-body mb-4">
+    {% csrf_token %}
+    <label class="form-label" for="attendance_date">Attendance date</label>
+    <input class="form-control mb-3" type="date" id="attendance_date"
+           name="attendance_date" value="{{ selected_date }}" required>
+    <button class="btn btn-primary" type="submit">Generate register</button>
+  </form>
+
+  <form method="get" class="mb-3">
+    <label class="form-label" for="date">View register for</label>
+    <input class="form-control" type="date" id="date" name="date"
+           value="{{ selected_date }}">
+    <button class="btn btn-outline-primary mt-2" type="submit">View</button>
+  </form>
+
+  <div class="table-responsive">
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Block</th><th>Room</th><th>Resident</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in records %}
+        <tr>
+          <td>{{ record.room.block.name }}</td>
+          <td>{{ record.room.number }}</td>
+          <td>{{ record.resident.get_full_name|default:record.resident.username }}</td>
+          <td>{{ record.get_status_display }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="4" class="text-muted">No attendance register for this date.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

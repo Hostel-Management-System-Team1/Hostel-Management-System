@@ -1,0 +1,48 @@
+
+{% extends "base.html" %}
+{% block title %}Outpass approvals{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="h3 mb-3">Outpass requests</h1>
+  <div class="table-responsive">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>Resident</th><th>Room</th><th>Destination</th>
+          <th>Contact</th><th>Expected return</th><th>Status</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in outpasses %}
+        <tr>
+          <td>{{ item.resident.get_full_name|default:item.resident.username }}</td>
+          <td>{{ item.allocation.bed.room }}</td>
+          <td>{{ item.destination }}</td>
+          <td>{{ item.contact_number }}</td>
+          <td>{{ item.expected_return_at }}</td>
+          <td>{{ item.get_status_display }}</td>
+          <td>
+            {% if item.status == "PENDING" %}
+            <form method="post" class="d-flex flex-column gap-2">
+              {% csrf_token %}
+              <input type="hidden" name="outpass_id" value="{{ item.pk }}">
+              <input class="form-control form-control-sm" name="reason"
+                     maxlength="300" placeholder="Decision reason">
+              <button class="btn btn-sm btn-success" name="decision"
+                      value="APPROVED">Approve</button>
+              <button class="btn btn-sm btn-danger" name="decision"
+                      value="REJECTED">Reject</button>
+            </form>
+            {% else %}
+              {{ item.decision_reason|default:"—" }}
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-muted">No outpass requests.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
