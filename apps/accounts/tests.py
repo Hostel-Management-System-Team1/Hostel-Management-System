@@ -83,7 +83,7 @@ class NavigationTests(TestCase):
         self.assertContains(response, "My outpasses")
         self.assertContains(response, "Request an outpass")
         self.assertContains(response, 'aria-current="page"')
-        
+
     def test_role_cannot_open_another_roles_page(self):
         self.login_as(User.Role.WARDEN)
         response = self.client.get(reverse("module", args=["outpass"]))
