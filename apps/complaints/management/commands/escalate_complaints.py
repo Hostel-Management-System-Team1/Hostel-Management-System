@@ -6,7 +6,6 @@ from django.utils import timezone
 
 from apps.complaints.models import Complaint
 
-
 logger = logging.getLogger(__name__)
 
 

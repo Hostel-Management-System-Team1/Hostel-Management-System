@@ -8,7 +8,6 @@ from django.utils import timezone
 
 from .models import Complaint
 
-
 User = get_user_model()
 
 
