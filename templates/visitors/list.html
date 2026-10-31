@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Visitor Records</title>
+</head>
+<body>
+    <h1>Visitor Records</h1>
+
+    {% if messages %}
+        {% for message in messages %}
+            <p>{{ message }}</p>
+        {% endfor %}
+    {% endif %}
+
+    <a href="{% url 'visitors:register' %}">Register New Visitor</a>
+
+    <table border="1" cellpadding="8">
+        <tr>
+            <th>Visitor</th>
+            <th>Phone</th>
+            <th>Resident</th>
+            <th>Purpose</th>
+            <th>Entry</th>
+            <th>Exit</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+
+        {% for visitor in visitors %}
+        <tr>
+            <td>{{ visitor.visitor_name }}</td>
+            <td>{{ visitor.phone }}</td>
+            <td>{{ visitor.resident }}</td>
+            <td>{{ visitor.purpose }}</td>
+            <td>{{ visitor.entry_time|default:"Not entered" }}</td>
+            <td>{{ visitor.exit_time|default:"Not exited" }}</td>
+            <td>{{ visitor.get_status_display }}</td>
+            <td>
+                {% if not visitor.entry_time and not visitor.exit_time %}
+                <form method="post" action="{% url 'visitors:entry' visitor.pk %}">
+                    {% csrf_token %}
+                    <button type="submit">Record Entry</button>
+                </form>
+                {% endif %}
+
+                {% if visitor.entry_time and not visitor.exit_time %}
+                <form method="post" action="{% url 'visitors:exit' visitor.pk %}">
+                    {% csrf_token %}
+                    <button type="submit">Record Exit</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8">No visitor records found.</td></tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

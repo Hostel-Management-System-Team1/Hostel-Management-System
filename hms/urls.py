@@ -1,4 +1,4 @@
-from django.conf import settings
+﻿from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
@@ -20,8 +20,11 @@ urlpatterns = [
 
     path("mess/", include("apps.mess.urls")),
     path("complaints/", include("apps.complaints.urls")),
+    path("visitors/", include("apps.visitors.urls")),
 
     path("reports/", include("apps.reporting.urls")),
     path("gate/", include("apps.gate.urls")),
     path("admin/", admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+
