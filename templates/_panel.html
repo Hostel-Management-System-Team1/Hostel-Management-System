@@ -1,5 +1,5 @@
 {# A dashboard panel built by hms/dashboard.py. #}
-<section class="hm-panel hm-panel--flush{% if panel.rows or panel.steps %} hm-panel--wide{% endif %}{% if panel.alert %} hm-panel--alert{% endif %}" aria-labelledby="{{ panel.id }}">
+<section class="hm-panel hm-panel--flush{% if panel.rows or panel.steps or not panel.facts %} hm-panel--wide{% endif %}{% if panel.alert %} hm-panel--alert{% endif %}" aria-labelledby="{{ panel.id }}">
   <div class="hm-panel__head">
     <h2 id="{{ panel.id }}">{{ panel.title }}</h2>
     {% if panel.link %}<a class="btn btn-sm btn-outline-secondary" href="{{ panel.link.1 }}">{{ panel.link.0 }}</a>{% endif %}

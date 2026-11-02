@@ -1,45 +1,64 @@
-
 {% extends "base.html" %}
-{% block title %}Night attendance{% endblock %}
+{% block title %}Night attendance · Hostel Management System{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-  <h1 class="h3 mb-3">Night attendance register</h1>
-
-  <form method="post" class="card card-body mb-4">
-    {% csrf_token %}
-    <label class="form-label" for="attendance_date">Attendance date</label>
-    <input class="form-control mb-3" type="date" id="attendance_date"
-           name="attendance_date" value="{{ selected_date }}" required>
-    <button class="btn btn-primary" type="submit">Generate register</button>
-  </form>
-
-  <form method="get" class="mb-3">
-    <label class="form-label" for="date">View register for</label>
-    <input class="form-control" type="date" id="date" name="date"
-           value="{{ selected_date }}">
-    <button class="btn btn-outline-primary mt-2" type="submit">View</button>
-  </form>
-
-  <div class="table-responsive">
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>Block</th><th>Room</th><th>Resident</th><th>Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for record in records %}
-        <tr>
-          <td>{{ record.room.block.name }}</td>
-          <td>{{ record.room.number }}</td>
-          <td>{{ record.resident.get_full_name|default:record.resident.username }}</td>
-          <td>{{ record.get_status_display }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="4" class="text-muted">No attendance register for this date.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>Residents</li>
+      <li aria-current="page">Night attendance</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Night attendance</h1>
+      <p class="hm-sub">Room by room: present from the gate log, on leave from approved outpasses, otherwise absent.</p>
+    </div>
+    <div class="hm-page-header__actions d-flex flex-wrap gap-2">
+      <form method="get" class="d-flex gap-2">
+        <label class="visually-hidden" for="date">Show the register for</label>
+        <input class="form-control" type="date" id="date" name="date" value="{{ selected_date }}">
+        <button class="btn btn-outline-secondary" type="submit">Show</button>
+      </form>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="attendance_date" value="{{ selected_date }}">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-arrow-repeat" aria-hidden="true"></i> Generate register</button>
+      </form>
+    </div>
   </div>
-</div>
+
+  {% if records %}
+    <section class="hm-stats hm-stats--3" aria-label="Summary">
+      <div class="hm-stat"><div class="hm-stat__label">Present</div><div class="hm-stat__value">{{ counts.PRESENT }}</div></div>
+      <div class="hm-stat"><div class="hm-stat__label">On leave</div><div class="hm-stat__value">{{ counts.ON_LEAVE }}</div></div>
+      <div class="hm-stat"><div class="hm-stat__label">Absent</div><div class="hm-stat__value">{{ counts.ABSENT }}</div>{% if counts.ABSENT %}<div class="hm-stat__note hm-stat__note--danger">Follow up</div>{% endif %}</div>
+    </section>
+  {% endif %}
+
+  <section class="hm-panel hm-panel--flush" aria-label="Register">
+    {% if records %}
+      <div class="table-responsive">
+        <table class="table hm-table hm-table-stack">
+          <thead><tr><th scope="col">Resident</th><th scope="col">Block</th><th scope="col">Room</th><th scope="col">Status</th></tr></thead>
+          <tbody>
+            {% for record in records %}
+              <tr>
+                <td class="hm-cell-primary"><strong>{{ record.resident.get_full_name|default:record.resident.username }}</strong></td>
+                <td data-label="Block">{{ record.room.block.name }}</td>
+                <td data-label="Room">{{ record.room.number }}</td>
+                <td data-label="Status"><span class="hm-badge hm-badge--{{ record.status|lower }}">{{ record.get_status_display }}</span></td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="hm-empty">
+        <i class="bi bi-moon" aria-hidden="true"></i>
+        <h3>No register for this night yet</h3>
+        <p>Generate it to mark every resident present, on leave or absent.</p>
+      </div>
+    {% endif %}
+  </section>
 {% endblock %}

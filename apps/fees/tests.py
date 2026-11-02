@@ -73,7 +73,9 @@ class InvoiceGenerationTests(TestCase):
 
     def test_no_fee_structure_means_no_invoice_but_the_allocation_stands(self):
         FeeHead.objects.filter(room_type="DOUBLE").delete()
-        allocation = allocated_resident("r1", room=make_room())
+        with self.assertLogs("apps.fees.services", "WARNING") as logs:
+            allocation = allocated_resident("r1", room=make_room())
+        self.assertIn("No fee structure for DOUBLE rooms", logs.output[0])
         self.assertEqual(allocation.status, "ACTIVE")
         self.assertFalse(Invoice.objects.exists())
 
@@ -538,7 +540,10 @@ class OverdueInvoiceTests(TestCase):
         self.invoice.due_date = self.today - timedelta(days=1)
         self.invoice.save(update_fields=["due_date"])
 
-        with patch("apps.fees.services.EmailMessage.send", side_effect=RuntimeError("SMTP down")):
+        with (
+            patch("apps.fees.services.EmailMessage.send", side_effect=RuntimeError("SMTP down")),
+            self.assertLogs("apps.fees.services", "ERROR"),
+        ):
             result = services.process_overdue_invoices(today=self.today)
 
         self.invoice.refresh_from_db()
@@ -575,7 +580,8 @@ class CommandTests(TestCase):
         User.objects.create_user(username="warden0", password=PASSWORD, role=R.WARDEN)
         saved = list(FeeHead.objects.filter(room_type="TRIPLE").values())
         FeeHead.objects.filter(room_type="TRIPLE").delete()
-        allocated_resident("r1", room=make_room(room_type="TRIPLE"))
+        with self.assertLogs("apps.fees.services", "WARNING"):
+            allocated_resident("r1", room=make_room(room_type="TRIPLE"))
         self.assertFalse(Invoice.objects.exists())
         FeeHead.objects.bulk_create([FeeHead(**row) for row in saved])
         out = StringIO()

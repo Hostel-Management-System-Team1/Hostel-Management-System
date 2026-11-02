@@ -1,61 +1,81 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Complaints</title>
-</head>
-<body>
-    <h1>Manage Hostel Complaints</h1>
+{% extends "base.html" %}
+{% block title %}Complaints · Hostel Management System{% endblock %}
 
-    {% for complaint in complaints %}
-        <hr>
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>{% if can_assign %}Operations{% else %}Work{% endif %}</li>
+      <li aria-current="page">Complaints</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>{% if can_assign %}Complaints{% else %}Complaints assigned to you{% endif %}</h1>
+      <p class="hm-sub">{% if can_assign %}Assign each complaint to maintenance staff. High priority is due in 48 hours, medium in 96; overdue ones are escalated.{% else %}Oldest first. Mark a complaint resolved when the work is done; the resident then confirms it.{% endif %}</p>
+    </div>
+  </div>
 
-        <h3>{{ complaint.title }}</h3>
-        <p>Resident: {{ complaint.created_by }}</p>
-        <p>Category: {{ complaint.get_category_display }}</p>
-        <p>Priority: {{ complaint.get_priority_display }}</p>
-        <p>Status: {{ complaint.get_status_display }}</p>
-        <p>Assigned staff: {{ complaint.assigned_to|default:"Not assigned" }}</p>
-        <p>SLA overdue: {{ complaint.is_sla_overdue|yesno:"Yes,No" }}</p>
-
-        {% if complaint.photo %}
-            <img src="{{ complaint.photo.url }}" alt="Complaint photo" width="200">
-        {% endif %}
-
-        <h4>Assign Maintenance Staff</h4>
-
-        <form method="POST" action="{% url 'complaints:assign_complaint' complaint.id %}">
-            {% csrf_token %}
-
-            <select name="assigned_to" required>
-                <option value="">Select staff</option>
-                {% for staff in maintenance_staff %}
-                    <option value="{{ staff.id }}"
-                        {% if complaint.assigned_to_id == staff.id %}selected{% endif %}>
-                        {{ staff.username }}
-                    </option>
-                {% endfor %}
-            </select>
-
-            <button type="submit">Assign</button>
-        </form>
-
-        <h4>Update Status</h4>
-
-        <form method="POST" action="{% url 'complaints:update_complaint_status' complaint.id %}">
-            {% csrf_token %}
-
-            <select name="status">
-                <option value="IN_PROGRESS">In progress</option>
-                <option value="RESOLVED">Resolved</option>
-            </select>
-
-            <button type="submit">Update Status</button>
-        </form>
-
-    {% empty %}
-        <p>No complaints have been submitted.</p>
+  <nav class="hm-tabs" aria-label="Filter by status">
+    {% for tab in tabs %}
+      <a class="hm-tab{% if tab.active %} is-active{% endif %}" href="?status={{ tab.value }}"{% if tab.active %} aria-current="page"{% endif %}>{{ tab.label }}<span class="hm-tab__count">{{ tab.count }}</span></a>
     {% endfor %}
-</body>
-</html>
+  </nav>
+
+  <section class="hm-panel hm-panel--flush" aria-label="Complaints">
+    {% if complaints %}
+      <div class="table-responsive">
+        <table class="table hm-table hm-table-stack">
+          <thead><tr><th scope="col">Complaint</th><th scope="col">Priority</th><th scope="col">Age</th><th scope="col">Status</th><th scope="col">Assigned to</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+          <tbody>
+            {% for complaint in complaints %}
+              <tr>
+                <td class="hm-cell-primary">
+                  <strong>{{ complaint.title }}</strong>
+                  <span class="hm-sub">#{{ complaint.pk }} · {{ complaint.get_category_display }} · {{ complaint.created_by.get_full_name|default:complaint.created_by.username }}{% if complaint.photo %} · <a href="{{ complaint.photo.url }}" target="_blank" rel="noopener">photo</a>{% endif %}</span>
+                  <span class="hm-sub">{{ complaint.description|truncatechars:90 }}</span>
+                </td>
+                <td data-label="Priority"><span class="hm-badge hm-badge--{{ complaint.priority|lower }}">{{ complaint.get_priority_display }}</span></td>
+                <td data-label="Age">{{ complaint.age_days }} day{{ complaint.age_days|pluralize }}{% if complaint.is_sla_overdue %} <span class="hm-badge hm-badge--overdue">Overdue</span>{% endif %}</td>
+                <td data-label="Status"><span class="hm-badge hm-badge--{{ complaint.status|lower }}">{{ complaint.get_status_display }}</span></td>
+                <td data-label="Assigned to">
+                  {% if can_assign and complaint.is_open %}
+                    <form method="post" action="{% url 'complaints:assign_complaint' complaint.id %}" class="d-flex gap-2">
+                      {% csrf_token %}
+                      <label class="visually-hidden" for="staff-{{ complaint.id }}">Assign “{{ complaint.title }}” to</label>
+                      <select class="form-select form-select-sm" id="staff-{{ complaint.id }}" name="assigned_to" required>
+                        <option value="">Choose staff</option>
+                        {% for staff in maintenance_staff %}
+                          <option value="{{ staff.id }}"{% if complaint.assigned_to_id == staff.id %} selected{% endif %}>{{ staff.get_full_name|default:staff.username }}</option>
+                        {% endfor %}
+                      </select>
+                      <button class="btn btn-sm btn-outline-secondary" type="submit">Assign</button>
+                    </form>
+                  {% else %}
+                    {{ complaint.assigned_to.get_full_name|default:"—" }}
+                  {% endif %}
+                </td>
+                <td data-label="">
+                  {% if complaint.is_open and complaint.assigned_to_id %}
+                    <form method="post" action="{% url 'complaints:update_complaint_status' complaint.id %}" class="hm-inline-form">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-success" type="submit" name="status" value="RESOLVED"><i class="bi bi-check-lg" aria-hidden="true"></i> Mark resolved</button>
+                    </form>
+                  {% elif complaint.status == "RESOLVED" %}
+                    <span class="hm-sub">Waiting for the resident</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="hm-empty">
+        <i class="bi bi-check2-all" aria-hidden="true"></i>
+        <h3>Nothing here</h3>
+        <p>No complaints with this status.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

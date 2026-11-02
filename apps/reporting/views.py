@@ -1,18 +1,21 @@
 
 import csv
+from decimal import Decimal
 from functools import wraps
+from html import escape
 from io import BytesIO
 
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db.models import Sum
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from openpyxl import Workbook
 from reportlab.lib import colors
-from reportlab.lib.pagesizes import landscape, letter
-from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import mm
 from reportlab.platypus import (
     Paragraph,
     SimpleDocTemplate,
@@ -182,54 +185,100 @@ def xlsx_response(filename, rows, sheet_name):
     return response
 
 
+NAVY = colors.HexColor("#17315f")
+MUTED = colors.HexColor("#556070")
+RULE = colors.HexColor("#d5d9e0")
+STRIPE = colors.HexColor("#f4f5f7")
+
+
+def _is_number(value):
+    if isinstance(value, (int, float, Decimal)):
+        return True
+    try:
+        Decimal(str(value))
+    except ArithmeticError:
+        return False
+    return True
+
+
 def pdf_response(filename, title, rows):
+    """An A4 landscape report that opens in the browser's PDF viewer."""
     output = BytesIO()
+    page = landscape(A4)
+    margin = 15 * mm
     document = SimpleDocTemplate(
-        output,
-        pagesize=landscape(letter),
-        rightMargin=24,
-        leftMargin=24,
-        topMargin=24,
-        bottomMargin=24,
+        output, pagesize=page, title=title, author="Hostel Management System",
+        leftMargin=margin, rightMargin=margin, topMargin=margin, bottomMargin=18 * mm,
     )
 
     styles = getSampleStyleSheet()
+    heading = ParagraphStyle("hms-title", parent=styles["Title"], alignment=0,
+                             fontSize=16, leading=20, textColor=NAVY, spaceAfter=2)
+    meta = ParagraphStyle("hms-meta", parent=styles["Normal"], fontSize=9, textColor=MUTED)
+    cell = ParagraphStyle("hms-cell", parent=styles["Normal"], fontSize=8.5, leading=11)
+    head = ParagraphStyle("hms-head", parent=cell, fontName="Helvetica-Bold",
+                          textColor=colors.white)
+
+    header, body = rows[0], rows[1:]
+    numeric = [
+        bool(body) and all(_is_number(row[i]) for row in body if row[i] not in ("", None))
+        for i in range(len(header))
+    ]
+    data = [[Paragraph(str(h), head) for h in header]]
+    for row in body:
+        data.append([
+            value if numeric[i] else Paragraph(escape(str(value)), cell)
+            for i, value in enumerate(row)
+        ])
+
+    # Share the width by the longest text in each column (numbers stay narrow).
+    width = page[0] - 2 * margin
+    lengths = [
+        max([len(str(header[i]))] + [len(str(row[i])) for row in body[:200]])
+        for i in range(len(header))
+    ]
+    lengths = [min(max(n, 6), 40) for n in lengths]
+    widths = [width * n / sum(lengths) for n in lengths]
+
+    table = Table(data, colWidths=widths, repeatRows=1)
+    style = [
+        ("BACKGROUND", (0, 0), (-1, 0), NAVY),
+        ("FONTSIZE", (0, 0), (-1, -1), 8.5),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ("LINEBELOW", (0, 0), (-1, -1), 0.5, RULE),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, STRIPE]),
+    ]
+    style += [("ALIGN", (i, 1), (i, -1), "RIGHT") for i, is_num in enumerate(numeric) if is_num]
+    table.setStyle(TableStyle(style))
+
+    generated = timezone.localtime().strftime("%d %b %Y, %H:%M")
     elements = [
-        Paragraph(title, styles["Title"]),
-        Paragraph(
-            "Generated: "
-            + timezone.localtime().strftime("%Y-%m-%d %H:%M"),
-            styles["Normal"],
-        ),
-        Spacer(1, 12),
-        Table(rows, repeatRows=1),
+        Paragraph(escape(title), heading),
+        Paragraph(f"Hostel Management System · generated {generated} · "
+                  f"{len(body)} row{'s' if len(body) != 1 else ''}", meta),
+        Spacer(1, 6 * mm),
+        table if body else Paragraph("No records.", meta),
     ]
 
-    elements[-1].setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#24476b")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("FONTSIZE", (0, 0), (-1, -1), 8),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [
-            colors.white, colors.HexColor("#edf2f7"),
-        ]),
-    ]))
-    document.build(elements)
+    def footer(canvas, doc):
+        canvas.saveState()
+        canvas.setFont("Helvetica", 8)
+        canvas.setFillColor(MUTED)
+        canvas.drawString(margin, 10 * mm, title)
+        canvas.drawRightString(page[0] - margin, 10 * mm, f"Page {doc.page}")
+        canvas.restoreState()
 
-    response = HttpResponse(
-        output.getvalue(),
-        content_type="application/pdf",
-    )
-    response["Content-Disposition"] = (
-        f'attachment; filename="{filename}"'
-    )
+    document.build(elements, onFirstPage=footer, onLaterPages=footer)
+
+    response = HttpResponse(output.getvalue(), content_type="application/pdf")
+    response["Content-Disposition"] = f'inline; filename="{filename}"'
     return response
 
 
-@report_access_required
-def reports_dashboard(request):
+def report_context():
+    """Figures and rows shown on the reports page, in the portal and in the admin site."""
     total_beds = Bed.objects.count()
     occupied_beds = Bed.objects.filter(
         status=Bed.Status.OCCUPIED
@@ -249,7 +298,7 @@ def reports_dashboard(request):
         "recorded_by"
     ).order_by("-activity_date", "meal_type")
 
-    context = {
+    return {
         "total_beds": total_beds,
         "occupied_beds": occupied_beds,
         "vacant_beds": Bed.objects.filter(
@@ -258,8 +307,9 @@ def reports_dashboard(request):
         "occupancy_percent": round(
             occupied_beds / total_beds * 100, 1
         ) if total_beds else 0,
-        "unpaid_invoices": unpaid_invoices.select_related("resident"),
+        "unpaid_invoices": unpaid_invoices.select_related("resident").order_by("due_date"),
         "outstanding_total": outstanding_total,
+        "overdue_count": unpaid_invoices.filter(status=Invoice.Status.OVERDUE).count(),
         "complaints": complaints,
         "open_complaints": complaints.filter(
             status__in=[
@@ -267,13 +317,20 @@ def reports_dashboard(request):
                 Complaint.Status.IN_PROGRESS,
             ]
         ).count(),
-        "mess_activities": mess_activities,
+        "mess_activities": mess_activities[:30],
         "total_meals_served": (
             mess_activities.aggregate(total=Sum("meals_served"))["total"]
             or 0
         ),
+        "generated_at": timezone.now(),
     }
-    return render(request, "reporting/reports.html", context)
+
+
+@report_access_required
+def reports_dashboard(request):
+    if request.user.role == User.Role.ADMINISTRATOR:
+        return redirect("admin:hms_reports")
+    return render(request, "reporting/reports.html", report_context())
 
 
 @report_access_required

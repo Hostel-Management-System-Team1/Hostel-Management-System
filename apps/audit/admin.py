@@ -9,9 +9,8 @@ class AuditEntryAdmin(admin.ModelAdmin):
     """The audit log, read-only: nobody can add, edit or delete an entry here (HMS-SR-004)."""
 
     list_display = ("seq", "timestamp", "who", "action", "what", "outcome")
-    list_filter = ("category", "outcome", "action")
+    list_filter = ("timestamp", "category", "outcome", "action")
     search_fields = ("actor_label", "action", "target_repr", "target_id")
-    date_hierarchy = "timestamp"
     ordering = ("-seq",)
     list_per_page = 50
     actions = None

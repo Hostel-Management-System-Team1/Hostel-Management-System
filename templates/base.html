@@ -38,16 +38,17 @@
         {% endfor %}
       </nav>
       <div class="hm-user">
-        <div class="hm-user__row">
+        <a class="hm-user__row" href="{% url 'profile' %}" title="My profile">
           <span class="hm-user__avatar" aria-hidden="true">{{ user_initials }}</span>
-          <div class="min-w-0"><div class="hm-user__name">{{ user.get_full_name|default:user.username }}</div><div class="hm-user__role">{{ user.get_role_display }}</div></div>
+          <span class="min-w-0"><span class="hm-user__name">{{ user.get_full_name|default:user.username }}</span><span class="hm-user__role">{{ user.get_role_display }}</span></span>
+        </a>
+        <div class="hm-user__actions">
+          <a class="hm-user__link" href="{% url 'password_change' %}"><i class="bi bi-key" aria-hidden="true"></i> Password</a>
+          <form method="post" action="{% url 'logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="hm-user__out"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Sign out</button>
+          </form>
         </div>
-        <a class="hm-user__link" href="{% url 'profile' %}"><i class="bi bi-person" aria-hidden="true"></i> My profile</a>
-        <a class="hm-user__link" href="{% url 'password_change' %}"><i class="bi bi-key" aria-hidden="true"></i> Change password</a>
-        <form method="post" action="{% url 'logout' %}">
-          {% csrf_token %}
-          <button type="submit" class="hm-user__out"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Sign out</button>
-        </form>
       </div>
     </div>
   </div>

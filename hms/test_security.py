@@ -156,7 +156,7 @@ class ContentSecurityPolicyCompatibilityTests(TestCase):
             login(self.client, username)
             for path in paths:
                 with self.subTest(user=username, path=path):
-                    response = self.client.get(path)
+                    response = self.client.get(path, follow=True)
                     self.assertEqual(response.status_code, 200, path)
                     html = response.content.decode()
                     inline = re.findall(
@@ -265,7 +265,6 @@ class QueryStyleTests(SimpleTestCase):
 
     ALLOWED_EXECUTE = {
         "apps/audit/service.py",
-        "apps/audit/management/commands/retention_report.py",
     }
 
     def python_files(self):

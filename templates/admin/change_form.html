@@ -9,3 +9,6 @@
 &rsaquo; {% if add %}{% blocktranslate with name=opts.verbose_name %}Add {{ name }}{% endblocktranslate %}{% else %}{{ original|truncatewords:"18" }}{% endif %}
 </div>
 {% endblock %}
+
+{# The record's name is already in the breadcrumb; no second heading under the title. #}
+{% block content_subtitle %}{% endblock %}

@@ -1,43 +1,55 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Complaints</title>
-</head>
-<body>
-    <h1>My Complaints</h1>
+{% extends "base.html" %}
+{% block title %}My complaints · Hostel Management System{% endblock %}
 
-    <p>
-        <a href="{% url 'complaints:submit_complaint' %}">
-            Submit New Complaint
-        </a>
-    </p>
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>Support</li>
+      <li aria-current="page">My complaints</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>My complaints</h1>
+      <p class="hm-sub">Report a problem in your room or the hostel and follow it until it is fixed.</p>
+    </div>
+    <a class="btn btn-primary" href="{% url 'complaints:submit_complaint' %}"><i class="bi bi-plus-lg" aria-hidden="true"></i> Report a problem</a>
+  </div>
 
-    {% for complaint in complaints %}
-        <hr>
-
-        <h3>{{ complaint.title }}</h3>
-
-        <p>Category: {{ complaint.get_category_display }}</p>
-        <p>Priority: {{ complaint.get_priority_display }}</p>
-        <p>Status: {{ complaint.get_status_display }}</p>
-        <p>Description: {{ complaint.description }}</p>
-        <p>Submitted: {{ complaint.created_at }}</p>
-
-        {% if complaint.photo %}
-            <img src="{{ complaint.photo.url }}" alt="Complaint photo" width="200">
-        {% endif %}
-
-        {% if complaint.status == "RESOLVED" and not complaint.resolution_confirmed %}
-            <form method="POST" action="{% url 'complaints:confirm_resolution' complaint.id %}">
-                {% csrf_token %}
-                <button type="submit">Confirm Resolution</button>
-            </form>
-        {% endif %}
-
-    {% empty %}
-        <p>You have not submitted any complaints yet.</p>
-    {% endfor %}
-</body>
-</html>
+  <section class="hm-panel hm-panel--flush" aria-label="Your complaints">
+    {% if complaints %}
+      <div class="table-responsive">
+        <table class="table hm-table hm-table-stack">
+          <thead><tr><th scope="col">Complaint</th><th scope="col">Category</th><th scope="col">Priority</th><th scope="col">Assigned to</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden">Action</span></th></tr></thead>
+          <tbody>
+            {% for complaint in complaints %}
+              <tr>
+                <td class="hm-cell-primary"><strong>{{ complaint.title }}</strong><span class="hm-sub">#{{ complaint.pk }} · reported {{ complaint.created_at|date:"j M Y" }}</span></td>
+                <td data-label="Category">{{ complaint.get_category_display }}</td>
+                <td data-label="Priority"><span class="hm-badge hm-badge--{{ complaint.priority|lower }}">{{ complaint.get_priority_display }}</span></td>
+                <td data-label="Assigned to">{{ complaint.assigned_to.get_full_name|default:"Not yet" }}</td>
+                <td data-label="Status"><span class="hm-badge hm-badge--{{ complaint.status|lower }}">{{ complaint.get_status_display }}</span></td>
+                <td data-label="">
+                  {% if complaint.status == "RESOLVED" and not complaint.resolution_confirmed %}
+                    <form method="post" action="{% url 'complaints:confirm_resolution' complaint.id %}" class="hm-inline-form">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-success" type="submit"><i class="bi bi-check2-circle" aria-hidden="true"></i> Confirm it’s fixed</button>
+                    </form>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="hm-empty">
+        <i class="bi bi-tools" aria-hidden="true"></i>
+        <h3>No complaints yet</h3>
+        <p>Something broken? Report it and the warden assigns it to maintenance.</p>
+        <a class="btn btn-primary" href="{% url 'complaints:submit_complaint' %}">Report a problem</a>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

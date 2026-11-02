@@ -1,12 +1,27 @@
 import logging
 
-from django.core.mail import mail_admins
+from django.conf import settings
+from django.core.mail import send_mail
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
+from apps.accounts.models import User
+from apps.audit import service as audit
 from apps.complaints.models import Complaint
 
 logger = logging.getLogger(__name__)
+
+
+def notify_administrators(subject, message):
+    """Email every active Hostel Administrator (HMS-F-042). Returns the number sent."""
+    recipients = list(
+        User.objects.filter(role=User.Role.ADMINISTRATOR, is_active=True)
+        .exclude(email="")
+        .values_list("email", flat=True)
+    )
+    if not recipients:
+        raise RuntimeError("No Hostel Administrator has an email address.")
+    return send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipients)
 
 
 class Command(BaseCommand):
@@ -51,11 +66,7 @@ class Command(BaseCommand):
             )
 
             try:
-                mail_admins(
-                    subject,
-                    message,
-                    fail_silently=False,
-                )
+                notify_administrators(subject, message)
             except Exception:
                 logger.exception(
                     "Could not send escalation email for complaint %s",
@@ -65,6 +76,12 @@ class Command(BaseCommand):
 
             complaint.escalated_at = now
             complaint.save(update_fields=["escalated_at"])
+            audit.record(
+                "complaint.escalated",
+                target=complaint,
+                actor=None,
+                detail={"priority": complaint.priority},
+            )
 
             escalated_count += 1
 

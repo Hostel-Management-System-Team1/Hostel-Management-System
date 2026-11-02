@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Gate log · Hostel Management System{% endblock %}
+
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>{% if is_guard %}Gate{% else %}Operations{% endif %}</li>
+      <li aria-current="page">Gate log</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Gate log</h1>
+      <p class="hm-sub">{% if is_guard %}Record a resident’s entry or exit when the card or fingerprint reader is not used.{% else %}Entries and exits at the gate, and residents still out after curfew.{% endif %}</p>
+    </div>
+  </div>
+
+  <section class="hm-stats" aria-label="Today at the gate">
+    <div class="hm-stat"><div class="hm-stat__label">Residents in</div><div class="hm-stat__value">{{ in_now }}</div></div>
+    <div class="hm-stat"><div class="hm-stat__label">Out now</div><div class="hm-stat__value">{{ out_now }}</div></div>
+    <div class="hm-stat"><div class="hm-stat__label">Movements today</div><div class="hm-stat__value">{{ moves_today }}</div></div>
+    <div class="hm-stat"><div class="hm-stat__label">Curfew alerts today</div><div class="hm-stat__value">{{ alerts_today }}</div>{% if alerts_today %}<div class="hm-stat__note hm-stat__note--danger">Warden notified</div>{% endif %}</div>
+  </section>
+
+  {% if is_guard %}
+    <section class="hm-panel hm-panel--flush" aria-labelledby="h-record">
+      <div class="hm-panel__head">
+        <h2 id="h-record">Record entry or exit</h2>
+        <form method="get" class="hm-page-header__actions d-flex gap-2" role="search">
+          <label class="visually-hidden" for="q">Find a resident</label>
+          <input class="form-control" type="search" id="q" name="q" value="{{ query }}" placeholder="Name or room">
+          <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search" aria-hidden="true"></i> Find</button>
+        </form>
+      </div>
+      {% if residents %}
+        <div class="table-responsive">
+          <table class="table hm-table hm-table-stack">
+            <thead><tr><th scope="col">Resident</th><th scope="col">Room</th><th scope="col">Now</th><th scope="col">Last movement</th><th scope="col"><span class="visually-hidden">Record</span></th></tr></thead>
+            <tbody>
+              {% for a in residents %}
+                <tr>
+                  <td class="hm-cell-primary"><strong>{{ a.resident.get_full_name|default:a.resident.username }}</strong><span class="hm-sub">@{{ a.resident.username }}</span></td>
+                  <td data-label="Room">{{ a.bed.room.block.name }} · {{ a.bed.room.number }}</td>
+                  <td data-label="Now">{% if a.last_direction == "OUT" %}<span class="hm-badge hm-badge--out">Out</span>{% else %}<span class="hm-badge hm-badge--in">In</span>{% endif %}</td>
+                  <td data-label="Last movement">{{ a.last_at|date:"j M, H:i"|default:"—" }}</td>
+                  <td data-label="">
+                    <form method="post" class="hm-inline-form">
+                      {% csrf_token %}
+                      <input type="hidden" name="resident" value="{{ a.resident.pk }}">
+                      <input type="hidden" name="q" value="{{ query }}">
+                      {% if a.last_direction == "OUT" %}
+                        <button class="btn btn-sm btn-success" type="submit" name="direction" value="IN"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Record entry</button>
+                      {% else %}
+                        <button class="btn btn-sm btn-outline-secondary" type="submit" name="direction" value="OUT"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Record exit</button>
+                      {% endif %}
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="hm-empty">
+          <i class="bi bi-person-x" aria-hidden="true"></i>
+          <h3>{% if query %}No resident matches “{{ query }}”{% else %}No residents yet{% endif %}</h3>
+          <p>Only residents with an allocated bed can pass the gate.</p>
+        </div>
+      {% endif %}
+    </section>
+  {% else %}
+    <section class="hm-panel hm-panel--flush" aria-labelledby="h-alerts">
+      <div class="hm-panel__head"><h2 id="h-alerts">Curfew alerts</h2></div>
+      {% if alerts %}
+        <div class="table-responsive">
+          <table class="table hm-table hm-table-stack">
+            <thead><tr><th scope="col">Resident</th><th scope="col">Block</th><th scope="col">Night of</th><th scope="col">Detected</th><th scope="col">Warden emailed</th></tr></thead>
+            <tbody>
+              {% for alert in alerts %}
+                <tr>
+                  <td class="hm-cell-primary"><strong>{{ alert.resident.get_full_name|default:alert.resident.username }}</strong></td>
+                  <td data-label="Block">{{ alert.block.name }}</td>
+                  <td data-label="Night of">{{ alert.curfew_date|date:"j M Y" }}</td>
+                  <td data-label="Detected">{{ alert.detected_at|date:"j M, H:i" }}</td>
+                  <td data-label="Warden emailed">{% if alert.notified_at %}<span class="hm-badge hm-badge--resolved">{{ alert.notified_at|date:"H:i" }}</span>{% else %}<span class="hm-badge hm-badge--pending">Not yet</span>{% endif %}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="hm-empty">
+          <i class="bi bi-moon-stars" aria-hidden="true"></i>
+          <h3>No curfew alerts</h3>
+          <p>Residents still out 30 minutes after their block’s curfew appear here, and you get an email.</p>
+        </div>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <section class="hm-panel hm-panel--flush" aria-labelledby="h-moves">
+    <div class="hm-panel__head"><h2 id="h-moves">Recent movements</h2></div>
+    {% if movements %}
+      <div class="table-responsive">
+        <table class="table hm-table hm-table-stack">
+          <thead><tr><th scope="col">Resident</th><th scope="col">Movement</th><th scope="col">When</th><th scope="col">Captured by</th></tr></thead>
+          <tbody>
+            {% for move in movements %}
+              <tr>
+                <td class="hm-cell-primary"><strong>{{ move.resident.get_full_name|default:move.resident.username }}</strong></td>
+                <td data-label="Movement"><span class="hm-badge hm-badge--{{ move.direction|lower }}">{{ move.get_direction_display }}</span></td>
+                <td data-label="When">{{ move.occurred_at|date:"j M Y, H:i" }}</td>
+                <td data-label="Captured by">{% if move.recorded_by %}{{ move.recorded_by.get_full_name|default:move.recorded_by.username }} (manual){% else %}{{ move.get_capture_method_display }} reader{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="hm-empty">
+        <i class="bi bi-door-open" aria-hidden="true"></i>
+        <h3>No gate movements yet</h3>
+        <p>Entries and exits recorded at the gate will appear here.</p>
+      </div>
+    {% endif %}
+  </section>
+{% endblock %}

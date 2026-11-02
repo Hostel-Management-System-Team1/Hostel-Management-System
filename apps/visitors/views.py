@@ -1,10 +1,11 @@
-﻿from django.contrib import messages
+from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.accounts.models import User
 from apps.accounts.permissions import role_required
+from apps.audit import service as audit
 
 from .forms import VisitorRegistrationForm
 from .models import VisitingHours, Visitor
@@ -18,6 +19,7 @@ def visitor_register(request):
             visitor = form.save(commit=False)
             visitor.registered_by = request.user
             visitor.save()
+            audit.record("visitor.registered", target=visitor)
             messages.success(request, "Visitor registered successfully.")
             return redirect("visitors:list")
     else:
@@ -26,12 +28,21 @@ def visitor_register(request):
     return render(request, "visitors/register.html", {"form": form})
 
 
-@role_required(User.Role.SECURITY_GUARD)
+@role_required(User.Role.SECURITY_GUARD, User.Role.WARDEN)
 def visitor_list(request):
+    """The guard registers visitors and records entry and exit; the warden approves
+    visits outside visiting hours from the same list (HMS-F-050, HMS-F-051)."""
     visitors = Visitor.objects.select_related(
         "resident", "registered_by", "overridden_by"
     )
-    return render(request, "visitors/list.html", {"visitors": visitors})
+    return render(request, "visitors/list.html", {
+        "visitors": visitors,
+        "hours": VisitingHours.objects.filter(is_active=True).first(),
+        "within_hours": within_visiting_hours(),
+        "is_guard": request.user.role == User.Role.SECURITY_GUARD,
+        "inside": visitors.filter(status=Visitor.Status.INSIDE).count(),
+        "waiting": visitors.filter(status=Visitor.Status.REGISTERED).count(),
+    })
 
 
 def within_visiting_hours():
@@ -68,6 +79,7 @@ def visitor_entry(request, pk):
     visitor.entry_time = timezone.now()
     visitor.status = Visitor.Status.INSIDE
     visitor.save(update_fields=["entry_time", "status", "updated_at"])
+    audit.record("visitor.entered", target=visitor)
     messages.success(request, "Visitor entry recorded.")
 
     return redirect("visitors:list")
@@ -85,6 +97,7 @@ def visitor_exit(request, pk):
     visitor.exit_time = timezone.now()
     visitor.status = Visitor.Status.EXITED
     visitor.save(update_fields=["exit_time", "status", "updated_at"])
+    audit.record("visitor.exited", target=visitor)
     messages.success(request, "Visitor exit recorded.")
 
     return redirect("visitors:list")
@@ -110,6 +123,7 @@ def visitor_override(request, pk):
     visitor.override_reason = reason
     visitor.overridden_by = request.user
     visitor.save(update_fields=["override_reason", "overridden_by", "updated_at"])
+    audit.record("visitor.hours_override", target=visitor, detail={"reason": reason[:200]})
 
     messages.success(request, "Warden override approved with reason.")
     return redirect("visitors:list")

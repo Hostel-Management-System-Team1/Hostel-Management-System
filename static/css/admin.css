@@ -848,6 +848,119 @@ thead th, #content #result_list thead th, .hms-brand small {
 #content #changelist td, #content #changelist th { padding-left: 8px; padding-right: 8px; }
 #content #changelist thead th { padding-left: 0; padding-right: 0; }
 
-/* Date drill-down strip above a list */
+/* Date drill-down strip above a list (Django renders it as <nav class="toplinks">) */
 #content #changelist .xfull { padding: 0; }
-#content #changelist ul.toplinks { margin: 0; padding: 10px 14px; border-bottom: 1px solid var(--hm-border); font-size: 0.85rem; }
+#content #changelist .toplinks { margin: 0; padding: 10px 16px; border-bottom: 1px solid var(--hm-border); font-size: 0.85rem; }
+#content #changelist .toplinks a { margin-right: 12px; }
+
+
+/* ══ Round 8 ═══════════════════════════════════════════════════════════════ */
+
+/* The header sits in a flex column; without flex: none it shrinks below its 60px height */
+#header { flex: none; }
+
+/* Table cells: room to breathe, and the first column clear of the card edge */
+#content #changelist td, #content #changelist th { padding-left: 12px; padding-right: 12px; }
+#content #changelist thead th { padding-left: 0; padding-right: 0; }
+#content #result_list thead th .text > a, #content #result_list thead th .text > span { padding-left: 12px; padding-right: 12px; }
+#content #result_list tr > :first-child,
+#content #result_list thead th:first-child .text > a,
+#content #result_list thead th:first-child .text > span { padding-left: 20px; }
+#content #result_list thead th:first-child { padding-left: 0; }
+#content #result_list tr > :last-child { padding-right: 20px; }
+#content #changelist #toolbar, #content #changelist .actions, #content #changelist .paginator { padding-left: 20px; padding-right: 20px; }
+
+/* Filter column: a quiet panel beside the list; long values wrap at dots, not mid-word */
+#content #changelist-filter { flex: 0 0 230px; background: var(--hm-bg); border-left: 1px solid var(--hm-border); padding-bottom: 12px; }
+#content #changelist-filter h2 { background: var(--hm-bg); }
+#content #changelist-filter details { border-bottom: 1px solid var(--hm-border-soft); padding-bottom: 6px; }
+#content #changelist-filter details:last-of-type { border-bottom: 0; }
+#content #changelist-filter #changelist-filter-extra-actions { padding: 8px 16px; border-bottom: 1px solid var(--hm-border-soft); margin: 0; }
+#content #changelist-filter li a { font-size: 0.85rem; overflow-wrap: normal; word-break: normal; }
+#content #changelist-filter li.selected a { background: var(--hm-surface); box-shadow: inset 0 0 0 1px var(--hm-border); }
+#content #changelist-filter { align-self: stretch; }
+
+/* Management reports in the admin site: the portal's report body (templates/reporting/_report_body.html) */
+.hms-reports .hm-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 0 0 20px; }
+.hms-reports .hm-stat { padding: 16px 18px; background: var(--hm-surface); border: 1px solid var(--hm-border); border-radius: var(--hms-card-radius); }
+.hms-reports .hm-stat__label { color: var(--hm-muted); font-size: 0.8rem; font-weight: 600; }
+.hms-reports .hm-stat__value { margin-top: 4px; font-size: 1.6rem; font-weight: 600; color: var(--hm-text); }
+.hms-reports .hm-stat__note { margin-top: 2px; color: var(--hm-muted); font-size: 0.8rem; }
+.hms-reports .hm-stat__note--danger { color: var(--hm-danger); }
+.hms-reports .hm-report { margin-bottom: 20px; border-radius: var(--hms-card-radius); overflow: hidden; }
+.hms-reports .hm-report .hm-panel__head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; padding: 12px 20px; }
+.hms-reports .hm-report .hm-panel__head h2 { background: none; color: var(--hm-text); padding: 0; font-size: 1rem; text-transform: none; letter-spacing: 0; }
+.hms-reports .hm-report__exports { display: inline-flex; gap: 12px; color: var(--hm-muted); font-size: 0.85rem; }
+.hms-reports .hm-report__exports a { font-weight: 600; }
+.hms-reports .hm-report table { margin: 0; }
+.hms-reports .hm-report th, .hms-reports .hm-report td { padding: 10px 12px; vertical-align: middle; }
+.hms-reports .hm-report tr > :first-child { padding-left: 20px; }
+.hms-reports .hm-report tr > :last-child { padding-right: 20px; }
+.hms-reports .hm-report .hm-cell-num { text-align: right; }
+.hms-reports .hm-sub { display: block; color: var(--hm-muted); font-size: 0.8rem; }
+.hms-reports .hm-facts { margin: 0; }
+.hms-reports .hm-facts > div { display: flex; justify-content: space-between; padding: 10px 20px; border-bottom: 1px solid var(--hm-border-soft); }
+.hms-reports .hm-facts > div:last-child { border-bottom: 0; }
+.hms-reports .hm-facts dt { margin: 0; color: var(--hm-muted); font-weight: 500; }
+.hms-reports .hm-facts dd { margin: 0; font-weight: 600; }
+.hms-reports .hm-badge { background: var(--hm-border-soft); color: var(--hm-muted); }
+.hms-reports .hm-badge--unpaid, .hms-reports .hm-badge--in_progress { background: var(--hm-warning-bg); color: var(--hm-warning); }
+.hms-reports .hm-badge--overdue { background: var(--hm-danger-bg); color: var(--hm-danger); }
+.hms-reports .hm-badge--open { background: var(--hm-accent-bg); color: var(--hm-accent); }
+.hms-reports .hm-badge--resolved { background: var(--hm-success-bg); color: var(--hm-success); }
+.hms-reports .hm-empty .bi { font-size: 1.5rem; }
+.hms-reports .hm-empty p { margin: 0; }
+@media (max-width: 1024px) { .hms-reports .hm-stats { grid-template-columns: repeat(2, 1fr); } }
+
+
+/* ══ Round 9: edit forms ═══════════════════════════════════════════════════ */
+
+/* Pencil / plus / cross / eye icons beside every related-record dropdown */
+#content .related-widget-wrapper-link { display: none; }
+
+/* One input style, the same as the portal's forms */
+#content form .form-row :is(input[type=text], input[type=email], input[type=number], input[type=tel],
+  input[type=url], input[type=date], input[type=time], input[type=password], select, textarea) {
+  box-sizing: border-box;
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid var(--hm-border-strong);
+  border-radius: var(--hm-radius);
+  background: var(--hm-surface);
+  color: var(--hm-text);
+  font: inherit;
+  font-size: 0.925rem;
+}
+#content form .form-row :is(input[type=text], input[type=email], input[type=tel], input[type=url],
+  input[type=password], select) { width: 100%; max-width: 28rem; }
+#content form .form-row textarea { width: 100%; max-width: 40rem; min-height: 6rem; }
+#content form .form-row :is(input[type=date], input[type=time], input[type=number]) { width: auto; min-width: 10rem; }
+#content form .form-row :is(input, select, textarea):focus { outline: 2px solid var(--hm-accent); outline-offset: 1px; border-color: var(--hm-accent); }
+#content form .form-row .related-widget-wrapper { width: 100%; max-width: 28rem; }
+#content form .form-row .related-widget-wrapper select { max-width: none; }
+#content .aligned .form-row .flex-container { align-items: flex-start; }
+#content .aligned .form-row .flex-container > :is(input[type=text], input[type=email], input[type=tel],
+  input[type=url], input[type=password], select, textarea, .related-widget-wrapper) { flex: 1 1 auto; }
+#content .aligned .readonly { padding-top: 8px; color: var(--hm-text); }
+#content .aligned label { padding-top: 9px; }
+#content .aligned .checkbox-row label { padding-top: 0; }
+
+/* Lists: the filter is its own card beside the table card, not glued to it */
+#content #changelist.module { background: none; border: 0; box-shadow: none; overflow: visible; }
+#content #changelist .changelist-form-container { background: var(--hm-surface); border: 1px solid var(--hm-border);
+  border-radius: var(--hms-card-radius); overflow: hidden; min-width: 0; }
+#content #changelist-filter { flex: 0 0 230px; margin-left: 20px; align-self: flex-start; border: 1px solid var(--hm-border);
+  border-radius: var(--hms-card-radius); overflow: hidden; background: var(--hm-surface); padding-bottom: 8px; }
+#content #changelist-filter h2 { background: var(--hm-surface); }
+@media (max-width: 1024px) { #content #changelist-filter { margin: 16px 0 0; flex-basis: auto; } }
+
+/* Clicking anywhere on a list row opens the record (its first-column link stretches over the row) */
+#content #result_list tbody tr { position: relative; }
+#content #result_list tbody tr > :first-child a::after { content: ""; position: absolute; inset: 0; }
+#content #result_list tbody tr:hover > * { cursor: pointer; }
+
+/* Sorting a column must not change its width: every sortable header reserves room for the arrow */
+#content #result_list thead th { position: relative; }
+#content #result_list thead th.sortable .text > a { padding-right: 28px; }
+#content #result_list thead th .sortoptions { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); float: none; padding: 0; margin: 0; }
+#content #result_list thead th.sorted { background: var(--hm-border-soft); }

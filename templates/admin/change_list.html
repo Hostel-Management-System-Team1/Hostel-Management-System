@@ -8,3 +8,6 @@
 &rsaquo; {{ cl.opts.verbose_name_plural|capfirst }}
 </div>
 {% endblock %}
+
+{# "Invoices" rather than Django's "Select invoice to change". #}
+{% block content_title %}<h1>{{ cl.opts.verbose_name_plural|capfirst }}</h1>{% endblock %}

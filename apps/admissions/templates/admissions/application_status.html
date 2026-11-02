@@ -28,6 +28,9 @@
           {% elif application.status == "APPROVED" %}
             <li class="is-done"><div class="hm-timeline__title">Approved</div><div class="hm-timeline__meta">{{ application.decided_at|date:"j M Y, H:i" }}</div>{% if application.decision_note %}<p class="hm-timeline__note">{{ application.decision_note }}</p>{% endif %}</li>
             <li class="is-todo"><div class="hm-timeline__title">Bed allocation</div><div class="hm-timeline__meta">The warden allocates a bed once your application is approved.</div></li>
+          {% elif application.status == "ALLOCATED" %}
+            <li class="is-done"><div class="hm-timeline__title">Approved</div><div class="hm-timeline__meta">{{ application.decided_at|date:"j M Y, H:i" }}</div>{% if application.decision_note %}<p class="hm-timeline__note">{{ application.decision_note }}</p>{% endif %}</li>
+            <li class="is-done"><div class="hm-timeline__title">Bed allocated</div><div class="hm-timeline__meta">{% with a=application.allocation %}{% if a %}{{ a.bed.room.block.name }} · room {{ a.bed.room.number }} · bed {{ a.bed.label }}{% endif %}{% endwith %}</div></li>
           {% else %}
             <li class="is-alert"><div class="hm-timeline__title">Rejected</div><div class="hm-timeline__meta">{{ application.decided_at|date:"j M Y, H:i" }}</div><p class="hm-timeline__note">{{ application.decision_note }}</p></li>
           {% endif %}

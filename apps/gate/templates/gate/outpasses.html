@@ -1,59 +1,68 @@
-
 {% extends "base.html" %}
-{% block title %}My Outpasses{% endblock %}
+{% block title %}My outpasses · Hostel Management System{% endblock %}
+
 {% block content %}
-<div class="container py-4">
-  <h1 class="h3 mb-3">My outpasses</h1>
-  <div class="card mb-4">
-    <div class="card-body">
-      <h2 class="h5">Request an outpass</h2>
-      <form method="post">
-        {% csrf_token %}
-        <div class="mb-3">
-          <label class="form-label" for="destination">Destination</label>
-          <input class="form-control" id="destination" name="destination"
-                 maxlength="200" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label" for="contact_number">Contact number</label>
-          <input class="form-control" id="contact_number" name="contact_number"
-                 maxlength="16" required>
-        </div>
-        <div class="mb-3">
-          <label class="form-label" for="expected_return_at">
-            Expected return date and time
-          </label>
-          <input class="form-control" type="datetime-local"
-                 id="expected_return_at" name="expected_return_at" required>
-        </div>
-        <button class="btn btn-primary" type="submit">Submit request</button>
-      </form>
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>My hostel</li>
+      <li aria-current="page">Outpass</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>My outpasses</h1>
+      <p class="hm-sub">Ask the warden before you stay away overnight. Your guardian is told when it is approved and when you are back.</p>
     </div>
   </div>
 
-  <h2 class="h5 mb-3">Request history</h2>
-  <div class="table-responsive">
-    <table class="table table-striped align-middle">
-      <thead>
-        <tr>
-          <th>Destination</th><th>Expected return</th>
-          <th>Status</th><th>Decision</th><th>Actual return</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for item in outpasses %}
-        <tr>
-          <td>{{ item.destination }}</td>
-          <td>{{ item.expected_return_at }}</td>
-          <td>{{ item.get_status_display }}</td>
-          <td>{{ item.decision_reason|default:"—" }}</td>
-          <td>{{ item.returned_at|default:"—" }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="5" class="text-muted">No outpass requests yet.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="hm-detail-grid">
+    <section class="hm-panel hm-panel--flush" aria-labelledby="h-history">
+      <div class="hm-panel__head"><h2 id="h-history">Request history</h2></div>
+      {% if outpasses %}
+        <div class="table-responsive">
+          <table class="table hm-table hm-table-stack">
+            <thead><tr><th scope="col">Destination</th><th scope="col">Back by</th><th scope="col">Status</th><th scope="col">Warden’s note</th><th scope="col">Returned</th></tr></thead>
+            <tbody>
+              {% for item in outpasses %}
+                <tr>
+                  <td class="hm-cell-primary"><strong>{{ item.destination }}</strong><span class="hm-sub">Asked {{ item.requested_at|date:"j M" }}</span></td>
+                  <td data-label="Back by">{{ item.expected_return_at|date:"j M Y, H:i" }}</td>
+                  <td data-label="Status">{% if item.returned_at %}<span class="hm-badge hm-badge--returned">Returned</span>{% else %}<span class="hm-badge hm-badge--{{ item.status|lower }}">{{ item.get_status_display }}</span>{% endif %}</td>
+                  <td data-label="Warden’s note">{{ item.decision_reason|default:"—" }}</td>
+                  <td data-label="Returned">{{ item.returned_at|date:"j M, H:i"|default:"—" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="hm-empty">
+          <i class="bi bi-box-arrow-up-right" aria-hidden="true"></i>
+          <h3>No outpass requests yet</h3>
+          <p>Requests you send to the warden will appear here with their decision.</p>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="hm-panel" aria-labelledby="h-request">
+      <div class="hm-panel__head"><h2 id="h-request">Request an outpass</h2></div>
+      <form method="post" class="hm-panel__body">
+        {% csrf_token %}
+        <div class="mb-3">
+          <label class="form-label hm-req" for="destination">Destination<span class="visually-hidden"> (required)</span></label>
+          <input class="form-control" id="destination" name="destination" maxlength="200" required>
+        </div>
+        <div class="mb-3">
+          <label class="form-label hm-req" for="contact_number">Contact number while away<span class="visually-hidden"> (required)</span></label>
+          <input class="form-control" id="contact_number" name="contact_number" maxlength="16" inputmode="tel" autocomplete="tel" required>
+        </div>
+        <div class="mb-4">
+          <label class="form-label hm-req" for="expected_return_at">Back by<span class="visually-hidden"> (required)</span></label>
+          <input class="form-control" type="datetime-local" id="expected_return_at" name="expected_return_at" required>
+        </div>
+        <button class="btn btn-primary w-100" type="submit"><i class="bi bi-send" aria-hidden="true"></i> Submit request</button>
+      </form>
+    </section>
   </div>
-</div>
 {% endblock %}

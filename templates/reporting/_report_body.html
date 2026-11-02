@@ -1,0 +1,112 @@
+{# Report figures and tables, shared by the portal page (reporting/reports.html) and the admin page (admin/hms_reports.html). #}
+<section class="hm-stats" aria-label="Summary">
+  <div class="hm-stat"><div class="hm-stat__label">Occupancy</div><div class="hm-stat__value">{{ occupancy_percent }}%</div><div class="hm-stat__note">{{ occupied_beds }} of {{ total_beds }} beds · {{ vacant_beds }} vacant</div></div>
+  <div class="hm-stat"><div class="hm-stat__label">Outstanding dues</div><div class="hm-stat__value">{{ outstanding_total|inr }}</div><div class="hm-stat__note{% if overdue_count %} hm-stat__note--danger{% endif %}">{{ unpaid_invoices|length }} unpaid · {{ overdue_count }} overdue</div></div>
+  <div class="hm-stat"><div class="hm-stat__label">Open complaints</div><div class="hm-stat__value">{{ open_complaints }}</div><div class="hm-stat__note">{{ complaints|length }} recorded in all</div></div>
+  <div class="hm-stat"><div class="hm-stat__label">Meals served</div><div class="hm-stat__value">{{ total_meals_served }}</div><div class="hm-stat__note">From mess service records</div></div>
+</section>
+
+<section class="hm-panel hm-panel--flush hm-report" aria-labelledby="h-occ">
+  <div class="hm-panel__head">
+    <h2 id="h-occ">Bed occupancy</h2>
+    <span class="hm-report__exports">Open
+      <a href="{% url 'reporting:export_occupancy_xlsx' %}">Excel</a>
+      <a href="{% url 'reporting:export_occupancy_pdf' %}" target="_blank" rel="noopener">PDF</a>
+    </span>
+  </div>
+  <dl class="hm-facts">
+    <div><dt>Total beds</dt><dd>{{ total_beds }}</dd></div>
+    <div><dt>Occupied</dt><dd>{{ occupied_beds }}</dd></div>
+    <div><dt>Vacant</dt><dd>{{ vacant_beds }}</dd></div>
+  </dl>
+</section>
+
+<section class="hm-panel hm-panel--flush hm-report" aria-labelledby="h-dues">
+  <div class="hm-panel__head">
+    <h2 id="h-dues">Outstanding fees and dues</h2>
+    <span class="hm-report__exports">Open
+      <a href="{% url 'reporting:export_dues_xlsx' %}">Excel</a>
+      <a href="{% url 'reporting:export_dues_pdf' %}" target="_blank" rel="noopener">PDF</a>
+    </span>
+  </div>
+  {% if unpaid_invoices %}
+    <div class="table-responsive">
+      <table class="table hm-table hm-table-stack">
+        <thead><tr><th scope="col">Invoice</th><th scope="col">Resident</th><th scope="col">Due</th><th scope="col">Status</th><th scope="col" class="hm-cell-num">Amount</th></tr></thead>
+        <tbody>
+          {% for invoice in unpaid_invoices %}
+            <tr>
+              <td class="hm-cell-primary"><strong>{{ invoice.number }}</strong><span class="hm-sub">{{ invoice.description }}</span></td>
+              <td data-label="Resident">{{ invoice.resident.get_full_name|default:invoice.resident.username }}</td>
+              <td data-label="Due">{{ invoice.due_date|date:"j M Y" }}</td>
+              <td data-label="Status"><span class="hm-badge hm-badge--{{ invoice.status|lower }} hms-badge">{{ invoice.get_status_display }}</span></td>
+              <td data-label="Amount" class="hm-cell-num">{{ invoice.total|inr }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="hm-empty"><i class="bi bi-check2-circle" aria-hidden="true"></i><h3 class="hm-empty__title">No outstanding dues</h3><p>Every invoice is paid.</p></div>
+  {% endif %}
+</section>
+
+<section class="hm-panel hm-panel--flush hm-report" aria-labelledby="h-comp">
+  <div class="hm-panel__head">
+    <h2 id="h-comp">Complaint ageing</h2>
+    <span class="hm-report__exports">Open
+      <a href="{% url 'reporting:export_complaints_xlsx' %}">Excel</a>
+      <a href="{% url 'reporting:export_complaints_pdf' %}" target="_blank" rel="noopener">PDF</a>
+    </span>
+  </div>
+  {% if complaints %}
+    <div class="table-responsive">
+      <table class="table hm-table hm-table-stack">
+        <thead><tr><th scope="col">Complaint</th><th scope="col">Category</th><th scope="col">Reported</th><th scope="col">Status</th><th scope="col" class="hm-cell-num">Age (days)</th></tr></thead>
+        <tbody>
+          {% for complaint in complaints %}
+            <tr>
+              <td class="hm-cell-primary"><strong>{{ complaint.title }}</strong><span class="hm-sub">{{ complaint.created_by.get_full_name|default:complaint.created_by.username }}</span></td>
+              <td data-label="Category">{{ complaint.get_category_display }}</td>
+              <td data-label="Reported">{{ complaint.created_at|date:"j M Y" }}</td>
+              <td data-label="Status"><span class="hm-badge hm-badge--{{ complaint.status|lower }} hms-badge">{{ complaint.get_status_display }}</span>{% if complaint.is_sla_overdue %} <span class="hm-badge hm-badge--overdue hms-badge">Overdue</span>{% endif %}</td>
+              <td data-label="Age (days)" class="hm-cell-num">{{ complaint.age_days }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="hm-empty"><i class="bi bi-tools" aria-hidden="true"></i><h3 class="hm-empty__title">No complaints recorded</h3><p>Complaints residents report appear here with their age.</p></div>
+  {% endif %}
+</section>
+
+<section class="hm-panel hm-panel--flush hm-report" aria-labelledby="h-mess">
+  <div class="hm-panel__head">
+    <h2 id="h-mess">Mess activity</h2>
+    <span class="hm-report__exports">Open
+      <a href="{% url 'reporting:export_mess_xlsx' %}">Excel</a>
+      <a href="{% url 'reporting:export_mess_pdf' %}" target="_blank" rel="noopener">PDF</a>
+    </span>
+  </div>
+  {% if mess_activities %}
+    <div class="table-responsive">
+      <table class="table hm-table hm-table-stack">
+        <thead><tr><th scope="col">Date</th><th scope="col">Meal</th><th scope="col">Notes</th><th scope="col">Recorded by</th><th scope="col" class="hm-cell-num">Meals served</th></tr></thead>
+        <tbody>
+          {% for activity in mess_activities %}
+            <tr>
+              <td class="hm-cell-primary"><strong>{{ activity.activity_date|date:"D j M Y" }}</strong></td>
+              <td data-label="Meal">{{ activity.get_meal_type_display }}</td>
+              <td data-label="Notes">{{ activity.notes|default:"—" }}</td>
+              <td data-label="Recorded by">{{ activity.recorded_by.get_full_name|default:activity.recorded_by.username }}</td>
+              <td data-label="Meals served" class="hm-cell-num">{{ activity.meals_served }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="hm-empty"><i class="bi bi-cup-hot" aria-hidden="true"></i><h3 class="hm-empty__title">No mess activity recorded</h3><p>Meals served, as recorded by the mess manager, appear here.</p></div>
+  {% endif %}
+</section>

@@ -58,7 +58,6 @@ NAV = {
                 "Outpass",
                 "bi-box-arrow-up-right",
                 "gate:outpasses",
-                sprint=2,
                 hint="Leave the hostel overnight",
                 issue=9,
             ),
@@ -74,7 +73,7 @@ NAV = {
             item(
                 "My complaints",
                 "bi-tools",
-                sprint=2,
+                "complaints:my_complaints",
                 hint="Plumbing, electrical, Wi-Fi",
                 issue=11,
             ),
@@ -112,7 +111,6 @@ NAV = {
                 "Outpasses",
                 "bi-box-arrow-up-right",
                 "gate:warden_outpasses",
-                sprint=2,
                 hint="Approve or reject requests",
                 issue=9,
             ),
@@ -120,7 +118,6 @@ NAV = {
                 "Night attendance",
                 "bi-moon",
                 "gate:attendance",
-                sprint=2,
                 hint="Daily register per room",
                 issue=9,
             ),
@@ -129,21 +126,21 @@ NAV = {
             item(
                 "Complaints",
                 "bi-tools",
-                sprint=2,
+                "complaints:manage_complaints",
                 hint="Assign and track",
                 issue=11,
             ),
             item(
                 "Gate log",
-                "bi-door-open",
-                sprint=2,
+                "bi-arrow-left-right",
+                "gate:log",
                 hint="Entries, exits and curfew",
                 issue=8,
             ),
             item(
                 "Visitors",
                 "bi-person-badge",
-                sprint=2,
+                "visitors:list",
                 hint="Visiting-hour overrides",
                 issue=12,
             ),
@@ -161,15 +158,15 @@ NAV = {
         ("Gate", [
             item(
                 "Gate log",
-                "bi-door-open",
-                sprint=2,
+                "bi-arrow-left-right",
+                "gate:log",
                 hint="Record entry and exit",
                 issue=8,
             ),
             item(
                 "Visitors",
                 "bi-person-badge",
-                sprint=2,
+                "visitors:list",
                 hint="Register visitors",
                 issue=12,
             ),
@@ -184,12 +181,11 @@ NAV = {
     ],
 
     R.MAINTENANCE_STAFF: [
-        ("Overview", [DASHBOARD]),
         ("Work", [
             item(
                 "Complaints",
                 "bi-tools",
-                sprint=2,
+                "complaints:manage_complaints",
                 hint="Complaints assigned to you",
                 issue=11,
             ),
@@ -200,17 +196,10 @@ NAV = {
         ("Overview", [DASHBOARD]),
         ("Mess", [
             item(
-                "Weekly menu",
+                "Menu & bills",
                 "bi-calendar-week",
                 "mess:home",
-                hint="Publish the menu",
-                issue=10,
-            ),
-            item(
-                "Opt-outs & bills",
-                "bi-cup-hot",
-                sprint=2,
-                hint="Meal counts and monthly bills",
+                hint="Publish the menu, see opt-outs, bill the month",
                 issue=10,
             ),
         ]),
@@ -246,21 +235,35 @@ ADMIN_NAV = [
         item(
             "Complaints",
             "bi-tools",
-            sprint=2,
+            "admin:complaints_complaint_changelist",
             hint="Escalations and SLA",
             issue=11,
         ),
         item(
             "Mess",
             "bi-cup-hot",
-            sprint=2,
-            hint="Menu and billing",
+            "admin:mess_messmenuitem_changelist",
+            hint="Menu and opt-outs",
             issue=10,
+        ),
+        item(
+            "Gate log",
+            "bi-arrow-left-right",
+            "admin:gate_gatemovement_changelist",
+            hint="Entries, exits and curfew alerts",
+            issue=8,
+        ),
+        item(
+            "Outpasses",
+            "bi-box-arrow-up-right",
+            "admin:gate_outpassrequest_changelist",
+            hint="Leave requests and returns",
+            issue=9,
         ),
         item(
             "Visitors",
             "bi-person-badge",
-            sprint=2,
+            "admin:visitors_visitor_changelist",
             hint="Visitor records",
             issue=12,
         ),
@@ -290,6 +293,18 @@ ADMIN_NAV = [
             "admin:admissions_allocationpolicy_changelist",
             hint="Merit, seniority or first come",
         ),
+        item(
+            "Curfew times",
+            "bi-moon",
+            "admin:gate_curfewconfiguration_changelist",
+            hint="Curfew for each block",
+        ),
+        item(
+            "Visiting hours",
+            "bi-clock",
+            "admin:visitors_visitinghours_changelist",
+            hint="When visitors may enter",
+        ),
     ]),
     ("Administration", [
         item(
@@ -301,7 +316,7 @@ ADMIN_NAV = [
         item(
             "Reports",
             "bi-bar-chart",
-            "reporting:dashboard",
+            "admin:hms_reports",
             hint="PDF and XLSX exports",
         ),
         item(
@@ -316,6 +331,8 @@ ADMIN_NAV = [
 
 def nav_for(user, current_path=None, admin=False):
     """Return navigation groups with resolved URLs and active states."""
+    if user.role == R.ADMINISTRATOR:
+        admin = True
     source = ADMIN_NAV if admin else NAV.get(user.role, NAV[R.RESIDENT])
     placeholder = "admin:hms_module" if admin else "module"
     home_url = reverse("admin:index") if admin else reverse("home")

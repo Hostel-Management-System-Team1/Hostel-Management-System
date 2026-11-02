@@ -99,16 +99,19 @@ def generate_invoice(allocation):
     return invoice
 
 
+MESS_MEAL_PRICE = Decimal("50.00")
+
+
 def generate_mess_invoice(resident, year, month):
     """
     Generate one monthly mess invoice for a resident.
 
     Each published meal costs ₹50.
     Meals with a recorded opt-out are excluded.
-    Repeated requests return the existing invoice.
+    Repeated requests return the existing invoice; no invoice is raised for zero meals.
     """
 
-    meal_price = Decimal("50.00")
+    meal_price = MESS_MEAL_PRICE
 
     first_day = date(year, month, 1)
     last_day = date(
@@ -148,6 +151,8 @@ def generate_mess_invoice(resident, year, month):
         )
 
         meal_count = consumed_meals.count()
+        if meal_count == 0:
+            return None  # nothing eaten, nothing to bill
         total_amount = meal_price * meal_count
 
         invoice = Invoice.objects.create(

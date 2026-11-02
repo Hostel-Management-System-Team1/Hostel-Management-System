@@ -1,21 +1,23 @@
-
-"""Report potentially eligible HMS records for retention review.
+"""Report potentially eligible HMS records for retention review (HMS-NF-005).
 
 This command is report-only. It never deletes, archives, or anonymizes records.
 """
 
 from datetime import date
 
-from dateutil.relativedelta import relativedelta
 from django.core.management.base import BaseCommand, CommandError
-from django.db import connection
+
+from apps.admissions.models import Allocation, Application
+from apps.fees.models import Invoice, Payment, Receipt
+from apps.gate.models import GateMovement, OutpassRequest
+from apps.visitors.models import Visitor
 
 
 class Command(BaseCommand):
     """Report records older than the configured retention period."""
 
     help = (
-        "Report potentially aged admissions and fee records "
+        "Report resident, fee and gate records older than the retention period "
         "without modifying any data."
     )
 
@@ -35,7 +37,11 @@ class Command(BaseCommand):
         if years < 1:
             raise CommandError("--years must be at least 1.")
 
-        cutoff = date.today() - relativedelta(years=years)
+        today = date.today()
+        try:
+            cutoff = today.replace(year=today.year - years)
+        except ValueError:  # 29 February in a non-leap year
+            cutoff = today.replace(year=today.year - years, day=28)
 
         self.stdout.write(
             self.style.WARNING(
@@ -45,62 +51,21 @@ class Command(BaseCommand):
         )
 
         checks = [
-            (
-                "Completed allocations",
-                """
-                SELECT COUNT(*)
-                FROM admissions_allocation
-                WHERE ended_at IS NOT NULL
-                  AND ended_at < %s
-                """,
-            ),
-            (
-                "Admission applications",
-                """
-                SELECT COUNT(*)
-                FROM admissions_application
-                WHERE submitted_at < %s
-                """,
-            ),
-            (
-                "Invoices",
-                """
-                SELECT COUNT(*)
-                FROM fees_invoice
-                WHERE issue_date < %s
-                """,
-            ),
-            (
-                "Payments",
-                """
-                SELECT COUNT(*)
-                FROM fees_payment
-                WHERE created_at < %s
-                """,
-            ),
-            (
-                "Receipts",
-                """
-                SELECT COUNT(*)
-                FROM fees_receipt
-                WHERE issued_at < %s
-                """,
-            ),
+            ("Completed allocations", Allocation.objects.filter(ended_at__date__lt=cutoff)),
+            ("Admission applications", Application.objects.filter(submitted_at__date__lt=cutoff)),
+            ("Invoices", Invoice.objects.filter(issue_date__lt=cutoff)),
+            ("Payments", Payment.objects.filter(created_at__date__lt=cutoff)),
+            ("Receipts", Receipt.objects.filter(issued_at__date__lt=cutoff)),
+            ("Gate movements", GateMovement.objects.filter(occurred_at__date__lt=cutoff)),
+            ("Outpass requests", OutpassRequest.objects.filter(requested_at__date__lt=cutoff)),
+            ("Visitor records", Visitor.objects.filter(created_at__date__lt=cutoff)),
         ]
-
-        with connection.cursor() as cursor:
-            for label, query in checks:
-                cursor.execute(query, [cutoff])
-                count = cursor.fetchone()[0]
-                self.stdout.write(f"{label}: {count}")
+        for label, records in checks:
+            self.stdout.write(f"{label}: {records.count()}")
 
         self.stdout.write(
             self.style.WARNING(
                 "These counts identify records for review only. "
                 "They do not authorize deletion or anonymization."
             )
-        )
-        self.stdout.write(
-            "Gate and visitor retention cannot be reported because "
-            "their database tables are not currently present."
         )

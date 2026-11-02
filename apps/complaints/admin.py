@@ -10,19 +10,16 @@ class ComplaintAdmin(admin.ModelAdmin):
         "category",
         "priority",
         "status",
+        "sla_overdue",
         "created_by",
         "assigned_to",
-        "resolution_confirmed",
-        "is_sla_overdue",
         "created_at",
-        "resolved_at",
     )
 
     list_filter = (
-        "category",
-        "priority",
         "status",
-        "resolution_confirmed",
+        "priority",
+        "category",
         "created_at",
     )
 
@@ -33,7 +30,24 @@ class ComplaintAdmin(admin.ModelAdmin):
         "assigned_to__username",
     )
 
+    # The administrator can reassign or change the state; what was reported stays as reported.
     readonly_fields = (
+        "title",
+        "description",
+        "category",
+        "photo",
+        "created_by",
+        "priority",
         "created_at",
+        "resolved_at",
+        "resolution_confirmed",
         "escalated_at",
     )
+
+    @admin.display(boolean=True, description="Past SLA")
+    def sla_overdue(self, obj):
+        return obj.is_sla_overdue
+
+    def has_add_permission(self, request):
+        # Residents report complaints from the portal.
+        return False

@@ -1,13 +1,84 @@
 
 from django.contrib import messages
-from django.shortcuts import redirect, render
+from django.db.models import OuterRef, Q, Subquery
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.accounts.permissions import role_required
+from apps.admissions.models import Allocation
 
 from . import services
-from .models import NightAttendance, OutpassRequest
+from .models import CurfewAlert, GateMovement, NightAttendance, OutpassRequest
+
+R = User.Role
+
+
+@role_required(R.SECURITY_GUARD, R.WARDEN)
+def gate_log(request):
+    """Gate log (HMS-F-020, HMS-F-022).
+
+    The guard finds a resident and records an entry or exit by hand when the RFID or
+    biometric reader is not used; the warden sees the same log and the curfew alerts.
+    """
+    is_guard = request.user.role == R.SECURITY_GUARD
+
+    if request.method == "POST":
+        if not is_guard:
+            return redirect("gate:log")
+        resident = get_object_or_404(User, pk=request.POST.get("resident"), role=R.RESIDENT)
+        direction = request.POST.get("direction", "")
+        try:
+            services.record_movement(
+                resident, direction, GateMovement.CaptureMethod.MANUAL, recorded_by=request.user
+            )
+        except services.InvalidGateMovement as error:
+            messages.error(request, str(error))
+        else:
+            verb = "entry" if direction == GateMovement.Direction.IN else "exit"
+            name = resident.get_full_name() or resident.username
+            messages.success(request, f"Recorded the {verb} of {name}.")
+        query = request.POST.get("q", "")
+        return redirect(f"{request.path}?q={query}" if query else request.path)
+
+    last_move = GateMovement.objects.filter(resident=OuterRef("resident")).order_by(
+        "-occurred_at", "-pk"
+    )
+    residents = (
+        Allocation.objects.filter(status=Allocation.Status.ACTIVE)
+        .select_related("resident", "bed__room__block")
+        .annotate(
+            last_direction=Subquery(last_move.values("direction")[:1]),
+            last_at=Subquery(last_move.values("occurred_at")[:1]),
+        )
+        .order_by("bed__room__block__name", "bed__room__number", "bed__label")
+    )
+    query = request.GET.get("q", "").strip()
+    if query:
+        residents = residents.filter(
+            Q(resident__first_name__icontains=query)
+            | Q(resident__last_name__icontains=query)
+            | Q(resident__username__icontains=query)
+            | Q(bed__room__number__icontains=query)
+        )
+    residents = list(residents)
+    out_now = sum(1 for a in residents if a.last_direction == GateMovement.Direction.OUT)
+
+    today = timezone.localdate()
+    movements = GateMovement.objects.select_related("resident", "recorded_by")[:25]
+    alerts = CurfewAlert.objects.select_related("resident", "block")[:10]
+
+    return render(request, "gate/log.html", {
+        "is_guard": is_guard,
+        "residents": residents,
+        "query": query,
+        "out_now": out_now,
+        "in_now": len(residents) - out_now,
+        "moves_today": GateMovement.objects.filter(occurred_at__date=today).count(),
+        "alerts_today": CurfewAlert.objects.filter(curfew_date=today).count(),
+        "movements": movements,
+        "alerts": alerts,
+    })
 
 
 @role_required(User.Role.RESIDENT)
@@ -76,12 +147,17 @@ def attendance_page(request):
         "resident__username",
     )
 
+    counts = {status: 0 for status in NightAttendance.Status.values}
+    for record in records:
+        counts[record.status] += 1
+
     return render(
         request,
         "gate/attendance.html",
         {
             "records": records,
             "selected_date": selected_date,
+            "counts": counts,
         },
     )
 
@@ -148,5 +224,5 @@ def gate_returns_page(request):
     return render(
         request,
         "gate/returns.html",
-        {"outpasses": approved_outpasses},
+        {"outpasses": approved_outpasses, "now": timezone.now()},
     )

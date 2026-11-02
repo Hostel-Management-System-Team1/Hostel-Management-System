@@ -1,17 +1,49 @@
-﻿<!DOCTYPE html>
-<html>
-<head>
-    <title>Register Visitor</title>
-</head>
-<body>
-    <h1>Visitor Registration</h1>
+﻿{% extends "base.html" %}
+{% block title %}Register a visitor · Hostel Management System{% endblock %}
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Register Visitor</button>
-    </form>
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li><a href="{% url 'visitors:list' %}">Visitors</a></li>
+      <li aria-current="page">Register</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Register a visitor</h1>
+      <p class="hm-sub">Check an identity document before registering. Fields marked * are required.</p>
+    </div>
+  </div>
 
-    <a href="{% url 'visitors:list' %}">View Visitor Records</a>
-</body>
-</html>
+  <form method="post" novalidate class="hm-form-narrow">
+    {% csrf_token %}
+    {% if form.errors %}
+      <div class="hm-alert hm-alert--danger" role="alert"><div class="hm-alert__body"><strong>Some details need fixing</strong>Check the highlighted fields below.</div></div>
+    {% endif %}
+    <section class="hm-panel hm-form-section" aria-labelledby="h-visitor">
+      <div class="hm-panel__head"><h2 id="h-visitor">Visitor</h2></div>
+      <div class="hm-panel__body">
+        <div class="row g-3">
+          <div class="col-md-6">{% include "_field.html" with field=form.visitor_name %}</div>
+          <div class="col-md-6">{% include "_field.html" with field=form.phone %}</div>
+          <div class="col-md-6">{% include "_field.html" with field=form.id_proof_type %}</div>
+          <div class="col-md-6">{% include "_field.html" with field=form.id_proof_number %}</div>
+        </div>
+      </div>
+    </section>
+    <section class="hm-panel hm-form-section" aria-labelledby="h-visit">
+      <div class="hm-panel__head"><h2 id="h-visit">Visit</h2></div>
+      <div class="hm-panel__body">
+        <div class="row g-3">
+          <div class="col-md-6">{% include "_field.html" with field=form.resident %}</div>
+          <div class="col-md-6">{% include "_field.html" with field=form.purpose %}</div>
+        </div>
+      </div>
+    </section>
+    <div class="hm-form-actions">
+      <a class="btn btn-outline-secondary" href="{% url 'visitors:list' %}">Cancel</a>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-person-plus" aria-hidden="true"></i> Register visitor</button>
+    </div>
+  </form>
+{% endblock %}

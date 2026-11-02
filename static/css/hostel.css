@@ -521,3 +521,76 @@ h1, h2, h3, .hm-serif { font-weight: 600; letter-spacing: -0.01em; }
     min-width: 0;
   }
 }
+
+/* Sprint 2 screens: vacating, outpass decisions, report downloads */
+.hm-badge--requested { background: var(--hm-warning-bg); color: var(--hm-warning); }
+.hm-badge--completed { background: var(--hm-success-bg); color: var(--hm-success); }
+.hm-note-input { max-width: 14rem; }
+.hm-report__exports { display: inline-flex; flex-wrap: wrap; align-items: center; gap: .25rem .75rem; font-size: .875rem; color: var(--hm-muted); }
+.hm-report__exports a { font-weight: 600; text-decoration: none; }
+.hm-report__exports a:hover { text-decoration: underline; }
+.hm-panel__head .hm-sub { margin: 0; font-size: .875rem; color: var(--hm-muted); }
+.hm-table details summary { cursor: pointer; color: var(--hm-accent); font-weight: 600; }
+.hm-table .form-select-sm { min-width: 11rem; }
+@media (max-width: 575.98px) {
+  .hm-stats--3 { grid-template-columns: 1fr 1fr; }
+  .hm-stat__value { font-size: 1.75rem; overflow-wrap: anywhere; }
+  .hm-table-stack td form.d-flex { flex-wrap: wrap; justify-content: flex-end; }
+  .hm-table .form-select-sm { min-width: 0; flex: 1 1 9rem; }
+}
+/* Long sidebars (the warden has 14 links) scroll inside the screen-high sidebar instead of being cut off */
+@media (min-width: 992px) {
+  .offcanvas-lg.hm-sidebar { display: flex; flex-direction: column; }
+  .offcanvas-lg.hm-sidebar .offcanvas-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+  .hm-sidebar .hm-nav-link { padding-top: .5rem; padding-bottom: .5rem; }
+}
+
+/* A whole table row opens its record: the row's main link stretches over the row,
+   while buttons, forms and other links in the row stay clickable above it */
+.hm-table tbody tr:has(a.hm-row-link) { position: relative; cursor: pointer; }
+.hm-table tbody tr:has(a.hm-row-link):hover > td { background: var(--hm-head-bg); }
+.hm-table a.hm-row-link::after { content: ""; position: absolute; inset: 0; }
+.hm-table tbody td :is(form, button, select, input, details, a:not(.hm-row-link)) { position: relative; z-index: 1; }
+
+/* Mess week grid: one row per day, one column per meal */
+.hm-menu-grid tbody th { font-weight: 600; white-space: nowrap; padding: .75rem 1.125rem; }
+.hm-menu-grid tbody th .hm-sub { font-weight: 400; }
+.hm-menu-grid td { vertical-align: top; min-width: 11rem; }
+.hm-meal { display: flex; flex-direction: column; gap: .2rem; }
+.hm-meal__dish { font-weight: 500; }
+.hm-meal__action { display: flex; align-items: center; gap: .5rem; margin-top: .35rem; }
+.hm-menu-grid td.is-skipped .hm-meal__dish { color: var(--hm-muted); text-decoration: line-through; }
+@media (max-width: 575.98px) {
+  .hm-menu-grid td { min-width: 0; }
+  .hm-menu-grid .hm-meal { align-items: flex-end; text-align: right; }
+}
+@media (max-width: 575.98px) {
+  .hm-menu-grid.hm-table-stack tbody th { display: block; width: 100%; border: 0; padding: 0 0 .35rem; font-size: 1.0625rem; }
+}
+
+/* Mess week planner */
+.hm-weekbar { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem .75rem; margin-bottom: 1rem; }
+.hm-weekbar__title { margin: 0; font-size: 1.125rem; display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap; }
+.hm-weekbar__title .hm-sub, .hm-weekbar > .hm-sub { font-size: .875rem; font-weight: 400; color: var(--hm-muted); }
+.hm-menu-grid tr.is-today > * { background: var(--hm-accent-bg); }
+.hm-meal__add { display: inline-flex; align-items: center; gap: .3rem; padding: .35rem .6rem; border: 1px dashed var(--hm-border-strong);
+  border-radius: var(--hm-radius); color: var(--hm-muted); text-decoration: none; font-size: .875rem; }
+.hm-meal__add:hover { border-color: var(--hm-accent); color: var(--hm-accent); background: var(--hm-surface); }
+.hm-meal__action .hm-served { width: 4.5rem; }
+.hm-day-action { display: flex; gap: .75rem; margin-top: .35rem; font-weight: 400; }
+
+/* Compact account box at the foot of the sidebar: name opens the profile; password and sign-out on one line */
+.hm-user { gap: .5rem; padding: .625rem .75rem; }
+a.hm-user__row { color: inherit; text-decoration: none; border-radius: var(--hm-radius); margin: 0; }
+a.hm-user__row:hover .hm-user__name { text-decoration: underline; }
+.hm-user__name, .hm-user__role { display: block; }
+.hm-user__avatar { width: 2.25rem; height: 2.25rem; }
+.hm-user__actions { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
+.hm-user__actions form { margin: 0; }
+button.hm-user__out { width: auto; min-height: 36px; padding: 0 .75rem; font-size: .875rem; }
+.hm-sidebar .offcanvas-body { gap: 1rem; }
+.hm-sidebar .hm-nav-link { min-height: 36px; }
+
+/* Empty state: the action button sits clear of the text above it */
+.hm-empty .btn { margin-top: .875rem; }
+.hm-dash .hm-empty { padding: 1.75rem 1rem 2rem; }

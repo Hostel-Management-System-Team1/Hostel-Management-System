@@ -30,6 +30,10 @@ class ApplicationForm(BootstrapFormMixin, forms.ModelForm):
             "guardian_phone": forms.TextInput(attrs={"type": "tel"}),
             "full_name": forms.TextInput(attrs={"autocomplete": "name"}),
             "email": forms.EmailInput(attrs={"autocomplete": "email"}),
+            "year_of_study": forms.Select(choices=[("", "Select")] + [
+                (n, f"{n}{'st' if n == 1 else 'nd' if n == 2 else 'rd' if n == 3 else 'th'} year")
+                for n in range(1, 7)
+            ]),
         }
 
     def __init__(self, *args, **kwargs):

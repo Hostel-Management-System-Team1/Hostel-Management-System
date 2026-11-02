@@ -1,73 +1,88 @@
-
 {% extends "base.html" %}
-
-{% block title %}My Vacating Request{% endblock %}
+{% block title %}Vacating · Hostel Management System{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <h1 class="h3 mb-3">Hostel Vacating</h1>
-  <p class="text-muted">
-    Submit a request to vacate your allocated bed. Hostel, mess, and maintenance
-    clearances must all be completed before vacating can be finalized.
-  </p>
-
-  {% if allocation %}
-    <div class="card mb-4">
-      <div class="card-body">
-        <h2 class="h5">Current allocation</h2>
-        <p class="mb-1">
-          <strong>Block:</strong> {{ allocation.bed.room.block.name }}
-        </p>
-        <p class="mb-1">
-          <strong>Room:</strong> {{ allocation.bed.room.number }}
-        </p>
-        <p class="mb-0">
-          <strong>Bed:</strong> {{ allocation.bed.label }}
-        </p>
-      </div>
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>My hostel</li>
+      <li aria-current="page">Vacating</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Leaving the hostel</h1>
+      <p class="hm-sub">Ask to vacate your bed. The warden checks hostel, mess and maintenance dues, then works out your deposit refund.</p>
     </div>
+  </div>
 
-    <div class="card mb-4">
-      <div class="card-body">
-        <h2 class="h5">Submit a vacating request</h2>
-        <form method="post" action="{% url 'admissions:submit_vacating' %}">
-          {% csrf_token %}
-          <div class="mb-3">
-            <label for="reason" class="form-label">Reason (optional)</label>
-            <textarea id="reason" name="reason" class="form-control"
-                      rows="3" maxlength="2000"></textarea>
+  <div class="hm-detail-grid">
+    <section class="hm-panel hm-panel--flush" aria-labelledby="h-requests">
+      <div class="hm-panel__head"><h2 id="h-requests">Your requests</h2></div>
+      {% if vacating_requests %}
+        <div class="table-responsive">
+          <table class="table hm-table hm-table-stack">
+            <thead><tr><th scope="col">Request</th><th scope="col">Submitted</th><th scope="col">Clearances</th><th scope="col">Status</th></tr></thead>
+            <tbody>
+              {% for item in vacating_requests %}
+                <tr>
+                  <td class="hm-cell-primary"><a class="hm-row-link" href="{% url 'admissions:vacating_detail' item.pk %}">Request #{{ item.pk }}</a></td>
+                  <td data-label="Submitted">{{ item.requested_at|date:"j M Y, H:i" }}</td>
+                  <td data-label="Clearances">{% for clearance in item.clearances.all %}<span class="hm-badge hm-badge--{{ clearance.status|lower }}" title="{{ clearance.get_status_display }}">{{ clearance.get_department_display }}</span> {% endfor %}</td>
+                  <td data-label="Status"><span class="hm-badge hm-badge--{{ item.status|lower }}">{{ item.get_status_display }}</span></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="hm-empty">
+          <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+          <h3>No vacating request</h3>
+          <p>When you are ready to leave, send a request from this page.</p>
+        </div>
+      {% endif %}
+    </section>
+
+    <div>
+      {% if allocation %}
+        <section class="hm-panel hm-panel--flush" aria-labelledby="h-bed">
+          <div class="hm-panel__head"><h2 id="h-bed">Your bed</h2></div>
+          <dl class="hm-facts">
+            <div><dt>Block</dt><dd>{{ allocation.bed.room.block.name }}</dd></div>
+            <div><dt>Room</dt><dd>{{ allocation.bed.room.number }}</dd></div>
+            <div><dt>Bed</dt><dd>{{ allocation.bed.label }}</dd></div>
+          </dl>
+        </section>
+        {% if open_request %}
+          <section class="hm-panel" aria-labelledby="h-next">
+            <div class="hm-panel__head"><h2 id="h-next">What happens next</h2></div>
+            <div class="hm-panel__body">
+              <p class="mb-3">Request #{{ open_request.pk }} is <strong>{{ open_request.get_status_display|lower }}</strong>. The warden clears your hostel, mess and maintenance dues, then completes it and releases your bed.</p>
+              <a class="btn btn-outline-secondary w-100" href="{% url 'admissions:vacating_detail' open_request.pk %}">View request</a>
+            </div>
+          </section>
+        {% else %}
+          <section class="hm-panel" aria-labelledby="h-submit">
+            <div class="hm-panel__head"><h2 id="h-submit">Ask to vacate</h2></div>
+            <form method="post" action="{% url 'admissions:submit_vacating' %}" class="hm-panel__body">
+              {% csrf_token %}
+              <label for="reason" class="form-label">Reason (optional)</label>
+              <textarea id="reason" name="reason" class="form-control mb-3" rows="3" maxlength="2000"></textarea>
+              <button class="btn btn-primary w-100" type="submit"><i class="bi bi-send" aria-hidden="true"></i> Submit request</button>
+            </form>
+          </section>
+        {% endif %}
+      {% else %}
+        <section class="hm-panel" aria-labelledby="h-nobed">
+          <div class="hm-panel__head"><h2 id="h-nobed">Your bed</h2></div>
+          <div class="hm-empty">
+            <i class="bi bi-door-closed" aria-hidden="true"></i>
+            <h3>No bed allocated</h3>
+            <p>You can ask to vacate once you have a bed.</p>
           </div>
-          <button class="btn btn-primary" type="submit">
-            Submit request
-          </button>
-        </form>
-      </div>
+        </section>
+      {% endif %}
     </div>
-  {% else %}
-    <div class="alert alert-info">
-      You do not currently have an active bed allocation.
-    </div>
-  {% endif %}
-
-  <h2 class="h5 mb-3">Your requests</h2>
-  {% for item in vacating_requests %}
-    <div class="card mb-3">
-      <div class="card-body">
-        <p class="mb-1">
-          <strong>Request #{{ item.pk }}</strong>
-          <span class="badge bg-secondary">{{ item.get_status_display }}</span>
-        </p>
-        <p class="text-muted small mb-2">
-          Submitted: {{ item.requested_at|date:"d M Y, H:i" }}
-        </p>
-        <a class="btn btn-outline-primary btn-sm"
-           href="{% url 'admissions:vacating_detail' item.pk %}">
-          View request
-        </a>
-      </div>
-    </div>
-  {% empty %}
-    <p>You have not submitted a vacating request.</p>
-  {% endfor %}
-</div>
+  </div>
 {% endblock %}
