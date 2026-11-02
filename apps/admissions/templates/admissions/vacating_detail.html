@@ -71,7 +71,11 @@
             <div><dt>Refundable deposit</dt><dd>{{ req.security_deposit|inr }}</dd></div>
             <div><dt>Outstanding dues</dt><dd>− {{ req.outstanding_dues|inr }}</dd></div>
             <div><dt>Damage deduction</dt><dd>− {{ req.damage_deduction|inr }}</dd></div>
-            <div><dt>Refund</dt><dd>{{ req.refund_amount|inr }}</dd></div>
+            {% if req.amount_payable %}
+              <div><dt>Payable by the resident</dt><dd class="text-danger">{{ req.amount_payable|inr }} <span class="hm-sub">billed as a new invoice</span></dd></div>
+            {% else %}
+              <div><dt>Refund</dt><dd>{{ req.refund_amount|inr }}</dd></div>
+            {% endif %}
             <div><dt>Vacated</dt><dd>{{ req.vacated_at|date:"j M Y, H:i" }}</dd></div>
             <div><dt>Staff notes</dt><dd>{{ req.staff_notes|default:"—" }}</dd></div>
           </dl>

@@ -1,4 +1,4 @@
-HMS automated test run — 2026-11-02 04:40 IST, PostgreSQL 16, DJANGO_DEBUG=false
+HMS automated test run — 2026-11-02 14:28 IST, PostgreSQL 16, DJANGO_DEBUG=false
 
 test_unauthenticated_api_call_is_refused_with_the_error_envelope (apps.accounts.test_auth.ApiTests.test_unauthenticated_api_call_is_refused_with_the_error_envelope) ... ok
 test_unknown_api_path_is_a_404_page_not_a_stack_trace (apps.accounts.test_auth.ApiTests.test_unknown_api_path_is_a_404_page_not_a_stack_trace) ... ok
@@ -108,10 +108,10 @@ test_resident_list_search (apps.admissions.test_transfer.TransferViewTests.test_
 test_residents_and_other_roles_cannot_transfer (apps.admissions.test_transfer.TransferViewTests.test_residents_and_other_roles_cannot_transfer) ... ok
 test_warden_transfers_a_resident (apps.admissions.test_transfer.TransferViewTests.test_warden_transfers_a_resident) ... ok
 test_completed_request_cannot_be_completed_again (apps.admissions.test_vacating.VacatingServiceTests.test_completed_request_cannot_be_completed_again) ... ok
+test_damage_beyond_the_deposit_is_shown_as_payable_and_billed (apps.admissions.test_vacating.VacatingServiceTests.test_damage_beyond_the_deposit_is_shown_as_payable_and_billed) ... ok
 test_duplicate_open_request_is_rejected (apps.admissions.test_vacating.VacatingServiceTests.test_duplicate_open_request_is_rejected) ... ok
 test_negative_damage_charge_is_rejected (apps.admissions.test_vacating.VacatingServiceTests.test_negative_damage_charge_is_rejected) ... ok
 test_pending_clearance_prevents_approval (apps.admissions.test_vacating.VacatingServiceTests.test_pending_clearance_prevents_approval) ... ok
-test_refund_never_becomes_negative (apps.admissions.test_vacating.VacatingServiceTests.test_refund_never_becomes_negative) ... ok
 test_request_must_be_approved_before_completion (apps.admissions.test_vacating.VacatingServiceTests.test_request_must_be_approved_before_completion) ... ok
 test_resident_can_submit_request_with_three_pending_clearances (apps.admissions.test_vacating.VacatingServiceTests.test_resident_can_submit_request_with_three_pending_clearances) ... ok
 test_successful_completion_records_refund_and_releases_bed (apps.admissions.test_vacating.VacatingServiceTests.test_successful_completion_records_refund_and_releases_bed) ... ok
@@ -176,7 +176,7 @@ test_high_priority_escalates_after_48_hours (apps.complaints.tests.ComplaintSLAT
 test_medium_priority_escalates_after_96_hours (apps.complaints.tests.ComplaintSLATests.test_medium_priority_escalates_after_96_hours) ... ok
 test_not_overdue_complaint_is_not_escalated (apps.complaints.tests.ComplaintSLATests.test_not_overdue_complaint_is_not_escalated) ... ok
 test_expire_payments_command (apps.fees.tests.CommandTests.test_expire_payments_command) ... ok
-test_generate_missing_invoices_after_a_fee_structure_is_added (apps.fees.tests.CommandTests.test_generate_missing_invoices_after_a_fee_structure_is_added) ... No fee structure for TRIPLE rooms; no invoice for allocation 58
+test_generate_missing_invoices_after_a_fee_structure_is_added (apps.fees.tests.CommandTests.test_generate_missing_invoices_after_a_fee_structure_is_added) ... ok
 test_administrator_edits_the_fee_structure (apps.fees.tests.FeeAdminTests.test_administrator_edits_the_fee_structure) ... ok
 test_fee_structure_and_fees_appear_in_the_admin_navigation (apps.fees.tests.FeeAdminTests.test_fee_structure_and_fees_appear_in_the_admin_navigation) ... ok
 test_invoices_are_listed_but_not_editable (apps.fees.tests.FeeAdminTests.test_invoices_are_listed_but_not_editable) ... ok
@@ -192,12 +192,12 @@ test_changing_the_fee_structure_does_not_change_an_existing_invoice (apps.fees.t
 test_generating_twice_gives_one_invoice (apps.fees.tests.InvoiceGenerationTests.test_generating_twice_gives_one_invoice) ... ok
 test_inactive_fee_heads_are_left_out (apps.fees.tests.InvoiceGenerationTests.test_inactive_fee_heads_are_left_out) ... ok
 test_invoice_is_raised_when_an_allocation_is_confirmed (apps.fees.tests.InvoiceGenerationTests.test_invoice_is_raised_when_an_allocation_is_confirmed) ... ok
-test_no_fee_structure_means_no_invoice_but_the_allocation_stands (apps.fees.tests.InvoiceGenerationTests.test_no_fee_structure_means_no_invoice_but_the_allocation_stands) ... No fee structure for DOUBLE rooms; no invoice for allocation 72
+test_no_fee_structure_means_no_invoice_but_the_allocation_stands (apps.fees.tests.InvoiceGenerationTests.test_no_fee_structure_means_no_invoice_but_the_allocation_stands) ... ok
 test_security_deposit_is_marked_refundable (apps.fees.tests.InvoiceGenerationTests.test_security_deposit_is_marked_refundable) ... ok
 test_total_is_the_sum_of_the_items_for_every_room_type (apps.fees.tests.InvoiceGenerationTests.test_total_is_the_sum_of_the_items_for_every_room_type) ... ok
 test_card_details_posted_to_the_gateway_page_are_not_kept (apps.fees.tests.NoCardDataTests.test_card_details_posted_to_the_gateway_page_are_not_kept) ... ok
 test_no_model_has_a_card_or_bank_field (apps.fees.tests.NoCardDataTests.test_no_model_has_a_card_or_bank_field) ... ok
-test_failed_email_is_left_pending_for_retry (apps.fees.tests.OverdueInvoiceTests.test_failed_email_is_left_pending_for_retry) ... Failed to send overdue reminder for invoice INV-2026-000077
+test_failed_email_is_left_pending_for_retry (apps.fees.tests.OverdueInvoiceTests.test_failed_email_is_left_pending_for_retry) ... ok
 test_invoice_is_not_overdue_on_its_due_date (apps.fees.tests.OverdueInvoiceTests.test_invoice_is_not_overdue_on_its_due_date) ... ok
 test_paid_invoice_is_never_marked_overdue_or_reminded (apps.fees.tests.OverdueInvoiceTests.test_paid_invoice_is_never_marked_overdue_or_reminded) ... ok
 test_past_due_invoice_is_flagged_and_reminder_goes_to_resident_and_guardian (apps.fees.tests.OverdueInvoiceTests.test_past_due_invoice_is_flagged_and_reminder_goes_to_resident_and_guardian) ... ok
@@ -299,6 +299,7 @@ test_tc_cmp_02_lifecycle_open_in_progress_resolved_closed (hms.test_acceptance.T
 test_tc_vis_01_out_of_hours_entry_needs_a_warden_override_with_reason (hms.test_acceptance.TS6Visitors.test_tc_vis_01_out_of_hours_entry_needs_a_warden_override_with_reason) ... ok
 test_tc_ops_02_retention_report_counts_old_records_and_changes_nothing (hms.test_acceptance.TS7Operations.test_tc_ops_02_retention_report_counts_old_records_and_changes_nothing) ... ok
 test_tc_rpt_01_reports_reconcile_and_both_exports_open (hms.test_acceptance.TS7Reports.test_tc_rpt_01_reports_reconcile_and_both_exports_open) ... ok
+test_tc_ops_02_old_personal_data_is_anonymised_and_records_are_kept (hms.test_acceptance.TS7Retention.test_tc_ops_02_old_personal_data_is_anonymised_and_records_are_kept) ... ok
 test_admin_menu_links_sprint2_modules (hms.test_screens.AdminReportsTests.test_admin_menu_links_sprint2_modules) ... ok
 test_lists_have_no_bulk_actions_and_evidence_is_read_only (hms.test_screens.AdminReportsTests.test_lists_have_no_bulk_actions_and_evidence_is_read_only) ... ok
 test_reports_open_inside_the_admin_site (hms.test_screens.AdminReportsTests.test_reports_open_inside_the_admin_site) ... ok
@@ -335,5 +336,5 @@ test_plain_http_is_redirected_to_https (hms.test_security.TlsSettingsTests.test_
 test_production_forces_https_hsts_and_secure_cookies (hms.test_security.TlsSettingsTests.test_production_forces_https_hsts_and_secure_cookies) ... ok
 test_proxy_header_is_trusted_only_when_asked (hms.test_security.TlsSettingsTests.test_proxy_header_is_trusted_only_when_asked) ... ok
 
-Ran 336 tests in 34.499s
+Ran 337 tests in 48.159s
 OK

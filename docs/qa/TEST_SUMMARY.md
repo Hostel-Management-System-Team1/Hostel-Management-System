@@ -6,13 +6,13 @@ Executed 2026-11-02 against `main` plus the Sprint 2 finish-up changes, on Postg
 
 | Status | Cases |
 |---|---|
-| PASS | 24 |
-| PARTIAL | 6 |
+| PASS | 26 |
+| PARTIAL | 4 |
 | NOT RUN | 1 |
 
-- **Automated suite:** 336 tests, all passing, including one acceptance test per Sprint 2 Test Plan case (`hms/test_acceptance.py`), driven through the pages each role uses.
-- **Defects:** 23 found during execution, all fixed and retested (below).
-- **Exit criteria:** every functional case passes except TC-VAC-01, whose gap is a documented deviation. The remaining non-functional items need a production-like server or a user trial (see *Open items*).
+- **Automated suite:** 337 tests, all passing, including one acceptance test per Sprint 2 Test Plan case (`hms/test_acceptance.py`), driven through the pages each role uses.
+- **Defects:** 25 found during execution, all fixed and retested (below).
+- **Exit criteria:** every functional case passes. The remaining non-functional items need a production-like server or a user trial (see *Open items*).
 
 ## Test cases
 
@@ -37,11 +37,11 @@ Executed 2026-11-02 against `main` plus the Sprint 2 finish-up changes, on Postg
 | TC-CMP-03 | PASS | High escalates after 48 h, Medium after 96 h; every Hostel Administrator emailed; escalation time and audit entry recorded (after fix D-03). | complaints.tests.ComplaintSLATests |
 | TC-VIS-01 | PASS | Out-of-hours entry refused; warden override without reason refused, with reason allowed and audited; exit recorded with a timestamp. ID number not encrypted (DEVIATIONS 12). | test_acceptance.test_tc_vis_01; visitors.tests; test_screens.VisitorScreenTests |
 | TC-RPT-01 | PASS | Occupancy, dues and complaint figures reconcile with the records; XLSX opens in openpyxl; PDF opens in the browser. Current state only, no period picker (DEVIATIONS 13). | test_acceptance.test_tc_rpt_01; reporting.tests.ReportingExportTests |
-| TC-VAC-01 | PARTIAL | Bed released only after all three clearances and paid invoices; refund = deposit − dues − damages. A negative result is shown as ₹0, not as payable (DEVIATIONS 14). | admissions.test_vacating.VacatingServiceTests |
-| TC-PERF-01 | PARTIAL | Locust, 2,000 seeded residents: p95 1.6 s, 0 failures (docs/performance). Run on a developer laptop, not a production-like server (DEVIATIONS 15). | docs/performance/performance_test_summary.txt |
+| TC-VAC-01 | PASS | Bed released only after all three clearances and paid invoices; refund = deposit − dues − damages. Damage beyond the deposit is shown as payable and raised as an invoice to the resident (after fix D-24). | admissions.test_vacating.VacatingServiceTests |
+| TC-PERF-01 | PARTIAL | Locust, 2,000 seeded residents: p95 1.6 s, 0 failures (docs/performance). Run on a developer laptop, not a production-like server (DEVIATIONS 14). | docs/performance/performance_test_summary.txt |
 | TC-OPS-AVAIL | NOT RUN | Uptime script exists (deploy/windows/check_uptime.ps1); a month of operation is needed for a 99.5% figure. | — |
 | TC-OPS-01 | PASS | Drill on 2 Nov: backup_database 0.9 s, pg_restore into a fresh database 0.7 s; users, allocations, invoices and audit rows identical; verify_audit passes on the restored copy. Nightly schedule gives RPO ≤ 24 h. | audit.test_backup_database; manual drill |
-| TC-OPS-02 | PARTIAL | retention_report lists admission, fee, gate, outpass and visitor records older than 5 years and changes nothing; no archive/anonymise job (DEVIATIONS 16). Crash fixed (D-07, D-08). | test_acceptance.test_tc_ops_02 |
+| TC-OPS-02 | PASS | retention_report lists records older than 5 years; anonymise_old_records --apply blanks the personal data of residents who left over 5 years ago, old visitors and outpass contacts, and keeps the records so they can still be retrieved; dry run by default; scheduled monthly (after fixes D-07, D-08, D-25). | test_acceptance.test_tc_ops_02_* |
 | TC-UX-01 | PARTIAL | axe-core WCAG 2.1 A/AA audit of 33 pages across 5 roles: 0 violations. Every page checked at 360 px; skip link and keyboard focus present. No 10-user trial held. | manual audit (axe-core 4.x, Chrome) |
 | TC-SEC-01 | PARTIAL | HTTPS redirect, HSTS and secure cookies enforced outside development; nginx example allows TLS 1.2+ only. No live TLS scan (no deployed server). | test_security.TlsSettingsTests |
 | TC-SEC-02 | PASS | Every restricted URL refuses every other role with 403; idle session expires at 15 min; a logged-out session cookie is rejected. | accounts.test_rbac.AccessMatrixTests; accounts.test_auth.SessionTests |
@@ -77,15 +77,15 @@ Executed 2026-11-02 against `main` plus the Sprint 2 finish-up changes, on Postg
 | D-21 | TC-UX-01 | Low | Admin edit pages showed related-record icons, calendar pop-ups and uneven inputs | Browser date/time pickers, one input style, icons removed | PASS – visual check |
 | D-22 | TC-ADM-01 | Low | Year of study was a free number box; applicants typed the calendar year | Dropdown of 1st–6th year | PASS – visual check |
 | D-23 | TC-RPT-01 | Medium | Meals served could not be recorded anywhere but the admin, so the mess activity report stayed empty; meals could not be edited or removed | Week planner: add, edit, remove and copy meals; record meals served on past meals | PASS – test_tc_mess_01_manager_plans_the_week |
+| D-24 | TC-VAC-01 | Medium | Damage beyond the deposit showed a ₹0 refund instead of an amount payable | Shortfall shown as payable and raised as an invoice to the resident | PASS – test_damage_beyond_the_deposit_is_shown_as_payable_and_billed |
+| D-25 | TC-OPS-02 | Medium | No job anonymised personal data after the 5-year retention period | anonymise_old_records command (dry run by default, --apply to change) | PASS – test_tc_ops_02_old_personal_data_is_anonymised… |
 
 ## Open items reported to the QA lead
 
 | Case | What is outstanding | Recorded in |
 |---|---|---|
-| TC-VAC-01 | Refund shortfall shown as ₹0, not as payable | DEVIATIONS 14 |
-| TC-PERF-01 | Load test repeated on a production-like server | DEVIATIONS 15 |
-| TC-OPS-AVAIL | A month of uptime data | DEVIATIONS 15 |
-| TC-OPS-02 | Archive/anonymise job | DEVIATIONS 16 |
+| TC-PERF-01 | Load test repeated on a production-like server | DEVIATIONS 14 |
+| TC-OPS-AVAIL | A month of uptime data | DEVIATIONS 14 |
 | TC-UX-01 | 10-user allocation trial | — |
 | TC-SEC-01 | Live TLS scan of the deployed server | — |
 | TC-SEC-06 | OWASP ZAP scan | — |

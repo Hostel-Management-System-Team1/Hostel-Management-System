@@ -392,8 +392,14 @@ class VacatingRequest(models.Model):
         max_digits=10,
         decimal_places=2,
         default="0.00",
+        help_text="Negative when damage exceeds the deposit: the resident owes the difference.",
     )
     staff_notes = models.TextField(blank=True)
+
+    @property
+    def amount_payable(self):
+        """What the resident owes after vacating (the negative part of the refund)."""
+        return -self.refund_amount if self.refund_amount < 0 else 0
 
     class Meta:
         ordering = ["-requested_at"]

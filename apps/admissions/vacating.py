@@ -1,13 +1,15 @@
 """Business rules for the hostel vacating workflow (HMS-F-062)."""
 
+from datetime import timedelta
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.utils import timezone
 
 from apps.audit import service as audit
-from apps.fees.models import Invoice
+from apps.fees.models import Invoice, InvoiceItem
 
 from .models import (
     Allocation,
@@ -316,10 +318,9 @@ def complete_vacating(vacating_request, actor, staff_notes=""):
         Decimal("0.00"),
     )
 
-    refund = max(
-        Decimal("0.00"),
-        deposit - outstanding - damage,
-    )
+    # A negative refund means the damage exceeds the deposit: the resident owes the difference
+    # (HMS-F-062), which is billed below.
+    refund = deposit - outstanding - damage
 
     now = timezone.now()
 
@@ -351,6 +352,9 @@ def complete_vacating(vacating_request, actor, staff_notes=""):
     bed.status = Bed.Status.VACANT
     bed.save(update_fields=["status"])
 
+    if refund < 0:
+        _bill_shortfall(request, allocation, -refund)
+
     audit.record(
         "vacating.completed",
         target=request,
@@ -362,3 +366,24 @@ def complete_vacating(vacating_request, actor, staff_notes=""):
     )
 
     return request
+
+
+def _bill_shortfall(request, allocation, amount):
+    """Raise an invoice for damage charges the security deposit did not cover."""
+    today = timezone.localdate()
+    invoice = Invoice.objects.create(
+        resident=request.resident,
+        allocation=None,  # the allocation's own fee invoice is the only one tied to it
+        kind=Invoice.Kind.ALLOCATION,
+        description=f"Damage beyond deposit — vacating request #{request.pk}",
+        issue_date=today,
+        due_date=today + timedelta(days=settings.FEE_DUE_DAYS),
+        total=amount,
+    )
+    InvoiceItem.objects.create(
+        invoice=invoice, description="Damage charges not covered by the deposit", amount=amount,
+    )
+    audit.record("invoice.raised", target=invoice, detail={
+        "invoice": invoice.number, "total": str(amount), "reason": "vacating shortfall",
+    })
+    return invoice

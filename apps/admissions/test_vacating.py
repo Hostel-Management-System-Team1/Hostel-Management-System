@@ -191,7 +191,7 @@ class VacatingServiceTests(TestCase):
         self.assertEqual(self.allocation.status, Allocation.Status.ENDED)
         self.assertEqual(self.allocation.bed.status, Bed.Status.VACANT)
 
-    def test_refund_never_becomes_negative(self):
+    def test_damage_beyond_the_deposit_is_shown_as_payable_and_billed(self):
         request = self.submit_request()
         self.prepare_for_approval(request)
 
@@ -207,7 +207,11 @@ class VacatingServiceTests(TestCase):
 
         self.assertEqual(completed.security_deposit, Decimal("10000.00"))
         self.assertEqual(completed.damage_deduction, Decimal("15000.00"))
-        self.assertEqual(completed.refund_amount, Decimal("0.00"))
+        self.assertEqual(completed.refund_amount, Decimal("-5000.00"))
+        self.assertEqual(completed.amount_payable, Decimal("5000.00"))
+        shortfall = Invoice.objects.get(description__startswith="Damage beyond deposit")
+        self.assertEqual(shortfall.total, Decimal("5000.00"))
+        self.assertEqual(shortfall.resident, completed.resident)
 
     def test_negative_damage_charge_is_rejected(self):
         request = self.submit_request()
