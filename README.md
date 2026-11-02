@@ -157,7 +157,8 @@ complaint ageing and mess activity, each downloadable as CSV, Excel (XLSX) or PD
 A resident asks to vacate under **Vacating**. Three no-dues clearances (hostel fees, mess dues, maintenance) are
 created; hostel and mess cannot be cleared while their invoices are unpaid. The warden records the clearances and any
 damage charges, approves the request, then completes it: the bed returns to the vacant pool and the refund is the
-paid security deposit minus outstanding dues and damage charges.
+paid security deposit minus outstanding dues and damage charges. When the damage is more than the deposit, the
+difference is shown as payable and raised as an invoice to the resident.
 
 ## Audit log and security protections (HMS-SR-001, SR-004 – SR-006)
 
@@ -187,8 +188,11 @@ paid security deposit minus outstanding dues and damage charges.
   keeps the last 7 days.
 - **Uptime.** `deploy/windows/check_uptime.ps1` requests the home page and appends the result to
   `monitoring/uptime.csv`; schedule it every few minutes.
-- **Retention.** `python manage.py retention_report --years 5` counts admission, fee, gate, outpass and visitor records older than the
-  retention period. It only reports; archiving is a manual decision (see DEVIATIONS.md).
+- **Retention.** `python manage.py retention_report --years 5` counts admission, fee, gate, outpass and visitor records
+  older than the retention period. `python manage.py anonymise_old_records --years 5 --apply` then blanks the personal
+  details of residents who left more than 5 years ago (name, contacts, guardian, medical, enrolment number), of old
+  visitor records and of old outpass contacts. The records themselves stay, so history can still be retrieved;
+  without `--apply` it only reports.
 - **Performance.** `locustfile.py` drives 200 users against 2,000 seeded residents
   (`seed_performance_data`, `seed_perf_wardens`). The measured results are in
   [`docs/performance/`](docs/performance/performance_test_summary.txt).
@@ -206,6 +210,7 @@ paid security deposit minus outstanding dues and damage charges.
 | `expire_payments` | every 30 minutes |
 | `backup_database` | nightly |
 | `verify_audit` | daily |
+| `anonymise_old_records --apply` | monthly |
 
 ## UI design
 

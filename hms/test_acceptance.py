@@ -325,3 +325,36 @@ class TS7Operations(HousedResidentTestCase):
         self.assertIn("Completed allocations: 1", out.getvalue())
         self.assertIn("Gate movements: 1", out.getvalue())
         self.assertEqual(self.resident.gate_movements.count(), 1)
+
+
+class TS7Retention(HousedResidentTestCase):
+    def test_tc_ops_02_old_personal_data_is_anonymised_and_records_are_kept(self):
+        from io import StringIO
+
+        from django.core.management import call_command
+
+        from apps.admissions.models import Allocation, Application
+
+        old = timezone.now() - timedelta(days=6 * 366)
+        movement = gate.record_movement(self.resident, "OUT", "RFID", occurred_at=old)
+        Allocation.objects.filter(pk=self.allocation.pk).update(status="ENDED", ended_at=old)
+        Visitor.objects.filter(pk=Visitor.objects.create(
+            visitor_name="Sunita", phone="9876500000", id_proof_number="1234",
+            resident=self.resident, purpose="Visit", registered_by=self.guard).pk,
+        ).update(created_at=old)
+
+        call_command("anonymise_old_records", stdout=StringIO())  # dry run changes nothing
+        self.resident.refresh_from_db()
+        self.assertEqual(self.resident.username, "res1")
+
+        call_command("anonymise_old_records", "--apply", stdout=StringIO())
+        self.resident.refresh_from_db()
+        self.assertEqual(self.resident.get_full_name(), "Former resident")
+        self.assertEqual((self.resident.email, self.resident.phone), ("", ""))
+        self.assertFalse(self.resident.is_active)
+        application = Application.objects.get(applicant=self.resident)
+        self.assertEqual((application.guardian_phone, application.medical_conditions), ("", ""))
+        self.assertEqual(Visitor.objects.get().id_proof_number, "")
+        # The records themselves are kept and can still be retrieved.
+        self.assertTrue(Allocation.objects.filter(pk=self.allocation.pk).exists())
+        self.assertTrue(type(movement).objects.filter(pk=movement.pk).exists())
