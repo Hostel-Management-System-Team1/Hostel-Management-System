@@ -1,256 +1,166 @@
-
 {% extends "base.html" %}
-
-{% block title %}Vacating Request #{{ vacating_request.pk }}{% endblock %}
+{% block title %}Vacating request #{{ vacating_request.pk }} · Hostel Management System{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-  <h1 class="h3">Vacating Request #{{ vacating_request.pk }}</h1>
+  {% with req=vacating_request resident=vacating_request.resident %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      {% if is_warden %}<li><a href="{% url 'admissions:vacating_list' %}">Vacating requests</a></li>{% else %}<li><a href="{% url 'admissions:my_vacating' %}">Vacating</a></li>{% endif %}
+      <li aria-current="page">Request #{{ req.pk }}</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>{{ resident.get_full_name|default:resident.username }}</h1>
+      <p class="hm-sub">Vacating request #{{ req.pk }} · {{ req.allocation.bed.room.block.name }} · room {{ req.allocation.bed.room.number }} · bed {{ req.allocation.bed.label }} · submitted {{ req.requested_at|date:"j M Y, H:i" }}</p>
+    </div>
+    <span class="hm-badge hm-badge--{{ req.status|lower }}">{{ req.get_status_display }}</span>
+  </div>
 
-  <div class="card my-3">
-    <div class="card-body">
-      <p>
-        <strong>Resident:</strong>
-        {{ vacating_request.resident.get_full_name|default:vacating_request.resident.username }}
-      </p>
-      <p>
-        <strong>Status:</strong>
-        <span class="badge
-          {% if vacating_request.status == 'COMPLETED' %}bg-success
-          {% elif vacating_request.status == 'APPROVED' %}bg-primary
-          {% elif vacating_request.status == 'REJECTED' %}bg-danger
-          {% else %}bg-warning text-dark{% endif %}">
-          {{ vacating_request.get_status_display }}
-        </span>
-      </p>
-      <p>
-        <strong>Reason:</strong>
-        {{ vacating_request.reason|default:"Not provided" }}
-      </p>
-      <p>
-        <strong>Room:</strong>
-        {{ vacating_request.allocation.bed.room.block.name }} /
-        {{ vacating_request.allocation.bed.room.number }} /
-        {{ vacating_request.allocation.bed.label }}
-      </p>
-      <p>
-        <strong>Submitted:</strong>
-        {{ vacating_request.requested_at|date:"d M Y, H:i" }}
-      </p>
+  <div class="hm-detail-grid">
+    <div>
+      <section class="hm-panel hm-panel--flush" aria-labelledby="h-clear">
+        <div class="hm-panel__head"><h2 id="h-clear">No-dues clearances</h2></div>
+        {% if clearances %}
+          <div class="table-responsive">
+            <table class="table hm-table hm-table-stack">
+              <thead><tr><th scope="col">Department</th><th scope="col">Status</th><th scope="col">Notes</th></tr></thead>
+              <tbody>
+                {% for clearance in clearances %}
+                  <tr>
+                    <td class="hm-cell-primary"><strong>{{ clearance.get_department_display }}</strong></td>
+                    <td data-label="Status"><span class="hm-badge hm-badge--{{ clearance.status|lower }}">{{ clearance.get_status_display }}</span></td>
+                    <td data-label="Notes">{{ clearance.notes|default:"—" }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="hm-empty"><i class="bi bi-clipboard-check" aria-hidden="true"></i><h3>No clearances yet</h3><p>Clearances are created when the request is submitted.</p></div>
+        {% endif %}
+      </section>
 
-      {% if vacating_request.approved_at %}
-        <p>
-          <strong>Approved by:</strong>
-          {{ vacating_request.approved_by.get_full_name|default:vacating_request.approved_by.username }}
-        </p>
-        <p class="mb-0">
-          <strong>Approved at:</strong>
-          {{ vacating_request.approved_at|date:"d M Y, H:i" }}
-        </p>
+      <section class="hm-panel hm-panel--flush" aria-labelledby="h-damage">
+        <div class="hm-panel__head"><h2 id="h-damage">Damage charges</h2></div>
+        {% if damage_charges %}
+          <div class="table-responsive">
+            <table class="table hm-table hm-table-stack">
+              <thead><tr><th scope="col">Item</th><th scope="col">Assessed by</th><th scope="col" class="hm-cell-num">Amount</th></tr></thead>
+              <tbody>
+                {% for charge in damage_charges %}
+                  <tr>
+                    <td class="hm-cell-primary"><strong>{{ charge.description }}</strong></td>
+                    <td data-label="Assessed by">{{ charge.assessed_by.get_full_name|default:charge.assessed_by.username|default:"—" }}</td>
+                    <td data-label="Amount" class="hm-cell-num">{{ charge.amount|inr }}</td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div class="hm-empty"><i class="bi bi-hammer" aria-hidden="true"></i><h3>No damage charges</h3><p>Charges for damage found at room inspection are deducted from the deposit.</p></div>
+        {% endif %}
+      </section>
+
+      {% if req.status == "COMPLETED" %}
+        <section class="hm-panel hm-panel--flush" aria-labelledby="h-refund">
+          <div class="hm-panel__head"><h2 id="h-refund">Deposit refund</h2></div>
+          <dl class="hm-facts">
+            <div><dt>Refundable deposit</dt><dd>{{ req.security_deposit|inr }}</dd></div>
+            <div><dt>Outstanding dues</dt><dd>− {{ req.outstanding_dues|inr }}</dd></div>
+            <div><dt>Damage deduction</dt><dd>− {{ req.damage_deduction|inr }}</dd></div>
+            <div><dt>Refund</dt><dd>{{ req.refund_amount|inr }}</dd></div>
+            <div><dt>Vacated</dt><dd>{{ req.vacated_at|date:"j M Y, H:i" }}</dd></div>
+            <div><dt>Staff notes</dt><dd>{{ req.staff_notes|default:"—" }}</dd></div>
+          </dl>
+        </section>
+      {% endif %}
+    </div>
+
+    <div>
+      <section class="hm-panel hm-panel--flush" aria-labelledby="h-request">
+        <div class="hm-panel__head"><h2 id="h-request">Request</h2></div>
+        <dl class="hm-facts">
+          <div><dt>Reason</dt><dd>{{ req.reason|default:"Not given" }}</dd></div>
+          {% if req.approved_at %}
+            <div><dt>Approved by</dt><dd>{{ req.approved_by.get_full_name|default:req.approved_by.username }}</dd></div>
+            <div><dt>Approved</dt><dd>{{ req.approved_at|date:"j M Y, H:i" }}</dd></div>
+          {% endif %}
+        </dl>
+      </section>
+
+      {% if is_warden and req.status == "REQUESTED" %}
+        <section class="hm-panel" aria-labelledby="h-update">
+          <div class="hm-panel__head"><h2 id="h-update">Update a clearance</h2></div>
+          <form method="post" action="{% url 'admissions:vacating_clearance' req.pk %}" class="hm-panel__body">
+            {% csrf_token %}
+            <p class="hm-note">Hostel and mess cannot be cleared while their invoices are unpaid.</p>
+            <div class="mb-3">
+              <label class="form-label" for="department">Department</label>
+              <select id="department" name="department" class="form-select" required>
+                <option value="HOSTEL">Hostel fees</option>
+                <option value="MESS">Mess dues</option>
+                <option value="MAINTENANCE">Maintenance dues</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="cleared">Decision</label>
+              <select id="cleared" name="cleared" class="form-select" required>
+                <option value="yes">Cleared</option>
+                <option value="no">Still pending</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="clearance-notes">Notes</label>
+              <textarea id="clearance-notes" name="notes" class="form-control" rows="2"></textarea>
+            </div>
+            <button class="btn btn-outline-secondary w-100" type="submit">Save clearance</button>
+          </form>
+        </section>
+
+        <section class="hm-panel" aria-labelledby="h-add-damage">
+          <div class="hm-panel__head"><h2 id="h-add-damage">Add a damage charge</h2></div>
+          <form method="post" action="{% url 'admissions:vacating_damage' req.pk %}" class="hm-panel__body">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label class="form-label hm-req" for="damage-description">Description<span class="visually-hidden"> (required)</span></label>
+              <input id="damage-description" name="description" class="form-control" maxlength="200" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label hm-req" for="damage-amount">Amount (₹)<span class="visually-hidden"> (required)</span></label>
+              <input id="damage-amount" name="amount" type="number" class="form-control" min="0" step="0.01" required>
+            </div>
+            <button class="btn btn-outline-secondary w-100" type="submit">Add charge</button>
+          </form>
+        </section>
+
+        <section class="hm-panel" aria-labelledby="h-approve">
+          <div class="hm-panel__head"><h2 id="h-approve">Approve</h2></div>
+          <form method="post" action="{% url 'admissions:vacating_approve' req.pk %}" class="hm-panel__body">
+            {% csrf_token %}
+            <p class="hm-note">Possible once all three clearances are done and every invoice is paid.</p>
+            <button class="btn btn-success w-100" type="submit"><i class="bi bi-check-lg" aria-hidden="true"></i> Approve request</button>
+          </form>
+        </section>
+      {% endif %}
+
+      {% if is_warden and req.status == "APPROVED" %}
+        <section class="hm-panel" aria-labelledby="h-complete">
+          <div class="hm-panel__head"><h2 id="h-complete">Complete vacating</h2></div>
+          <form method="post" action="{% url 'admissions:vacating_complete' req.pk %}" class="hm-panel__body">
+            {% csrf_token %}
+            <p class="hm-note">Checks clearances and invoices again, works out the refund and releases the bed.</p>
+            <div class="mb-3">
+              <label class="form-label" for="staff-notes">Staff notes</label>
+              <textarea id="staff-notes" name="staff_notes" class="form-control" rows="2"></textarea>
+            </div>
+            <button class="btn btn-danger w-100" type="submit"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Complete and release bed</button>
+          </form>
+        </section>
       {% endif %}
     </div>
   </div>
-
-  <h2 class="h5 mt-4">Required clearances</h2>
-  <div class="table-responsive">
-    <table class="table table-bordered">
-      <thead>
-        <tr>
-          <th>Department</th>
-          <th>Status</th>
-          <th>Notes</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for clearance in clearances %}
-          <tr>
-            <td>{{ clearance.get_department_display }}</td>
-            <td>
-              {% if clearance.status == "CLEARED" %}
-                <span class="badge bg-success">Cleared</span>
-              {% else %}
-                <span class="badge bg-warning text-dark">Pending</span>
-              {% endif %}
-            </td>
-            <td>{{ clearance.notes|default:"—" }}</td>
-          </tr>
-        {% empty %}
-          <tr>
-            <td colspan="3">No clearance records found.</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-
-  {% if is_warden and vacating_request.status == "REQUESTED" %}
-    <div class="card my-3">
-      <div class="card-body">
-        <h2 class="h5">Update clearance</h2>
-        <p class="text-muted">
-          Hostel and mess clearances cannot be marked cleared while their
-          related invoices remain unpaid or overdue.
-        </p>
-
-        <form method="post"
-              action="{% url 'admissions:vacating_clearance' vacating_request.pk %}">
-          {% csrf_token %}
-
-          <div class="mb-3">
-            <label class="form-label" for="department">Department</label>
-            <select id="department" name="department" class="form-select" required>
-              <option value="HOSTEL">Hostel fees</option>
-              <option value="MESS">Mess dues</option>
-              <option value="MAINTENANCE">Maintenance dues</option>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label" for="cleared">Clearance decision</label>
-            <select id="cleared" name="cleared" class="form-select" required>
-              <option value="yes">Cleared</option>
-              <option value="no">Still pending</option>
-            </select>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label" for="clearance-notes">Notes</label>
-            <textarea id="clearance-notes" name="notes"
-                      class="form-control" rows="2"></textarea>
-          </div>
-
-          <button class="btn btn-primary" type="submit">
-            Save clearance
-          </button>
-        </form>
-      </div>
-    </div>
-
-    <div class="card my-3">
-      <div class="card-body">
-        <h2 class="h5">Add damage charge</h2>
-
-        <form method="post"
-              action="{% url 'admissions:vacating_damage' vacating_request.pk %}">
-          {% csrf_token %}
-
-          <div class="mb-3">
-            <label class="form-label" for="damage-description">Description</label>
-            <input id="damage-description" name="description"
-                   class="form-control" maxlength="200" required>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label" for="damage-amount">Amount</label>
-            <input id="damage-amount" name="amount" type="number"
-                   class="form-control" min="0" step="0.01" required>
-          </div>
-
-          <button class="btn btn-outline-primary" type="submit">
-            Add charge
-          </button>
-        </form>
-      </div>
-    </div>
-
-    <div class="card my-3 border-primary">
-      <div class="card-body">
-        <h2 class="h5">Approve vacating request</h2>
-        <p>
-          Approval is allowed only after all three clearances are complete
-          and all invoices are paid.
-        </p>
-
-        <form method="post"
-              action="{% url 'admissions:vacating_approve' vacating_request.pk %}">
-          {% csrf_token %}
-          <button class="btn btn-primary" type="submit">
-            Approve Request
-          </button>
-        </form>
-      </div>
-    </div>
-  {% endif %}
-
-  {% if is_warden and vacating_request.status == "APPROVED" %}
-    <div class="card my-3 border-warning">
-      <div class="card-body">
-        <h2 class="h5">Complete vacating</h2>
-        <p>
-          The request is approved. Completion checks the clearances and
-          outstanding invoices again, calculates the eligible refund,
-          records the result, and releases the bed.
-        </p>
-
-        <form method="post"
-              action="{% url 'admissions:vacating_complete' vacating_request.pk %}">
-          {% csrf_token %}
-
-          <div class="mb-3">
-            <label class="form-label" for="staff-notes">Staff notes</label>
-            <textarea id="staff-notes" name="staff_notes"
-                      class="form-control" rows="2"></textarea>
-          </div>
-
-          <button class="btn btn-danger" type="submit">
-            Complete vacating and release bed
-          </button>
-        </form>
-      </div>
-    </div>
-  {% endif %}
-
-  <h2 class="h5 mt-4">Damage charges</h2>
-  <ul>
-    {% for charge in damage_charges %}
-      <li>
-        {{ charge.description }} — {{ charge.amount }}
-        {% if charge.assessed_by %}
-          (assessed by {{ charge.assessed_by.get_full_name|default:charge.assessed_by.username }})
-        {% endif %}
-      </li>
-    {% empty %}
-      <li>No damage charges recorded.</li>
-    {% endfor %}
-  </ul>
-
-  {% if vacating_request.status == "COMPLETED" %}
-    <h2 class="h5 mt-4">Refund record</h2>
-    <dl class="row">
-      <dt class="col-sm-4">Eligible refundable deposit</dt>
-      <dd class="col-sm-8">{{ vacating_request.security_deposit }}</dd>
-
-      <dt class="col-sm-4">Outstanding dues recorded</dt>
-      <dd class="col-sm-8">{{ vacating_request.outstanding_dues }}</dd>
-
-      <dt class="col-sm-4">Damage deduction</dt>
-      <dd class="col-sm-8">{{ vacating_request.damage_deduction }}</dd>
-
-      <dt class="col-sm-4">Refund amount</dt>
-      <dd class="col-sm-8">
-        <strong>{{ vacating_request.refund_amount }}</strong>
-      </dd>
-
-      <dt class="col-sm-4">Vacated at</dt>
-      <dd class="col-sm-8">
-        {{ vacating_request.vacated_at|date:"d M Y, H:i" }}
-      </dd>
-
-      <dt class="col-sm-4">Staff notes</dt>
-      <dd class="col-sm-8">
-        {{ vacating_request.staff_notes|default:"—" }}
-      </dd>
-    </dl>
-  {% endif %}
-
-  {% if is_warden %}
-    <a href="{% url 'admissions:vacating_list' %}" class="btn btn-link">
-      Back to all requests
-    </a>
-  {% else %}
-    <a href="{% url 'admissions:my_vacating' %}" class="btn btn-link">
-      Back to my vacating requests
-    </a>
-  {% endif %}
-</div>
+  {% endwith %}
 {% endblock %}

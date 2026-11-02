@@ -417,6 +417,9 @@ def my_vacating(request):
         {
             "allocation": current_allocation,
             "vacating_requests": requests,
+            "open_request": requests.filter(status__in=[
+                VacatingRequest.Status.REQUESTED, VacatingRequest.Status.APPROVED,
+            ]).first(),
         },
     )
 
@@ -450,15 +453,24 @@ def vacating_list(request):
         "allocation__bed__room__block",
     ).prefetch_related("clearances")
 
-    if status in dict(VacatingRequest.Status.choices):
-        requests = requests.filter(status=status)
+    if status not in dict(VacatingRequest.Status.choices):
+        status = VacatingRequest.Status.REQUESTED
+    tabs = [
+        {
+            "value": value,
+            "label": label,
+            "count": requests.filter(status=value).count(),
+            "active": value == status,
+        }
+        for value, label in VacatingRequest.Status.choices
+    ]
 
     return render(
         request,
         "admissions/vacating_list.html",
         {
-            "vacating_requests": requests,
-            "statuses": VacatingRequest.Status.choices,
+            "vacating_requests": requests.filter(status=status),
+            "tabs": tabs,
             "selected_status": status,
         },
     )

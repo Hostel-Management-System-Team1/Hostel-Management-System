@@ -1,21 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Submit Complaint</title>
-</head>
-<body>
-    <h1>Submit a Complaint</h1>
+{% extends "base.html" %}
+{% block title %}Report a problem · Hostel Management System{% endblock %}
 
-    <form method="POST" enctype="multipart/form-data">
-        {% csrf_token %}
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li><a href="{% url 'complaints:my_complaints' %}">My complaints</a></li>
+      <li aria-current="page">Report a problem</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Report a problem</h1>
+      <p class="hm-sub">Maintenance problems are high priority (48 hours), cleaning is medium (96 hours). Fields marked * are required.</p>
+    </div>
+  </div>
 
-        {{ form.as_p }}
-
-        <button type="submit">Submit Complaint</button>
-    </form>
-
-    <p><a href="{% url 'complaints:my_complaints' %}">My Complaints</a></p>
-</body>
-</html>
+  <form method="post" enctype="multipart/form-data" novalidate class="hm-form-narrow">
+    {% csrf_token %}
+    {% if form.errors %}
+      <div class="hm-alert hm-alert--danger" role="alert"><div class="hm-alert__body"><strong>Some details need fixing</strong>Check the highlighted fields below.</div></div>
+    {% endif %}
+    <section class="hm-panel hm-form-section" aria-labelledby="h-complaint">
+      <div class="hm-panel__head"><h2 id="h-complaint">The problem</h2></div>
+      <div class="hm-panel__body">
+        <div class="row g-3">
+          <div class="col-md-8">{% include "_field.html" with field=form.title %}</div>
+          <div class="col-md-4">{% include "_field.html" with field=form.category %}</div>
+          <div class="col-12">{% include "_field.html" with field=form.description %}</div>
+          <div class="col-12">{% include "_field.html" with field=form.photo %}<div class="form-text">Optional. A photo up to 5 MB helps maintenance bring the right tools.</div></div>
+        </div>
+      </div>
+    </section>
+    <div class="hm-form-actions">
+      <a class="btn btn-outline-secondary" href="{% url 'complaints:my_complaints' %}">Cancel</a>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-send" aria-hidden="true"></i> Submit complaint</button>
+    </div>
+  </form>
+{% endblock %}

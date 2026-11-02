@@ -92,7 +92,7 @@ class NavigationTests(TestCase):
     def test_dashboard_cards_link_to_pages(self):
         self.login_as(User.Role.SECURITY_GUARD)
         response = self.client.get(reverse("home"))
-        self.assertContains(response, f'href="{reverse("module", args=["gate-log"])}"')
+        self.assertContains(response, f'href="{reverse("gate:log")}"')
 
     def test_portal_password_change_uses_portal_layout(self):
         self.login_as(User.Role.RESIDENT)
@@ -127,8 +127,9 @@ class AdminSiteTests(TestCase):
 
     def test_admin_reports_page_opens(self):
         login(self.client, "a1")
-        response = self.client.get(reverse("reporting:dashboard"))
+        response = self.client.get(reverse("reporting:dashboard"), follow=True)
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[-1][0], reverse("admin:hms_reports"))
 
 
     def test_portal_roles_cannot_open_admin(self):

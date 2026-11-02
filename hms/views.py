@@ -38,13 +38,6 @@ DESKS = {
         "empty_title": "No gate movements yet",
         "empty_text": "Entries and exits recorded at the gate will appear here.",
     },
-    R.MAINTENANCE_STAFF: {
-        "title": "Maintenance desk",
-        "panel": "Assigned to you",
-        "empty_icon": "bi-tools",
-        "empty_title": "No complaints assigned",
-        "empty_text": "Complaints the warden assigns to you will appear here, oldest first.",
-    },
     R.MESS_MANAGER: {
         "title": "Mess office",
         "panel": "This week’s menu",
@@ -71,6 +64,9 @@ def portal_view(view):
 @portal_view
 def home(request):
     user = request.user
+    if user.role == R.MAINTENANCE_STAFF:
+        # Maintenance staff have one job and one page: the complaints assigned to them.
+        return redirect("complaints:manage_complaints")
     desk = DESKS.get(user.role, DESKS[R.RESIDENT])
     panels = panels_for(user) or [
         table_panel(desk["panel"], [], [], empty=empty(

@@ -30,10 +30,18 @@ Everyone signs in at http://127.0.0.1:8000. What they see depends on their role 
 | Hostel Administrator | **Admin site** (`/admin/`) | An HMS dashboard (live account counts, recent activity), user and role management, and the administrator screens |
 
 The role decides access: setting a user's role to *Hostel Administrator* gives them full rights in
-the admin site, and any other role limits them to the portal. Screens planned for a later sprint
-already appear in the navigation and open a "Coming in Sprint N" page naming their backlog issue.
-When a feature is built, point its entry in [`hms/navigation.py`](hms/navigation.py) at the real
-view and the sidebar, dashboard cards and breadcrumbs update with it.
+the admin site, and any other role limits them to the portal. Each role's sidebar is listed in
+[`hms/navigation.py`](hms/navigation.py); the admin dashboard's module cards come from the same list.
+Each module adds its own panels to the role dashboards from its `dashboard.py`.
+
+| Role | Sidebar |
+|---|---|
+| Resident | Room application, Fees & receipts, Vacating, Outpass, Meals, My complaints |
+| Warden | Applications, Rooms, Residents, Vacating requests, Outpasses, Night attendance, Complaints, Gate log, Visitors, Reports |
+| Security Guard | Gate log, Visitors, Resident returns |
+| Maintenance Staff | Complaints assigned to them |
+| Mess Manager | Menu & bills |
+| Hostel Administrator | Applications, Residents, Fees, Complaints, Mess, Gate log, Outpasses, Visitors, masters (blocks, rooms, fee structure, allocation order, curfew times, visiting hours), Users & roles, Reports, Audit log |
 
 To add people, sign in as an administrator and use **Users & roles → Add user**.
 
@@ -96,6 +104,61 @@ development. `POST /api/v1/invoices/{id}/payments` starts a payment (201, 404, 4
 
 `python manage.py expire_payments` marks payment sessions nobody finished as Abandoned.
 
+### Overdue fees (HMS-F-013)
+
+`python manage.py process_overdue_invoices` (run daily, just after midnight) marks every unpaid invoice whose due
+date has passed as Overdue and emails one reminder to the resident, with the guardian in BCC. The reminder time is
+stored only after the email is sent, so a failed send is retried on the next run and nobody is reminded twice.
+
+## Gate, outpass and night attendance (HMS-F-020 – F-023)
+
+- **Gate log.** Readers post entries and exits to `POST /api/v1/gate/movements/device` with the
+  `X-Gate-Device-Key` header (set `GATE_DEVICE_API_KEY`); the event's own time is kept and a repeated event id is
+  ignored. When a reader is not used, the guard opens **Gate log**, finds the resident by name or room and presses
+  *Record exit* or *Record entry* (also `POST /api/v1/gate/movements/manual`). The warden sees the same log.
+- **Curfew.** Each block has a curfew time (admin: *Masters → Curfew times*). `python manage.py
+  process_curfew_alerts`, run every few minutes, raises an alert for a resident still out 30 minutes after
+  curfew and emails the wardens; alerts show on the warden's dashboard and gate log.
+- **Outpass.** A resident with a bed asks for leave (destination, contact number, return time). The warden
+  approves or rejects it under **Outpasses**; the guardian is emailed on approval and again when the guard records
+  the return under **Resident returns**.
+- **Night attendance.** The warden generates the register for a night under **Night attendance**: each resident is
+  Present (gate log), On leave (approved outpass) or Absent, room by room.
+
+## Mess menu, opt-outs and bills (HMS-F-030, F-031)
+
+The mess manager publishes each meal (date, time, menu) under **Menu & bills**; residents see the week under
+**Meals** and can skip a meal until 24 hours before it is served. **Generate bills** raises one mess invoice per
+resident for a month: ₹50 for every published meal they did not skip. Running it again for the same month does not
+bill twice. Mess invoices appear beside hostel fees under **Fees & receipts**.
+
+## Complaints (HMS-F-040 – F-042)
+
+A resident reports a problem (title, category, description, optional photo up to 5 MB) under **My complaints**. The
+category sets the priority: Maintenance is High (48-hour SLA), Cleaning Medium (96 hours), Noise and Other Low. The
+warden assigns each complaint to maintenance staff, who see only their own under **Complaints** and mark them
+resolved; the resident then confirms the fix, which closes it. `python manage.py escalate_complaints`, run hourly,
+emails every Hostel Administrator about complaints past their SLA and records the escalation in the audit log.
+
+## Visitors (HMS-F-050)
+
+The guard registers a visitor (name, phone, identity document, resident visited, purpose) and records entry and
+exit under **Visitors**. Outside visiting hours (admin: *Masters → Visiting hours*; with none set, every entry
+counts as out of hours) entry is refused until the warden opens the visitor and allows it with a reason; the
+override is written to the audit log.
+
+## Reports (HMS-F-060)
+
+Wardens open **Reports** in the portal and administrators in the admin site: bed occupancy, outstanding dues,
+complaint ageing and mess activity, each downloadable as CSV, Excel (XLSX) or PDF.
+
+## Vacating and deposit refund (HMS-F-062)
+
+A resident asks to vacate under **Vacating**. Three no-dues clearances (hostel fees, mess dues, maintenance) are
+created; hostel and mess cannot be cleared while their invoices are unpaid. The warden records the clearances and any
+damage charges, approves the request, then completes it: the bed returns to the vacant pool and the refund is the
+paid security deposit minus outstanding dues and damage charges.
+
 ## Audit log and security protections (HMS-SR-001, SR-004 – SR-006)
 
 - **Audit log** (administrator: *Audit log* in the admin site). Every allocation and transfer, invoice and
@@ -117,6 +180,33 @@ development. `POST /api/v1/invoices/{id}/payments` starts a payment (201, 404, 4
   input the database cannot store is a 400, not a crash. Failed sign-ins are written to the audit log; limiting
   how fast requests arrive is left to the web server (`limit_req` in `deploy/nginx.conf.example`).
 
+## Operations (HMS-NF-001 – NF-005)
+
+- **Backup.** `python manage.py backup_database` writes a timestamped `pg_dump` to `HMS_BACKUP_DIR` (default
+  `../hms-backups`). Schedule it nightly with cron, or on Windows with `deploy/windows/backup_nightly.bat`, which also
+  keeps the last 7 days.
+- **Uptime.** `deploy/windows/check_uptime.ps1` requests the home page and appends the result to
+  `monitoring/uptime.csv`; schedule it every few minutes.
+- **Retention.** `python manage.py retention_report --years 5` counts admission, fee, gate, outpass and visitor records older than the
+  retention period. It only reports; archiving is a manual decision (see DEVIATIONS.md).
+- **Performance.** `locustfile.py` drives 200 users against 2,000 seeded residents
+  (`seed_performance_data`, `seed_perf_wardens`). The measured results are in
+  [`docs/performance/`](docs/performance/performance_test_summary.txt).
+- **QA.** The Test Plan results, defects and open items are in [`docs/qa/TEST_SUMMARY.md`](docs/qa/TEST_SUMMARY.md),
+  with per-case evidence in `docs/qa/HMS_QA_Test_Execution_Register.xlsx`. `hms/test_acceptance.py` holds one
+  acceptance test per Sprint 2 Test Plan case.
+
+### Scheduled jobs
+
+| Command | When |
+|---|---|
+| `process_overdue_invoices` | daily, 00:05 |
+| `process_curfew_alerts` | every 5 minutes in the evening |
+| `escalate_complaints` | hourly |
+| `expire_payments` | every 30 minutes |
+| `backup_database` | nightly |
+| `verify_audit` | daily |
+
 ## UI design
 
 The portal and admin use one light theme on Bootstrap 5: `static/css/hostel.css` (portal) and
@@ -136,7 +226,7 @@ A modular monolith (SAD 3.5): one Django project, one Django app per service mod
 | `apps/complaints` | Complaint Service | HMS-F-040 – F-042 |
 | `apps/visitors` | Visitor Service | HMS-F-050 |
 | `apps/reporting` | Reporting & Admin Service | HMS-F-060 – F-062 |
-| `apps/audit` | Audit Service | HMS-SR-004 |
+| `apps/audit` | Audit Service | HMS-SR-004, HMS-NF-003, HMS-NF-005 |
 
 ## Running locally
 
@@ -176,9 +266,11 @@ Open http://127.0.0.1:8000 for the portal and http://127.0.0.1:8000/admin for th
 python manage.py seed_demo
 ```
 
-creates one account per role (`admin`, `warden`, `guard`, `maintenance`, `mess`, `aarav`, `diya`, all with
-password `demo-pass-123`) and the sample data the demo needs. It is safe to re-run and refuses to run unless
-`DJANGO_DEBUG` is on. `admin` and `warden` have an authenticator app already linked; read their
+creates one account per role (`admin`, `warden`, `guard`, `maintenance`, `mess`, and residents `aarav`, `diya`,
+`rohan`, `isha`, `neha`, `omar`, all with password `demo-pass-123`) and sample data for every module: four residents
+with a bed and an invoice, a week's menu with opt-outs, gate movements and a curfew alert, a pending and an approved
+outpass, complaints in each state, visitors and a vacating request. `neha` and `omar` have not applied yet, for
+trying the application form. It is safe to re-run and refuses to run unless `DJANGO_DEBUG` is on. `admin` and `warden` have an authenticator app already linked; read their
 second-step code with `python manage.py totp_code warden`.
 
 The app connects to the `hms` database as user `hms` on localhost. To use different

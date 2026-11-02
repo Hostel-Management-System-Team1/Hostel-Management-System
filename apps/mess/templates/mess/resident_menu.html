@@ -1,71 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Meals · Hostel Management System{% endblock %}
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Mess Menu</title>
-</head>
-<body>
-    <h1>Weekly Mess Menu</h1>
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>My hostel</li>
+      <li aria-current="page">Meals</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Meals</h1>
+      <p class="hm-sub">Skip a meal, or a whole day, until 24 hours before it is served. Skipped meals are left off your monthly mess bill ({{ meal_price|inr }} a meal).</p>
+    </div>
+  </div>
 
-    {% if messages %}
-        {% for message in messages %}
-            <p>{{ message }}</p>
-        {% endfor %}
-    {% endif %}
+  {% if housed %}
+    <section class="hm-stats hm-stats--3" aria-label="This month so far">
+      <div class="hm-stat"><div class="hm-stat__label">Meals eaten this month</div><div class="hm-stat__value">{{ month.eaten }}</div></div>
+      <div class="hm-stat"><div class="hm-stat__label">Skipped this month</div><div class="hm-stat__value">{{ month.skipped }}</div></div>
+      <div class="hm-stat"><div class="hm-stat__label">Mess bill so far</div><div class="hm-stat__value">{{ month.cost|inr }}</div><div class="hm-stat__note">Billed after the month ends</div></div>
+    </section>
+  {% else %}
+    <div class="hm-alert hm-alert--info" role="status"><div class="hm-alert__body">You can skip meals once you have a bed in the hostel. Until then the menu is shown for reference.</div></div>
+  {% endif %}
 
-    {% for item in menu_items %}
-        <div>
-            <h3>
-                {{ item.menu_date }} -
-                {{ item.get_meal_type_display }}
-            </h3>
+  <div class="hm-weekbar">
+    <a class="btn btn-sm {% if offset == 0 %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="?week=0"{% if offset == 0 %} aria-current="page"{% endif %}>This week</a>
+    <a class="btn btn-sm {% if offset == 1 %}btn-primary{% else %}btn-outline-secondary{% endif %}" href="?week=1"{% if offset == 1 %} aria-current="page"{% endif %}>Next week</a>
+    <span class="hm-sub">{{ monday|date:"j M" }} – {{ sunday|date:"j M Y" }}</span>
+  </div>
 
-            <p>{{ item.description }}</p>
-
-            {% if item.meal_datetime %}
-                <p>
-                    <strong>Meal Time:</strong>
-                    {{ item.meal_datetime|date:"d M Y, h:i A" }}
-                </p>
-            {% else %}
-                <p><strong>Meal time not scheduled yet.</strong></p>
-            {% endif %}
-
-            {% if item.id in opted_out_ids %}
-                <p>
-                    <strong>You have opted out of this meal.</strong>
-                </p>
-
-            {% elif item.meal_datetime %}
-                <form method="POST">
+  <section class="hm-panel hm-panel--flush" aria-label="Menu">
+    <div class="table-responsive">
+      <table class="table hm-table hm-table-stack hm-menu-grid">
+        <thead><tr><th scope="col">Day</th>{% for value, label in meal_types %}<th scope="col">{{ label }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in rows %}
+            <tr{% if row.day == today %} class="is-today"{% endif %}>
+              <th scope="row" class="hm-cell-primary">
+                {{ row.day|date:"l" }}<span class="hm-sub">{{ row.day|date:"j M" }}{% if row.day == today %} · today{% endif %}</span>
+                {% if housed %}{% if row.can_skip_day or row.can_undo_day %}
+                  <form method="post" class="hm-day-action">
                     {% csrf_token %}
-
-                    <input
-                        type="hidden"
-                        name="menu_item_id"
-                        value="{{ item.id }}"
-                    >
-
-                    <button type="submit">Opt Out</button>
-                </form>
-
-                <p>
-                    <small>
-                        Opt-out requests must be submitted more than
-                        24 hours before the meal.
-                    </small>
-                </p>
-
-            {% else %}
-                <p>Opt-out unavailable until the meal is scheduled.</p>
-            {% endif %}
-        </div>
-
-        <hr>
-
-    {% empty %}
-        <p>No published menu available.</p>
-    {% endfor %}
-
-</body>
-</html>
+                    <input type="hidden" name="day" value="{{ row.day|date:'Y-m-d' }}">
+                    <input type="hidden" name="week" value="{{ offset }}">
+                    {% if row.can_skip_day %}<button class="btn btn-link btn-sm p-0" type="submit" name="action" value="skip_day">Skip whole day</button>{% endif %}
+                    {% if row.can_undo_day %}<button class="btn btn-link btn-sm p-0" type="submit" name="action" value="undo_day">Eat all day</button>{% endif %}
+                  </form>
+                {% endif %}{% endif %}
+              </th>
+              {% for value, label, item in row.cells %}
+                <td data-label="{{ label }}"{% if item.id in skipped %} class="is-skipped"{% endif %}>
+                  {% if item %}
+                    <div class="hm-meal">
+                      <span class="hm-meal__dish">{{ item.description }}</span>
+                      <span class="hm-sub">{{ item.meal_datetime|date:"H:i" }}</span>
+                      {% if housed and item.meal_datetime and item.meal_datetime > cutoff %}
+                        <form method="post" class="hm-meal__action">
+                          {% csrf_token %}
+                          <input type="hidden" name="menu_item_id" value="{{ item.id }}">
+                          <input type="hidden" name="week" value="{{ offset }}">
+                          {% if item.id in skipped %}
+                            <span class="hm-badge hm-badge--closed">Skipping</span>
+                            <button class="btn btn-link btn-sm p-0" type="submit" name="action" value="undo">Undo</button>
+                          {% else %}
+                            <button class="btn btn-sm btn-outline-secondary" type="submit" name="action" value="skip">Skip</button>
+                          {% endif %}
+                        </form>
+                      {% elif item.id in skipped %}
+                        <span><span class="hm-badge hm-badge--closed">Skipped</span></span>
+                      {% endif %}
+                    </div>
+                  {% else %}<span class="hm-sub">—</span>{% endif %}
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

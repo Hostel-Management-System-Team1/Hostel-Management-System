@@ -1,121 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Menu & bills · Hostel Management System{% endblock %}
 
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Weekly Mess Menu</title>
-</head>
-<body>
-    <h1>Weekly Mess Menu</h1>
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>Mess</li>
+      <li aria-current="page">Menu &amp; bills</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Menu &amp; bills</h1>
+      <p class="hm-sub">Plan the week, see how many are eating each meal, record what was served and bill each month at {{ meal_price|inr }} a meal.</p>
+    </div>
+  </div>
 
-    {% if messages %}
-        {% for message in messages %}
-            <p>{{ message }}</p>
-        {% endfor %}
+  <div class="hm-weekbar">
+    <a class="btn btn-outline-secondary btn-sm" href="?week={{ offset|add:-1 }}" aria-label="Previous week"><i class="bi bi-chevron-left" aria-hidden="true"></i></a>
+    <h2 class="hm-weekbar__title">{% if offset == 0 %}This week{% elif offset == 1 %}Next week{% elif offset == -1 %}Last week{% else %}Week of {{ monday|date:"j M" }}{% endif %}<span class="hm-sub">{{ monday|date:"j M" }} – {{ sunday|date:"j M Y" }}</span></h2>
+    <a class="btn btn-outline-secondary btn-sm" href="?week={{ offset|add:1 }}" aria-label="Next week"><i class="bi bi-chevron-right" aria-hidden="true"></i></a>
+    {% if offset != 0 %}<a class="btn btn-link btn-sm" href="?week=0">Back to this week</a>{% endif %}
+    {% if planned %}
+      <form method="post" action="{% url 'mess:copy_week' %}" class="ms-auto">
+        {% csrf_token %}
+        <input type="hidden" name="week" value="{{ offset }}">
+        <button class="btn btn-outline-secondary btn-sm" type="submit"><i class="bi bi-copy" aria-hidden="true"></i> Copy to next week</button>
+      </form>
     {% endif %}
+  </div>
 
-    <h2>Publish a meal</h2>
+  <section class="hm-stats hm-stats--3" aria-label="This week">
+    <div class="hm-stat"><div class="hm-stat__label">Residents with a bed</div><div class="hm-stat__value">{{ housed }}</div></div>
+    <div class="hm-stat"><div class="hm-stat__label">Meals planned</div><div class="hm-stat__value">{{ planned }}</div></div>
+    <div class="hm-stat"><div class="hm-stat__label">Skips</div><div class="hm-stat__value">{{ skips }}</div></div>
+  </section>
 
-    <form method="POST">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Publish Menu</button>
-    </form>
-
-    <hr>
-
-    <h2>Generate Monthly Mess Bills</h2>
-
-    <p>Price per meal: ₹50</p>
-
-    <form method="POST">
-        {% csrf_token %}
-
-        <input type="hidden" name="action" value="generate_bills">
-
-        <label for="month">Select Month:</label>
-        <select name="month" id="month" required>
-            <option value="1">January</option>
-            <option value="2">February</option>
-            <option value="3">March</option>
-            <option value="4">April</option>
-            <option value="5">May</option>
-            <option value="6">June</option>
-            <option value="7">July</option>
-            <option value="8">August</option>
-            <option value="9">September</option>
-            <option value="10">October</option>
-            <option value="11">November</option>
-            <option value="12">December</option>
-        </select>
-
-        <br><br>
-
-        <label for="year">Enter Year:</label>
-        <input
-            type="number"
-            name="year"
-            id="year"
-            value="2026"
-            min="2020"
-            max="2100"
-            required
-        >
-
-        <br><br>
-
-        <button type="submit">Generate Monthly Bills</button>
-    </form>
-
-    <hr>
-
-    <h2>Menu Items and Meal Opt-outs</h2>
-
-    {% for item in menu_items %}
-        <div>
-            <h3>
-                {{ item.menu_date }} -
-                {{ item.get_meal_type_display }}
-            </h3>
-
-            <p>{{ item.description }}</p>
-
-            <p>
-                <strong>Scheduled Meal Time:</strong>
-                {% if item.meal_datetime %}
-                    {{ item.meal_datetime|date:"d M Y, h:i A" }}
-                {% else %}
-                    Not scheduled
-                {% endif %}
-            </p>
-
-            {% if item.is_published %}
-                <p><strong>Status: Published</strong></p>
-            {% else %}
-                <p><strong>Status: Draft</strong></p>
-            {% endif %}
-
-            <h4>Resident Opt-outs</h4>
-
-            <p>Total opt-outs: {{ item.opt_outs.count }}</p>
-
-            {% for optout in item.opt_outs.all %}
-                <p>
-                    Resident: {{ optout.resident.username }}
-                    <br>
-                    Requested: {{ optout.requested_at }}
-                    <br>
-                    Reason: {{ optout.reason|default:"Not provided" }}
-                </p>
-            {% empty %}
-                <p>No residents have opted out.</p>
+  <div class="hm-detail-grid">
+    <section class="hm-panel hm-panel--flush" aria-label="Week planner">
+      <div class="table-responsive">
+        <table class="table hm-table hm-table-stack hm-menu-grid">
+          <thead><tr><th scope="col">Day</th>{% for value, label in meal_types %}<th scope="col">{{ label }}</th>{% endfor %}</tr></thead>
+          <tbody>
+            {% for day, cells in days %}
+              <tr{% if day == today %} class="is-today"{% endif %}>
+                <th scope="row" class="hm-cell-primary">{{ day|date:"l" }}<span class="hm-sub">{{ day|date:"j M" }}{% if day == today %} · today{% endif %}</span></th>
+                {% for value, label, item in cells %}
+                  <td data-label="{{ label }}">
+                    {% if item %}
+                      <div class="hm-meal">
+                        <span class="hm-meal__dish">{{ item.description }}</span>
+                        <span class="hm-sub">{{ item.meal_datetime|date:"H:i" }}{% if not item.is_past %} · <strong>{{ item.eating }} eating</strong>{% endif %}</span>
+                        {% if item.skipping and not item.is_past %}<span class="hm-sub">Skipping: {% for r in item.skipping %}{{ r.get_full_name|default:r.username }}{% if not forloop.last %}, {% endif %}{% endfor %}</span>{% endif %}
+                        {% if item.is_past %}
+                          <form method="post" action="{% url 'mess:record_served' item.pk %}" class="hm-meal__action">
+                            {% csrf_token %}
+                            <input type="hidden" name="week" value="{{ offset }}">
+                            <label class="hm-sub" for="served-{{ item.pk }}">Served</label>
+                            <input class="form-control form-control-sm hm-served" type="number" min="0" id="served-{{ item.pk }}" name="served" value="{% if item.served is not None %}{{ item.served }}{% else %}{{ item.eating }}{% endif %}">
+                            <button class="btn btn-sm {% if item.served is None %}btn-primary{% else %}btn-outline-secondary{% endif %}" type="submit">{% if item.served is None %}Record{% else %}Update{% endif %}</button>
+                          </form>
+                        {% else %}
+                          <div class="hm-meal__action">
+                            <a class="btn btn-link btn-sm p-0" href="?week={{ offset }}&amp;edit={{ item.pk }}#meal-form">Edit</a>
+                            <form method="post" action="{% url 'mess:meal_delete' item.pk %}">
+                              {% csrf_token %}
+                              <input type="hidden" name="week" value="{{ offset }}">
+                              <button class="btn btn-link btn-sm p-0 text-danger" type="submit">Remove</button>
+                            </form>
+                          </div>
+                        {% endif %}
+                      </div>
+                    {% elif day >= today %}
+                      <a class="hm-meal__add" href="?week={{ offset }}&amp;date={{ day|date:'Y-m-d' }}&amp;meal={{ value }}#meal-form"><i class="bi bi-plus-lg" aria-hidden="true"></i> Add {{ label|lower }}</a>
+                    {% else %}<span class="hm-sub">—</span>{% endif %}
+                  </td>
+                {% endfor %}
+              </tr>
             {% endfor %}
-        </div>
+          </tbody>
+        </table>
+      </div>
+    </section>
 
-        <hr>
+    <div>
+      <section class="hm-panel" aria-labelledby="meal-form">
+        <div class="hm-panel__head"><h2 id="meal-form">{% if editing %}Change a meal{% else %}Publish a meal{% endif %}</h2>{% if editing %}<a class="btn btn-link btn-sm" href="?week={{ offset }}">Cancel</a>{% endif %}</div>
+        <form method="post" action="{% url 'mess:meal_save' %}" class="hm-panel__body" novalidate>
+          {% csrf_token %}
+          {% if form.non_field_errors %}<div class="hm-alert hm-alert--danger" role="alert"><div class="hm-alert__body">{{ form.non_field_errors|join:" " }}</div></div>{% endif %}
+          <div class="row g-3">
+            <div class="col-7">{% include "_field.html" with field=form.menu_date %}</div>
+            <div class="col-5">{% include "_field.html" with field=form.time %}</div>
+            <div class="col-12">{% include "_field.html" with field=form.meal_type %}</div>
+            <div class="col-12">{% include "_field.html" with field=form.description %}</div>
+          </div>
+          <button class="btn btn-primary w-100 mt-3" type="submit"><i class="bi bi-megaphone" aria-hidden="true"></i> {% if editing %}Save changes{% else %}Publish{% endif %}</button>
+          <p class="hm-note mt-2 mb-0">Publishing a meal that is already planned for that day replaces it.</p>
+        </form>
+      </section>
 
-    {% empty %}
-        <p>No menu items available.</p>
-    {% endfor %}
-
-</body>
-</html>
+      <section class="hm-panel" aria-labelledby="h-bills">
+        <div class="hm-panel__head"><h2 id="h-bills">Bill a month</h2></div>
+        <form method="post" class="hm-panel__body">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="generate_bills">
+          <p class="hm-note">One invoice per resident who had a bed that month: meals served minus the ones they skipped. A month can be billed once it has ended, and never twice.</p>
+          <div class="row g-3">
+            <div class="col-7">
+              <label class="form-label" for="month">Month</label>
+              <select class="form-select" name="month" id="month" required>
+                {% for number, name in months %}<option value="{{ number }}"{% if number == bill_month %} selected{% endif %}>{{ name }}</option>{% endfor %}
+              </select>
+            </div>
+            <div class="col-5">
+              <label class="form-label" for="year">Year</label>
+              <input class="form-control" type="number" name="year" id="year" value="{{ bill_year }}" min="2020" max="2100" required>
+            </div>
+          </div>
+          <button class="btn btn-outline-secondary w-100 mt-3" type="submit"><i class="bi bi-receipt" aria-hidden="true"></i> Generate bills</button>
+        </form>
+      </section>
+    </div>
+  </div>
+{% endblock %}

@@ -1,8 +1,9 @@
 @echo off
 setlocal
 
-set "PROJECT_DIR=C:\Users\VISHNU SR\Downloads\HMS-Team1"
-set "BACKUP_DIR=C:\Users\VISHNU SR\Downloads\hms-backups"
+rem The project is two folders up from this script (deploy\windows).
+for %%I in ("%~dp0..\..") do set "PROJECT_DIR=%%~fI"
+if not defined BACKUP_DIR set "BACKUP_DIR=%PROJECT_DIR%\..\hms-backups"
 
 if not exist "%BACKUP_DIR%" mkdir "%BACKUP_DIR%"
 

@@ -52,43 +52,26 @@
     </section>
 
     <section class="module hms-panel" aria-labelledby="h-recent">
-      <h2 id="h-recent"><span>Recent activity</span></h2>
+      <h2 id="h-recent"><span>Recent activity</span><a class="hms-headlink" href="{{ audit_url }}"><i class="bi bi-journal-text" aria-hidden="true"></i>Audit log</a></h2>
       {% if recent_actions %}
         <ul class="hms-activity">
           {% for entry in recent_actions %}
             <li>
-              <span class="hms-activity__icon hms-activity__icon--{% if entry.is_addition %}add{% elif entry.is_deletion %}del{% else %}edit{% endif %}" aria-hidden="true">
-                <i class="bi {% if entry.is_addition %}bi-plus-lg{% elif entry.is_deletion %}bi-trash3{% else %}bi-pencil{% endif %}"></i>
+              <span class="hms-activity__icon hms-activity__icon--{% if entry.outcome == 'SUCCESS' %}add{% elif entry.outcome == 'DENIED' %}del{% else %}edit{% endif %}" aria-hidden="true">
+                <i class="bi {% if entry.outcome == 'SUCCESS' %}bi-check-lg{% else %}bi-exclamation-lg{% endif %}"></i>
               </span>
               <span class="hms-activity__text">
-                <strong>{% firstof entry.user.get_full_name entry.user.get_username %}</strong>
-                {% if entry.is_addition %}added{% elif entry.is_deletion %}deleted{% else %}changed{% endif %}
-                {% if entry.content_type %}{{ entry.content_type.name }}{% endif %}
-                {% if entry.is_deletion or not entry.get_admin_url %}{{ entry.object_repr }}{% else %}<a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>{% endif %}
-                <small>{{ entry.action_time|timesince }} ago</small>
+                <strong>{{ entry.actor_label }}</strong> {{ entry.action }}{% if entry.target_repr %} · {{ entry.target_repr }}{% endif %}
+                <small>{{ entry.timestamp|timesince }} ago</small>
               </span>
             </li>
           {% endfor %}
         </ul>
       {% else %}
-        <div class="hms-empty"><i class="bi bi-clock-history" aria-hidden="true"></i><p>No activity yet. Changes made in the admin appear here.</p></div>
+        <div class="hms-empty"><i class="bi bi-clock-history" aria-hidden="true"></i><p>No activity yet. Allocations, payments, approvals and other changes appear here.</p></div>
       {% endif %}
     </section>
   </div>
 
-  <h2 class="hms-section">Modules</h2>
-  <div class="hms-cards">
-    {% for entry in modules %}
-      <a class="hms-card" href="{{ entry.url }}">
-        <span class="hms-card__icon" aria-hidden="true"><i class="bi {{ entry.icon }}"></i></span>
-        <span class="hms-card__title">{{ entry.label }}</span>
-        <span class="hms-card__text">{{ entry.hint }}</span>
-        <span class="hms-card__foot">
-          {% if entry.sprint %}<span class="hms-chip">Sprint {{ entry.sprint }}</span>{% else %}<span class="hms-chip hms-chip--live">Open</span>{% endif %}
-          <i class="bi bi-arrow-right" aria-hidden="true"></i>
-        </span>
-      </a>
-    {% endfor %}
-  </div>
 </div>
 {% endblock %}

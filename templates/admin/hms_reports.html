@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+{# Management reports inside the admin site (HMSAdminSite.reports_view). #}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">Home</a> &rsaquo; Administration &rsaquo; Reports
+</div>
+{% endblock %}
+
+{% block content_title %}
+<div class="hms-pagehead">
+  <div>
+    <h1>Management reports</h1>
+    <p>Live figures as of {{ generated_at|date:"j M Y, H:i" }}. Each report downloads as CSV, Excel or PDF.</p>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main" class="hms-reports">
+  {% include "reporting/_report_body.html" %}
+</div>
+{% endblock %}

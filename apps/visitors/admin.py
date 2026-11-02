@@ -1,4 +1,4 @@
-﻿from django.contrib import admin
+from django.contrib import admin
 
 from .models import VisitingHours, Visitor
 
@@ -16,6 +16,16 @@ class VisitorAdmin(admin.ModelAdmin):
     list_filter = ("status", "created_at")
     search_fields = ("visitor_name", "phone", "resident__username")
     readonly_fields = ("created_at", "updated_at")
+
+    # Visitors are registered and let in at the gate; the record is evidence.
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(VisitingHours)

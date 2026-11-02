@@ -1,21 +1,43 @@
-﻿<!DOCTYPE html>
-<html>
-<head>
-    <title>Visitor Override</title>
-</head>
-<body>
-    <h1>Warden Visitor Override</h1>
+﻿{% extends "base.html" %}
+{% block title %}Allow a visit out of hours · Hostel Management System{% endblock %}
 
-    <p>Visitor: {{ visitor.visitor_name }}</p>
-    <p>Resident: {{ visitor.resident }}</p>
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li><a href="{% url 'visitors:list' %}">Visitors</a></li>
+      <li aria-current="page">Allow out of hours</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Allow a visit out of hours</h1>
+      <p class="hm-sub">The guard can then let this visitor in outside visiting hours. Your name and reason go in the audit log.</p>
+    </div>
+  </div>
 
-    <form method="post">
+  <div class="hm-detail-grid">
+    <section class="hm-panel hm-panel--flush" aria-labelledby="h-visit">
+      <div class="hm-panel__head"><h2 id="h-visit">Visit</h2></div>
+      <dl class="hm-facts">
+        <div><dt>Visitor</dt><dd>{{ visitor.visitor_name }}</dd></div>
+        <div><dt>Phone</dt><dd>{{ visitor.phone }}</dd></div>
+        <div><dt>Visiting</dt><dd>{{ visitor.resident.get_full_name|default:visitor.resident.username }}</dd></div>
+        <div><dt>Purpose</dt><dd>{{ visitor.purpose }}</dd></div>
+        <div><dt>Registered</dt><dd>{{ visitor.created_at|date:"j M Y, H:i" }} by {{ visitor.registered_by.get_full_name|default:visitor.registered_by.username }}</dd></div>
+      </dl>
+    </section>
+    <section class="hm-panel" aria-labelledby="h-reason">
+      <div class="hm-panel__head"><h2 id="h-reason">Your approval</h2></div>
+      <form method="post" class="hm-panel__body">
         {% csrf_token %}
-        <label for="reason">Reason for allowing this visitor:</label>
-        <textarea id="reason" name="reason" required></textarea>
-        <button type="submit">Approve Override</button>
-    </form>
-
-    <a href="{% url 'visitors:list' %}">Back to Visitor Records</a>
-</body>
-</html>
+        <label class="form-label hm-req" for="reason">Reason<span class="visually-hidden"> (required)</span></label>
+        <textarea class="form-control mb-3" id="reason" name="reason" rows="3" required placeholder="e.g. Parent arriving on a late train"></textarea>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-primary" type="submit"><i class="bi bi-unlock" aria-hidden="true"></i> Allow entry</button>
+          <a class="btn btn-outline-secondary" href="{% url 'visitors:list' %}">Cancel</a>
+        </div>
+      </form>
+    </section>
+  </div>
+{% endblock %}

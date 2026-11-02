@@ -1,4 +1,3 @@
-
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, redirect, render
@@ -6,9 +5,16 @@ from django.utils import timezone
 
 from apps.accounts.models import User
 from apps.accounts.permissions import role_required
+from apps.audit import service as audit
 
 from .forms import ComplaintForm
 from .models import Complaint
+
+STATUS_TABS = [
+    ("open", "Open", [Complaint.Status.OPEN, Complaint.Status.IN_PROGRESS]),
+    ("resolved", "Resolved", [Complaint.Status.RESOLVED]),
+    ("closed", "Closed", [Complaint.Status.CLOSED]),
+]
 
 
 @login_required
@@ -21,8 +27,16 @@ def submit_complaint(request):
             complaint = form.save(commit=False)
             complaint.created_by = request.user
             complaint.save()
+            audit.record(
+                "complaint.submitted",
+                target=complaint,
+                detail={"category": complaint.category, "priority": complaint.priority},
+            )
 
-            messages.success(request, "Complaint submitted successfully.")
+            messages.success(
+                request,
+                f"Complaint #{complaint.pk} submitted. The warden will assign it to maintenance.",
+            )
             return redirect("complaints:my_complaints")
     else:
         form = ComplaintForm()
@@ -39,7 +53,7 @@ def submit_complaint(request):
 def my_complaints(request):
     complaints = Complaint.objects.filter(
         created_by=request.user
-    )
+    ).select_related("assigned_to").order_by("-created_at")
 
     return render(
         request,
@@ -49,22 +63,40 @@ def my_complaints(request):
 
 
 @login_required
-@role_required("WARDEN", "ADMINISTRATOR")
+@role_required("WARDEN", "ADMINISTRATOR", "MAINTENANCE_STAFF")
 def manage_complaints(request):
-    complaints = Complaint.objects.select_related(
-        "created_by", "assigned_to"
-    ).all()
+    """Wardens see every complaint; maintenance staff see the ones assigned to them."""
+    complaints = Complaint.objects.select_related("created_by", "assigned_to")
+    if request.user.role == User.Role.MAINTENANCE_STAFF:
+        complaints = complaints.filter(assigned_to=request.user)
+
+    selected = request.GET.get("status", "open")
+    tabs = []
+    for value, label, statuses in STATUS_TABS:
+        tabs.append({
+            "value": value,
+            "label": label,
+            "count": complaints.filter(status__in=statuses).count(),
+            "active": value == selected,
+        })
+        if value == selected:
+            shown = complaints.filter(status__in=statuses)
+    if not any(tab["active"] for tab in tabs):
+        tabs[0]["active"] = True
+        shown = complaints.filter(status__in=STATUS_TABS[0][2])
 
     maintenance_staff = User.objects.filter(
-        role="MAINTENANCE_STAFF"
+        role="MAINTENANCE_STAFF", is_active=True
     )
 
     return render(
         request,
         "complaints/manage_complaints.html",
         {
-            "complaints": complaints,
+            "complaints": shown.order_by("created_at"),
+            "tabs": tabs,
             "maintenance_staff": maintenance_staff,
+            "can_assign": request.user.role != User.Role.MAINTENANCE_STAFF,
         },
     )
 
@@ -86,6 +118,9 @@ def assign_complaint(request, complaint_id):
         complaint.assigned_to = staff
         complaint.status = Complaint.Status.IN_PROGRESS
         complaint.save()
+        audit.record(
+            "complaint.assigned", target=complaint, detail={"assigned_to": staff.username}
+        )
 
         messages.success(request, "Complaint assigned successfully.")
 
@@ -122,6 +157,9 @@ def update_complaint_status(request, complaint_id):
                     complaint.resolution_confirmed = False
 
                 complaint.save()
+                audit.record(
+                    "complaint.status_changed", target=complaint, detail={"status": new_status}
+                )
                 messages.success(request, "Complaint status updated.")
 
     return redirect("complaints:manage_complaints")
@@ -141,6 +179,7 @@ def confirm_resolution(request, complaint_id):
             complaint.resolution_confirmed = True
             complaint.status = Complaint.Status.CLOSED
             complaint.save()
+            audit.record("complaint.closed", target=complaint)
 
             messages.success(
                 request,

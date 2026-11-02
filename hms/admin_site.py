@@ -7,7 +7,6 @@ counts, HMS navigation in the sidebar (templates/admin/nav_sidebar.html), and
 
 from django.conf import settings
 from django.contrib import admin
-from django.contrib.admin.models import LogEntry
 from django.contrib.auth.views import redirect_to_login
 from django.db.models import Count
 from django.http import Http404
@@ -16,8 +15,9 @@ from django.template.response import TemplateResponse
 from django.urls import path, reverse
 
 from apps.accounts.models import User
+from apps.audit.models import AuditEntry
 
-from .navigation import find_item, nav_for
+from .navigation import find_item
 
 
 class HMSAdminSite(admin.AdminSite):
@@ -27,6 +27,12 @@ class HMSAdminSite(admin.AdminSite):
     # registration/password_change_*.html are the portal's versions; the admin keeps its own.
     password_change_template = "admin/hms_password_change_form.html"
     password_change_done_template = "admin/hms_password_change_done.html"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # No bulk deletes: records are deleted one at a time from their own page, if at all,
+        # so lists carry no selection checkboxes or action bar.
+        self.disable_action("delete_selected")
 
     def login(self, request, extra_context=None):
         """Everyone signs in on the portal's page; administrators land back here afterwards."""
@@ -51,6 +57,7 @@ class HMSAdminSite(admin.AdminSite):
     def get_urls(self):
         return [
             path("m/<slug:slug>/", self.admin_view(self.module_view), name="hms_module"),
+            path("reports/", self.admin_view(self.reports_view), name="hms_reports"),
         ] + super().get_urls()
 
     def index(self, request, extra_context=None):
@@ -73,16 +80,20 @@ class HMSAdminSite(admin.AdminSite):
                 for value, label in User.Role.choices
             ],
             "users_url": users_url,
-            "recent_actions": LogEntry.objects.select_related("user", "content_type")[:8],
-            "modules": [
-                entry
-                for _, items in nav_for(request.user, admin=True)
-                for entry in items
-                if entry["url_name"] != "admin:index"
-            ],
+            # Sign-ins and refused requests stay in the audit log; this panel shows changes.
+            "recent_actions": AuditEntry.objects.exclude(
+                category__in=["auth", "access"]
+            ).order_by("-seq")[:8],
+            "audit_url": reverse("admin:audit_auditentry_changelist"),
             **(extra_context or {}),
         }
         return super().index(request, context)
+
+    def reports_view(self, request):
+        from apps.reporting.views import report_context
+
+        context = {**self.each_context(request), "title": "Reports", **report_context()}
+        return TemplateResponse(request, "admin/hms_reports.html", context)
 
     def module_view(self, request, slug):
         entry = find_item(request.user, slug, admin=True)

@@ -28,8 +28,12 @@ class MessMenuItemAdmin(admin.ModelAdmin):
     )
     list_filter = ("menu_date", "meal_type", "is_published")
     search_fields = ("description", "published_by__username")
-    readonly_fields = ("created_at",)
-    date_hierarchy = "menu_date"
+    readonly_fields = ("published_by", "created_at")
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            obj.published_by = request.user
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(MealOptOut)

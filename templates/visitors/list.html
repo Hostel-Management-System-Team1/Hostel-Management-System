@@ -1,59 +1,77 @@
-﻿<!DOCTYPE html>
-<html>
-<head>
-    <title>Visitor Records</title>
-</head>
-<body>
-    <h1>Visitor Records</h1>
+﻿{% extends "base.html" %}
+{% block title %}Visitors · Hostel Management System{% endblock %}
 
-    {% if messages %}
-        {% for message in messages %}
-            <p>{{ message }}</p>
-        {% endfor %}
+{% block content %}
+  <nav class="hm-breadcrumb" aria-label="Breadcrumb">
+    <ol>
+      <li><a href="{% url 'home' %}">Home</a></li>
+      <li>{% if is_guard %}Gate{% else %}Operations{% endif %}</li>
+      <li aria-current="page">Visitors</li>
+    </ol>
+  </nav>
+  <div class="hm-page-header">
+    <div>
+      <h1>Visitors</h1>
+      <p class="hm-sub">
+        {% if hours %}Visiting hours {{ hours.start_time|time:"H:i" }}–{{ hours.end_time|time:"H:i" }} —
+          {% if within_hours %}<strong>open now</strong>{% else %}<strong>closed now</strong>; entry needs the warden’s approval{% endif %}.
+        {% else %}No visiting hours are set, so every entry needs the warden’s approval.{% endif %}
+      </p>
+    </div>
+    {% if is_guard %}<a class="btn btn-primary" href="{% url 'visitors:register' %}"><i class="bi bi-person-plus" aria-hidden="true"></i> Register visitor</a>{% endif %}
+  </div>
+
+  <section class="hm-stats hm-stats--3" aria-label="Summary">
+    <div class="hm-stat"><div class="hm-stat__label">Inside now</div><div class="hm-stat__value">{{ inside }}</div></div>
+    <div class="hm-stat"><div class="hm-stat__label">Registered, not yet in</div><div class="hm-stat__value">{{ waiting }}</div></div>
+    <div class="hm-stat"><div class="hm-stat__label">Visiting hours</div><div class="hm-stat__value">{% if within_hours %}Open{% else %}Closed{% endif %}</div></div>
+  </section>
+
+  <section class="hm-panel hm-panel--flush" aria-label="Visitor records">
+    {% if visitors %}
+      <div class="table-responsive">
+        <table class="table hm-table hm-table-stack">
+          <thead><tr><th scope="col">Visitor</th><th scope="col">Visiting</th><th scope="col">Purpose</th><th scope="col">In</th><th scope="col">Out</th><th scope="col">Status</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
+          <tbody>
+            {% for visitor in visitors %}
+              <tr>
+                <td class="hm-cell-primary"><strong>{{ visitor.visitor_name }}</strong><span class="hm-sub">{{ visitor.phone }}{% if visitor.id_proof_type %} · {{ visitor.id_proof_type }}{% endif %}</span></td>
+                <td data-label="Visiting">{{ visitor.resident.get_full_name|default:visitor.resident.username }}</td>
+                <td data-label="Purpose">{{ visitor.purpose }}</td>
+                <td data-label="In">{{ visitor.entry_time|date:"j M, H:i"|default:"—" }}</td>
+                <td data-label="Out">{{ visitor.exit_time|date:"j M, H:i"|default:"—" }}</td>
+                <td data-label="Status">
+                  <span class="hm-badge hm-badge--{% if visitor.status == 'INSIDE' %}in{% elif visitor.status == 'EXITED' %}closed{% else %}pending{% endif %}">{{ visitor.get_status_display }}</span>
+                  {% if visitor.overridden_by %}<span class="hm-sub" title="{{ visitor.override_reason }}">Approved out of hours by {{ visitor.overridden_by.get_full_name|default:visitor.overridden_by.username }}</span>{% endif %}
+                </td>
+                <td data-label="">
+                  {% if is_guard %}
+                    {% if not visitor.entry_time and not visitor.exit_time %}
+                      <form method="post" action="{% url 'visitors:entry' visitor.pk %}" class="hm-inline-form">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-success" type="submit"><i class="bi bi-box-arrow-in-right" aria-hidden="true"></i> Record entry</button>
+                      </form>
+                    {% elif visitor.entry_time and not visitor.exit_time %}
+                      <form method="post" action="{% url 'visitors:exit' visitor.pk %}" class="hm-inline-form">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-box-arrow-right" aria-hidden="true"></i> Record exit</button>
+                      </form>
+                    {% endif %}
+                  {% elif not visitor.entry_time and not visitor.overridden_by %}
+                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'visitors:override' visitor.pk %}"><i class="bi bi-unlock" aria-hidden="true"></i> Allow out of hours</a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="hm-empty">
+        <i class="bi bi-person-badge" aria-hidden="true"></i>
+        <h3>No visitors yet</h3>
+        <p>{% if is_guard %}Register a visitor at the gate before letting them in.{% else %}Visitors registered at the gate will appear here.{% endif %}</p>
+      </div>
     {% endif %}
-
-    <a href="{% url 'visitors:register' %}">Register New Visitor</a>
-
-    <table border="1" cellpadding="8">
-        <tr>
-            <th>Visitor</th>
-            <th>Phone</th>
-            <th>Resident</th>
-            <th>Purpose</th>
-            <th>Entry</th>
-            <th>Exit</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-
-        {% for visitor in visitors %}
-        <tr>
-            <td>{{ visitor.visitor_name }}</td>
-            <td>{{ visitor.phone }}</td>
-            <td>{{ visitor.resident }}</td>
-            <td>{{ visitor.purpose }}</td>
-            <td>{{ visitor.entry_time|default:"Not entered" }}</td>
-            <td>{{ visitor.exit_time|default:"Not exited" }}</td>
-            <td>{{ visitor.get_status_display }}</td>
-            <td>
-                {% if not visitor.entry_time and not visitor.exit_time %}
-                <form method="post" action="{% url 'visitors:entry' visitor.pk %}">
-                    {% csrf_token %}
-                    <button type="submit">Record Entry</button>
-                </form>
-                {% endif %}
-
-                {% if visitor.entry_time and not visitor.exit_time %}
-                <form method="post" action="{% url 'visitors:exit' visitor.pk %}">
-                    {% csrf_token %}
-                    <button type="submit">Record Exit</button>
-                </form>
-                {% endif %}
-            </td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="8">No visitor records found.</td></tr>
-        {% endfor %}
-    </table>
-</body>
-</html>
+  </section>
+{% endblock %}

@@ -2,7 +2,8 @@
 # Monitor the local Django application and log uptime checks to CSV.
 
 $Url = "http://127.0.0.1:8000/"
-$LogDir = "C:\Users\VISHNU SR\Downloads\HMS-Team1\monitoring"
+# Logs go to <project>\monitoring; the project is two folders up from this script.
+$LogDir = Join-Path (Resolve-Path (Join-Path $PSScriptRoot "..\..")) "monitoring"
 $LogFile = Join-Path $LogDir "uptime.csv"
 
 # Create the monitoring directory if it does not exist.
