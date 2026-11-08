@@ -140,7 +140,10 @@ class TS4Mess(HousedResidentTestCase):
         meal = MessMenuItem.objects.get()
         self.assertEqual(meal.description, "Paneer")
 
-        self.client.post(reverse("mess:copy_week"), {"week": 0})
+        # The meal is two days ahead, so at a weekend it falls in next week: use its own week.
+        this_monday = timezone.localdate() - timedelta(days=timezone.localdate().weekday())
+        week = (meal.menu_date - this_monday).days // 7
+        self.client.post(reverse("mess:copy_week"), {"week": week})
         self.assertTrue(MessMenuItem.objects.filter(
             menu_date=meal.menu_date + timedelta(weeks=1), description="Paneer").exists())
 

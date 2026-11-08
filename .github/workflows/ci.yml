@@ -62,5 +62,7 @@ jobs:
           HMS_BEHIND_PROXY: "true"
         run: python manage.py check --deploy --fail-level WARNING
 
-      - name: Run tests
-        run: python manage.py test
+      - name: Run tests with branch coverage
+        run: |
+          coverage run manage.py test
+          coverage report --fail-under=80

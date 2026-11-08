@@ -38,3 +38,6 @@ smoke_test_exceptions.csv
 
 # Generated monitoring logs
 monitoring/uptime.csv
+# Coverage output
+.coverage
+htmlcov/

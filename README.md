@@ -290,7 +290,27 @@ python manage.py makemigrations --check --dry-run
 python manage.py test
 ```
 
-GitHub Actions runs the same steps, against PostgreSQL, on every pull request to `main`.
+GitHub Actions runs the same steps, against PostgreSQL, on every pull request to `main`. It runs
+the suite under coverage.py with branch coverage and fails the build below 80%:
+
+```bash
+coverage run manage.py test
+coverage report -m          # add `coverage html` for a browsable report
+```
+
+### Test reports (`docs/reports/`)
+
+| Report | File |
+|---|---|
+| Unit test report | [`UNIT_TEST_REPORT.md`](docs/reports/UNIT_TEST_REPORT.md) |
+| System validation report | [`SYSTEM_VALIDATION_REPORT.md`](docs/reports/SYSTEM_VALIDATION_REPORT.md) |
+| Code coverage report | [`CODE_COVERAGE_REPORT.md`](docs/reports/CODE_COVERAGE_REPORT.md) (browsable: `docs/reports/coverage-html/index.html`) |
+| Branch coverage report | [`BRANCH_COVERAGE_REPORT.md`](docs/reports/BRANCH_COVERAGE_REPORT.md) |
+| Updated test cases | [`TEST_CASE_DOCUMENT.md`](docs/reports/TEST_CASE_DOCUMENT.md) |
+
+The earlier QA register and Sprint 2 summary are in `docs/qa/`, the load test in `docs/performance/`
+and the demo videos in `docs/demo/`. Differences from the SRS, SAD and Test Plan are in
+[`DEVIATIONS.md`](DEVIATIONS.md).
 
 ## Workflow
 

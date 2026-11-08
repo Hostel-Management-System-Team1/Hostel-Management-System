@@ -1,0 +1,8 @@
+== ruff check .
+All checks passed!
+== manage.py check
+System check identified no issues (0 silenced).
+== makemigrations --check --dry-run
+No changes detected
+== check --deploy --fail-level WARNING
+System check identified no issues (1 silenced).
