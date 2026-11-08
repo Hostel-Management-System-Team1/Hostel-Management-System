@@ -31,7 +31,9 @@ class GuardianDetails(serializers.Serializer):
 
 class MedicalDetails(serializers.Serializer):
     bloodGroup = serializers.ChoiceField(
-        source="blood_group", choices=Application.BloodGroup.choices, required=False,
+        source="blood_group",
+        choices=Application.BloodGroup.choices,
+        required=False,
         allow_blank=True,
     )
     conditions = serializers.CharField(
@@ -48,8 +50,11 @@ class ApplicationSubmitSerializer(serializers.Serializer):
     guardianDetails = GuardianDetails()
     medicalDetails = MedicalDetails(required=False)
     preferredBlock = serializers.SlugRelatedField(
-        source="preferred_block", slug_field="name", queryset=Block.objects.all(),
-        required=False, allow_null=True,
+        source="preferred_block",
+        slug_field="name",
+        queryset=Block.objects.all(),
+        required=False,
+        allow_null=True,
     )
     roomType = serializers.ChoiceField(source="room_type", choices=RoomType.choices)
 

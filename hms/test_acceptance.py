@@ -62,15 +62,22 @@ class TS3GateOutpassAttendance(HousedResidentTestCase):
     def test_tc_out_01_outpass_pending_approved_returned_with_guardian_notices(self):
         self.as_user(self.resident)
         back = timezone.localtime() + timedelta(days=2)
-        self.client.post(reverse("gate:outpasses"), {
-            "destination": "Home", "contact_number": "9876500000",
-            "expected_return_at": back.strftime("%Y-%m-%dT%H:%M")})
+        self.client.post(
+            reverse("gate:outpasses"),
+            {
+                "destination": "Home",
+                "contact_number": "9876500000",
+                "expected_return_at": back.strftime("%Y-%m-%dT%H:%M"),
+            },
+        )
         outpass = OutpassRequest.objects.get()
         self.assertEqual(outpass.status, "PENDING")
 
         self.as_user(self.warden)
-        self.client.post(reverse("gate:warden_outpasses"),
-                         {"outpass_id": outpass.pk, "decision": "APPROVED", "reason": "OK"})
+        self.client.post(
+            reverse("gate:warden_outpasses"),
+            {"outpass_id": outpass.pk, "decision": "APPROVED", "reason": "OK"},
+        )
         outpass.refresh_from_db()
         self.assertEqual(outpass.status, "APPROVED")
         self.assertEqual(len(mail.outbox), 1)
@@ -83,11 +90,14 @@ class TS3GateOutpassAttendance(HousedResidentTestCase):
         self.assertEqual(mail.outbox[1].to, [outpass.allocation.application.guardian_email])
 
     def test_tc_out_01_rejected_outpass_sends_no_approval_notice(self):
-        outpass = gate.submit_outpass(self.resident, "Home", "9876500000",
-                                      timezone.now() + timedelta(days=1))
+        outpass = gate.submit_outpass(
+            self.resident, "Home", "9876500000", timezone.now() + timedelta(days=1)
+        )
         self.as_user(self.warden)
-        self.client.post(reverse("gate:warden_outpasses"),
-                         {"outpass_id": outpass.pk, "decision": "REJECTED", "reason": "Exams"})
+        self.client.post(
+            reverse("gate:warden_outpasses"),
+            {"outpass_id": outpass.pk, "decision": "REJECTED", "reason": "Exams"},
+        )
         outpass.refresh_from_db()
         self.assertEqual(outpass.status, "REJECTED")
         self.assertEqual(mail.outbox, [])
@@ -122,13 +132,20 @@ class TS4Mess(HousedResidentTestCase):
     def test_tc_mess_01_published_menu_is_visible_to_residents(self):
         self.as_user(self.manager)
         when = timezone.localtime() + timedelta(days=3)
-        self.client.post(reverse("mess:meal_save"), {
-            "menu_date": when.date().isoformat(), "meal_type": "LUNCH",
-            "time": "13:00", "description": "Veg biryani"})
+        self.client.post(
+            reverse("mess:meal_save"),
+            {
+                "menu_date": when.date().isoformat(),
+                "meal_type": "LUNCH",
+                "time": "13:00",
+                "description": "Veg biryani",
+            },
+        )
         self.assertTrue(MessMenuItem.objects.get().is_published)
         self.as_user(self.resident)
-        week = (when.date() - (timezone.localdate()
-                - timedelta(days=timezone.localdate().weekday()))).days // 7
+        week = (
+            when.date() - (timezone.localdate() - timedelta(days=timezone.localdate().weekday()))
+        ).days // 7
         self.assertContains(self.client.get(reverse("mess:home"), {"week": week}), "Veg biryani")
 
     def test_tc_mess_01_manager_plans_the_week(self):
@@ -144,8 +161,11 @@ class TS4Mess(HousedResidentTestCase):
         this_monday = timezone.localdate() - timedelta(days=timezone.localdate().weekday())
         week = (meal.menu_date - this_monday).days // 7
         self.client.post(reverse("mess:copy_week"), {"week": week})
-        self.assertTrue(MessMenuItem.objects.filter(
-            menu_date=meal.menu_date + timedelta(weeks=1), description="Paneer").exists())
+        self.assertTrue(
+            MessMenuItem.objects.filter(
+                menu_date=meal.menu_date + timedelta(weeks=1), description="Paneer"
+            ).exists()
+        )
 
         past = self.meal(timezone.now() - timedelta(hours=3))
         self.client.post(reverse("mess:record_served", args=[past.pk]), {"served": "4"})
@@ -155,8 +175,13 @@ class TS4Mess(HousedResidentTestCase):
 
     def meal(self, when, meal_type="LUNCH"):
         return MessMenuItem.objects.create(
-            menu_date=timezone.localtime(when).date(), meal_datetime=when, meal_type=meal_type,
-            description="Rice", is_published=True, published_by=self.manager)
+            menu_date=timezone.localtime(when).date(),
+            meal_datetime=when,
+            meal_type=meal_type,
+            description="Rice",
+            is_published=True,
+            published_by=self.manager,
+        )
 
     def test_tc_mess_02_opt_out_needs_24_hours_notice(self):
         soon = self.meal(timezone.now() + timedelta(hours=10), "DINNER")
@@ -179,7 +204,8 @@ class TS4Mess(HousedResidentTestCase):
         noon = timezone.make_aware(datetime.combine(last_month_day, time(13, 0)))
         away = allocated_resident("res2", room=self.room).resident  # skips every meal
         type(self.allocation).objects.update(
-            allocated_at=noon - timedelta(days=40))  # both housed for the whole month
+            allocated_at=noon - timedelta(days=40)
+        )  # both housed for the whole month
         meals = [self.meal(noon - timedelta(days=d)) for d in range(3)]
         MealOptOut.objects.create(resident=self.resident, menu_item=meals[0])
         for meal in meals:
@@ -187,9 +213,14 @@ class TS4Mess(HousedResidentTestCase):
         unhoused = person("neha", R.RESIDENT)
         self.as_user(self.manager)
         for _ in range(2):  # a second run must not bill twice
-            self.client.post(reverse("mess:home"), {
-                "action": "generate_bills", "month": last_month_day.month,
-                "year": last_month_day.year})
+            self.client.post(
+                reverse("mess:home"),
+                {
+                    "action": "generate_bills",
+                    "month": last_month_day.month,
+                    "year": last_month_day.year,
+                },
+            )
         bill = Invoice.objects.get(resident=self.resident, kind=Invoice.Kind.MESS)
         self.assertEqual(bill.total, 2 * 50)
         self.assertFalse(Invoice.objects.filter(resident=unhoused).exists())
@@ -198,8 +229,11 @@ class TS4Mess(HousedResidentTestCase):
     def test_tc_mess_02_a_month_still_running_cannot_be_billed(self):
         self.as_user(self.manager)
         today = timezone.localdate()
-        response = self.client.post(reverse("mess:home"), {
-            "action": "generate_bills", "month": today.month, "year": today.year}, follow=True)
+        response = self.client.post(
+            reverse("mess:home"),
+            {"action": "generate_bills", "month": today.month, "year": today.year},
+            follow=True,
+        )
         self.assertContains(response, "only after it has ended")
         self.assertFalse(Invoice.objects.filter(kind=Invoice.Kind.MESS).exists())
 
@@ -228,8 +262,9 @@ class TS5Complaints(HousedResidentTestCase):
         self.assertContains(self.client.get(reverse("complaints:manage_complaints")), "Tap leaking")
 
     def test_tc_cmp_01_photo_over_5_mb_is_refused(self):
-        big = SimpleUploadedFile("big.gif", b"GIF89a" + b"0" * (5 * 1024 * 1024 + 1),
-                                 content_type="image/gif")
+        big = SimpleUploadedFile(
+            "big.gif", b"GIF89a" + b"0" * (5 * 1024 * 1024 + 1), content_type="image/gif"
+        )
         self.submit(photo=big)
         self.assertFalse(Complaint.objects.exists())
 
@@ -244,14 +279,18 @@ class TS5Complaints(HousedResidentTestCase):
         self.assertEqual(complaint.status, "OPEN")
 
         self.as_user(self.warden)
-        self.client.post(reverse("complaints:assign_complaint", args=[complaint.pk]),
-                         {"assigned_to": self.staff.pk})
+        self.client.post(
+            reverse("complaints:assign_complaint", args=[complaint.pk]),
+            {"assigned_to": self.staff.pk},
+        )
         complaint.refresh_from_db()
         self.assertEqual(complaint.status, "IN_PROGRESS")
 
         self.as_user(self.staff)
-        self.client.post(reverse("complaints:update_complaint_status", args=[complaint.pk]),
-                         {"status": "RESOLVED"})
+        self.client.post(
+            reverse("complaints:update_complaint_status", args=[complaint.pk]),
+            {"status": "RESOLVED"},
+        )
         complaint.refresh_from_db()
         self.assertEqual(complaint.status, "RESOLVED")
 
@@ -270,9 +309,17 @@ class TS6Visitors(HousedResidentTestCase):
         VisitingHours.objects.create(start_time=closed_from, end_time=closed_to)
 
         self.as_user(self.guard)
-        self.client.post(reverse("visitors:register"), {
-            "visitor_name": "Sunita Sharma", "phone": "9876500000", "id_proof_type": "Aadhaar",
-            "id_proof_number": "1234", "resident": self.resident.pk, "purpose": "Visit"})
+        self.client.post(
+            reverse("visitors:register"),
+            {
+                "visitor_name": "Sunita Sharma",
+                "phone": "9876500000",
+                "id_proof_type": "Aadhaar",
+                "id_proof_number": "1234",
+                "resident": self.resident.pk,
+                "purpose": "Visit",
+            },
+        )
         visitor = Visitor.objects.get()
         self.client.post(reverse("visitors:entry", args=[visitor.pk]))
         visitor.refresh_from_db()
@@ -295,8 +342,9 @@ class TS6Visitors(HousedResidentTestCase):
 
 class TS7Reports(HousedResidentTestCase):
     def test_tc_rpt_01_reports_reconcile_and_both_exports_open(self):
-        Complaint.objects.create(title="Fan", description="Broken", category="MAINTENANCE",
-                                 created_by=self.resident)
+        Complaint.objects.create(
+            title="Fan", description="Broken", category="MAINTENANCE", created_by=self.resident
+        )
         self.as_user(self.warden)
         page = self.client.get(reverse("reporting:dashboard"))
         invoice = Invoice.objects.get(resident=self.resident)
@@ -341,9 +389,15 @@ class TS7Retention(HousedResidentTestCase):
         old = timezone.now() - timedelta(days=6 * 366)
         movement = gate.record_movement(self.resident, "OUT", "RFID", occurred_at=old)
         Allocation.objects.filter(pk=self.allocation.pk).update(status="ENDED", ended_at=old)
-        Visitor.objects.filter(pk=Visitor.objects.create(
-            visitor_name="Sunita", phone="9876500000", id_proof_number="1234",
-            resident=self.resident, purpose="Visit", registered_by=self.guard).pk,
+        Visitor.objects.filter(
+            pk=Visitor.objects.create(
+                visitor_name="Sunita",
+                phone="9876500000",
+                id_proof_number="1234",
+                resident=self.resident,
+                purpose="Visit",
+                registered_by=self.guard,
+            ).pk,
         ).update(created_at=old)
 
         call_command("anonymise_old_records", stdout=StringIO())  # dry run changes nothing

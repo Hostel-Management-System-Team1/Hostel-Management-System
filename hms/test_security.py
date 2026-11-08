@@ -1,4 +1,3 @@
-
 """Security protections that cut across modules (HMS-SR-001, SR-005, SR-006)."""
 
 import os
@@ -70,8 +69,7 @@ class TlsSettingsTests(SimpleTestCase):
             **os.environ,
             "DJANGO_DEBUG": "false",
             "HMS_BEHIND_PROXY": "true",
-            "DJANGO_SECRET_KEY": "k" * 20
-            + "".join(chr(65 + i) for i in range(26)) * 2,
+            "DJANGO_SECRET_KEY": "k" * 20 + "".join(chr(65 + i) for i in range(26)) * 2,
         }
         environment.pop("HMS_FORCE_HTTPS", None)
         result = subprocess.run(
@@ -159,9 +157,7 @@ class ContentSecurityPolicyCompatibilityTests(TestCase):
                     response = self.client.get(path, follow=True)
                     self.assertEqual(response.status_code, 200, path)
                     html = response.content.decode()
-                    inline = re.findall(
-                        r"<script(?![^>]*\bsrc=)[^>]*>(.+?)</script>", html, re.S
-                    )
+                    inline = re.findall(r"<script(?![^>]*\bsrc=)[^>]*>(.+?)</script>", html, re.S)
                     self.assertEqual([item for item in inline if item.strip()], [], path)
                     self.assertNotRegex(html, r"\son[a-z]+=\"", path)
                     self.assertNotIn("javascript:", html, path)
@@ -202,9 +198,7 @@ class InputHandlingTests(TestCase):
 
     def test_stored_markup_is_escaped_on_every_page(self):
         # Even if markup reached the database some other way, pages print it as text.
-        User.objects.filter(pk=self.user.pk).update(
-            first_name="<img src=x onerror=alert(1)>"
-        )
+        User.objects.filter(pk=self.user.pk).update(first_name="<img src=x onerror=alert(1)>")
         for path in ("/", "/profile/"):
             html = self.client.get(path).content.decode()
             self.assertNotIn("<img src=x onerror", html, path)

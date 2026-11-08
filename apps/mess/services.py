@@ -48,8 +48,12 @@ def menu_grid(menu_items):
 
 
 # When each meal is usually served; the publish form starts from these.
-DEFAULT_TIMES = {"BREAKFAST": time(8, 0), "LUNCH": time(13, 0), "SNACKS": time(17, 0),
-                 "DINNER": time(20, 0)}
+DEFAULT_TIMES = {
+    "BREAKFAST": time(8, 0),
+    "LUNCH": time(13, 0),
+    "SNACKS": time(17, 0),
+    "DINNER": time(20, 0),
+}
 
 
 def week_start(offset=0):
@@ -71,8 +75,11 @@ def week_grid(monday, items):
     from .models import MessMenuItem
 
     by_slot = {(item.menu_date, item.meal_type): item for item in items}
-    types = [(v, label) for v, label in MessMenuItem.MealType.choices
-             if v != "SNACKS" or any(t == "SNACKS" for _, t in by_slot)]
+    types = [
+        (v, label)
+        for v, label in MessMenuItem.MealType.choices
+        if v != "SNACKS" or any(t == "SNACKS" for _, t in by_slot)
+    ]
     days = []
     for n in range(7):
         day = monday + timedelta(days=n)
@@ -88,7 +95,8 @@ def month_so_far(resident):
 
     now = timezone.now()
     served = MessMenuItem.objects.filter(
-        is_published=True, meal_datetime__lte=now,
+        is_published=True,
+        meal_datetime__lte=now,
         menu_date__gte=timezone.localdate().replace(day=1),
     )
     skipped = served.filter(opt_outs__resident=resident).count()

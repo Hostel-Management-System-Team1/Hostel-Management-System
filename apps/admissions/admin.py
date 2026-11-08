@@ -19,18 +19,39 @@ class ApplicationAdmin(admin.ModelAdmin):
     Medical details are left out: only the applicant and the warden need them (SO-1).
     """
 
-    list_display = ("application_number", "full_name", "enrolment_number", "gender",
-                    "room_type", "status", "submitted_at")
+    list_display = (
+        "application_number",
+        "full_name",
+        "enrolment_number",
+        "gender",
+        "room_type",
+        "status",
+        "submitted_at",
+    )
     list_filter = ("status", "gender", "room_type", "academic_session")
     search_fields = ("application_number", "full_name", "enrolment_number")
     actions = None
     fieldsets = (
         (None, {"fields": ("application_number", "academic_session", "status", "submitted_at")}),
-        ("Applicant", {"fields": ("enrolment_number", "full_name", "date_of_birth", "gender",
-                                  "phone", "email", "address")}),
+        (
+            "Applicant",
+            {
+                "fields": (
+                    "enrolment_number",
+                    "full_name",
+                    "date_of_birth",
+                    "gender",
+                    "phone",
+                    "email",
+                    "address",
+                )
+            },
+        ),
         ("Academic", {"fields": ("programme", "year_of_study", "cgpa")}),
-        ("Guardian", {"fields": ("guardian_name", "guardian_relation", "guardian_phone",
-                                 "guardian_email")}),
+        (
+            "Guardian",
+            {"fields": ("guardian_name", "guardian_relation", "guardian_phone", "guardian_email")},
+        ),
         ("Preference", {"fields": ("preferred_block", "room_type")}),
         ("Decision", {"fields": ("decided_by", "decided_at", "decision_note")}),
     )
@@ -58,7 +79,9 @@ class BedInlineForm(forms.ModelForm):
             self.fields["status"].disabled = True
         else:
             self.fields["status"].choices = [
-                (Bed.Status.VACANT, "Vacant"), (Bed.Status.BLOCKED, "Blocked")]
+                (Bed.Status.VACANT, "Vacant"),
+                (Bed.Status.BLOCKED, "Blocked"),
+            ]
 
 
 class BedInline(admin.TabularInline):

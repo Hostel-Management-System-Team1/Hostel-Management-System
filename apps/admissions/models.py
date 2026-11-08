@@ -52,7 +52,9 @@ class Room(models.Model):
     number = models.CharField(max_length=10)
     room_type = models.CharField(max_length=10, choices=RoomType.choices)
     bed_capacity = models.PositiveSmallIntegerField(
-        null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(8)],
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(8)],
         help_text="Leave blank to use the usual capacity for the room type.",
     )
     status = models.CharField(max_length=10, choices=Status.choices, default=Status.AVAILABLE)
@@ -70,12 +72,19 @@ class Room(models.Model):
         super().clean()
         capacity = self.bed_capacity or ROOM_TYPE_CAPACITY.get(self.room_type)
         if self.pk and capacity:
-            keep = self.beds.filter(models.Q(status=Bed.Status.OCCUPIED) | models.Q(
-                allocations__isnull=False)).distinct().count()
+            keep = (
+                self.beds.filter(
+                    models.Q(status=Bed.Status.OCCUPIED) | models.Q(allocations__isnull=False)
+                )
+                .distinct()
+                .count()
+            )
             if capacity < keep:
                 raise ValidationError(
-                    {"bed_capacity": f"{keep} beds in this room are occupied or have a history of "
-                     "residents, so the capacity cannot be lowered below that."}
+                    {
+                        "bed_capacity": f"{keep} beds in this room are occupied or have a history "
+                        "of residents, so the capacity cannot be lowered below that."
+                    }
                 )
 
     def save(self, *args, **kwargs):
@@ -184,7 +193,8 @@ class Application(models.Model):
 
     # Personal
     enrolment_number = models.CharField(
-        max_length=20, validators=[validators.enrolment_format],
+        max_length=20,
+        validators=[validators.enrolment_format],
         help_text="Your student enrolment number, for example PES2UG24CS582.",
     )
     full_name = models.CharField(max_length=100, validators=[validators.person_name])
@@ -196,14 +206,17 @@ class Application(models.Model):
 
     # Academic
     programme = models.CharField(
-        max_length=80, validators=[validators.plain_text],
+        max_length=80,
+        validators=[validators.plain_text],
         help_text="For example B.Tech Computer Science.",
     )
     year_of_study = models.PositiveSmallIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(6)]
     )
     cgpa = models.DecimalField(
-        "CGPA", max_digits=4, decimal_places=2,
+        "CGPA",
+        max_digits=4,
+        decimal_places=2,
         validators=[MinValueValidator(0), MaxValueValidator(10)],
         help_text="Used to rank applicants when beds are allocated by merit.",
     )
@@ -219,13 +232,19 @@ class Application(models.Model):
     # Medical (visible to the applicant and the warden only)
     blood_group = models.CharField(max_length=3, choices=BloodGroup.choices, blank=True)
     medical_conditions = models.TextField(
-        max_length=500, blank=True, validators=[validators.plain_text],
+        max_length=500,
+        blank=True,
+        validators=[validators.plain_text],
         help_text="Allergies, chronic conditions or regular medication. Leave blank if none.",
     )
 
     # Preferences
     preferred_block = models.ForeignKey(
-        Block, null=True, blank=True, on_delete=models.PROTECT, related_name="+",
+        Block,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
         help_text="Only blocks for your gender can be chosen.",
     )
     room_type = models.CharField(max_length=10, choices=RoomType.choices)
@@ -258,8 +277,10 @@ class Application(models.Model):
         block = self.preferred_block
         if block and self.gender and block.gender != self.gender:
             raise ValidationError(
-                {"preferred_block": "That block is not for your gender. Pick a block for "
-                 f"{self.get_gender_display().lower()} residents or leave it blank."}
+                {
+                    "preferred_block": "That block is not for your gender. Pick a block for "
+                    f"{self.get_gender_display().lower()} residents or leave it blank."
+                }
             )
 
     def save(self, *args, **kwargs):
@@ -299,11 +320,13 @@ class Allocation(models.Model):
         ordering = ["-allocated_at"]
         constraints = [
             models.UniqueConstraint(
-                fields=["bed"], condition=models.Q(status="ACTIVE"),
+                fields=["bed"],
+                condition=models.Q(status="ACTIVE"),
                 name="one_active_allocation_per_bed",
             ),
             models.UniqueConstraint(
-                fields=["resident"], condition=models.Q(status="ACTIVE"),
+                fields=["resident"],
+                condition=models.Q(status="ACTIVE"),
                 name="one_active_allocation_per_resident",
             ),
         ]
@@ -336,6 +359,8 @@ class Transfer(models.Model):
 
     def __str__(self):
         return f"{self.allocation.resident}: {self.from_bed} → {self.to_bed}"
+
+
 class VacatingRequest(models.Model):
     """A resident's request to vacate their currently allocated bed (HMS-F-062)."""
 
@@ -461,10 +486,7 @@ class NoDuesClearance(models.Model):
         ]
 
     def __str__(self):
-        return (
-            f"{self.get_department_display()} - "
-            f"{self.get_status_display()}"
-        )
+        return f"{self.get_department_display()} - {self.get_status_display()}"
 
 
 class DamageCharge(models.Model):

@@ -1,4 +1,3 @@
-
 from datetime import date
 
 from django.core.management.base import BaseCommand, CommandError
@@ -29,26 +28,16 @@ class Command(BaseCommand):
             raise CommandError("This command requires PostgreSQL.")
 
         if connection.settings_dict["NAME"] != "hms_perf_test":
-            raise CommandError(
-                "Safety check failed: database must be hms_perf_test."
-            )
+            raise CommandError("Safety check failed: database must be hms_perf_test.")
 
         if count < 1:
             raise CommandError("--count must be positive.")
 
-        if Allocation.objects.filter(
-            status=Allocation.Status.ACTIVE
-        ).exists():
-            raise CommandError(
-                "Active allocations already exist. Use a fresh test database."
-            )
+        if Allocation.objects.filter(status=Allocation.Status.ACTIVE).exists():
+            raise CommandError("Active allocations already exist. Use a fresh test database.")
 
-        if User.objects.filter(
-            username__startswith="perfresident"
-        ).exists():
-            raise CommandError(
-                "Synthetic users already exist. Use a fresh test database."
-            )
+        if User.objects.filter(username__startswith="perfresident").exists():
+            raise CommandError("Synthetic users already exist. Use a fresh test database.")
 
         actor = User.objects.filter(role="WARDEN").first()
         if actor is None:
@@ -86,9 +75,7 @@ class Command(BaseCommand):
             room_number = 1
             while existing_beds < required:
                 number = f"PT{room_number:05d}"
-                if Room.objects.filter(
-                    block=block, number=number
-                ).exists():
+                if Room.objects.filter(block=block, number=number).exists():
                     room_number += 1
                     continue
 
@@ -109,7 +96,9 @@ class Command(BaseCommand):
                 room__room_type=room_type,
                 room__status=Room.Status.AVAILABLE,
                 status=Bed.Status.VACANT,
-            ).select_related("room", "room__block").order_by("id")
+            )
+            .select_related("room", "room__block")
+            .order_by("id")
         )
         female_beds = list(
             Bed.objects.filter(
@@ -117,7 +106,9 @@ class Command(BaseCommand):
                 room__room_type=room_type,
                 room__status=Room.Status.AVAILABLE,
                 status=Bed.Status.VACANT,
-            ).select_related("room", "room__block").order_by("id")
+            )
+            .select_related("room", "room__block")
+            .order_by("id")
         )
 
         male_count = (count + 1) // 2
@@ -201,13 +192,10 @@ class Command(BaseCommand):
             occupied_beds.append(bed)
 
         Allocation.objects.bulk_create(allocations, batch_size=500)
-        Bed.objects.bulk_update(
-            occupied_beds, ["status"], batch_size=500
-        )
+        Bed.objects.bulk_update(occupied_beds, ["status"], batch_size=500)
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Created {count} synthetic residents, applications, "
-                "and active allocations."
+                f"Created {count} synthetic residents, applications, and active allocations."
             )
         )

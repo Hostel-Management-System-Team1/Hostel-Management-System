@@ -1,4 +1,3 @@
-
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -52,9 +51,7 @@ class OutpassRequestSerializer(serializers.ModelSerializer):
 
     def validate_expected_return_at(self, value):
         if value <= timezone.now():
-            raise serializers.ValidationError(
-                "Expected return time must be in the future."
-            )
+            raise serializers.ValidationError("Expected return time must be in the future.")
         return value
 
 
@@ -105,14 +102,11 @@ class AttendanceGenerationSerializer(serializers.Serializer):
     attendance_date = serializers.DateField()
 
 
-
 class ManualGateMovementSerializer(serializers.Serializer):
     """Request body for a security guard's manual gate entry."""
 
     resident_id = serializers.IntegerField()
-    direction = serializers.ChoiceField(
-        choices=GateMovement.Direction.choices
-    )
+    direction = serializers.ChoiceField(choices=GateMovement.Direction.choices)
     occurred_at = serializers.DateTimeField(required=False)
 
 
@@ -120,9 +114,7 @@ class DeviceGateEventSerializer(serializers.Serializer):
     """Request body for an RFID or biometric device event."""
 
     resident_id = serializers.IntegerField()
-    direction = serializers.ChoiceField(
-        choices=GateMovement.Direction.choices
-    )
+    direction = serializers.ChoiceField(choices=GateMovement.Direction.choices)
     capture_method = serializers.ChoiceField(
         choices=[
             GateMovement.CaptureMethod.RFID,

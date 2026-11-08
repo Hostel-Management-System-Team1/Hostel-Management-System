@@ -1,4 +1,3 @@
-
 import base64
 import csv
 import secrets
@@ -23,17 +22,13 @@ class Command(BaseCommand):
         count = options["count"]
 
         if not settings.DEBUG:
-            raise CommandError(
-                "This command is for development testing only."
-            )
+            raise CommandError("This command is for development testing only.")
 
         if connection.vendor != "postgresql":
             raise CommandError("This command requires PostgreSQL.")
 
         if connection.settings_dict["NAME"] != "hms_perf_test":
-            raise CommandError(
-                "Safety check failed: connect to hms_perf_test first."
-            )
+            raise CommandError("Safety check failed: connect to hms_perf_test first.")
 
         if count < 1 or count > 200:
             raise CommandError("Count must be between 1 and 200.")
@@ -81,9 +76,7 @@ class Command(BaseCommand):
                 device.save(update_fields=["confirmed"])
 
             # Convert the hexadecimal device key to Base32 for pyotp.
-            secret_base32 = base64.b32encode(
-                bytes.fromhex(device.key)
-            ).decode("ascii").rstrip("=")
+            secret_base32 = base64.b32encode(bytes.fromhex(device.key)).decode("ascii").rstrip("=")
 
             credentials.append(
                 {
@@ -93,9 +86,7 @@ class Command(BaseCommand):
                 }
             )
 
-        with output_path.open(
-            "w", newline="", encoding="utf-8"
-        ) as file:
+        with output_path.open("w", newline="", encoding="utf-8") as file:
             writer = csv.DictWriter(
                 file,
                 fieldnames=["username", "password", "totp_secret"],
@@ -110,7 +101,5 @@ class Command(BaseCommand):
             )
         )
         self.stdout.write(
-            self.style.WARNING(
-                "Keep locust_users.csv private. Do not commit or share it."
-            )
+            self.style.WARNING("Keep locust_users.csv private. Do not commit or share it.")
         )

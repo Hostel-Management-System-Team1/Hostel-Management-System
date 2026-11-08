@@ -1,4 +1,3 @@
-
 from datetime import datetime, time, timedelta
 from unittest.mock import patch
 
@@ -22,6 +21,7 @@ from .models import (
 
 User = get_user_model()
 R = User.Role
+
 
 class GateMovementServiceTests(TestCase):
     def setUp(self):
@@ -153,9 +153,7 @@ class CurfewAlertTests(TestCase):
     def test_resident_still_outside_gets_alert(self, notify):
         self.record(GateMovement.Direction.OUT, self.threshold - timedelta(hours=1))
 
-        result = services.process_curfew_alerts(
-            now=self.threshold + timedelta(minutes=1)
-        )
+        result = services.process_curfew_alerts(now=self.threshold + timedelta(minutes=1))
 
         self.assertEqual(result["alerts_created"], 1)
         self.assertEqual(result["notifications_sent"], 1)
@@ -167,9 +165,7 @@ class CurfewAlertTests(TestCase):
         self.record(GateMovement.Direction.OUT, self.threshold - timedelta(hours=1))
         self.record(GateMovement.Direction.IN, self.threshold - timedelta(minutes=5))
 
-        services.process_curfew_alerts(
-            now=self.threshold + timedelta(minutes=1)
-        )
+        services.process_curfew_alerts(now=self.threshold + timedelta(minutes=1))
 
         self.assertEqual(CurfewAlert.objects.count(), 0)
         notify.assert_not_called()
@@ -179,9 +175,7 @@ class CurfewAlertTests(TestCase):
         self.record(GateMovement.Direction.OUT, self.threshold - timedelta(hours=1))
 
         for _ in range(2):
-            services.process_curfew_alerts(
-                now=self.threshold + timedelta(minutes=1)
-            )
+            services.process_curfew_alerts(now=self.threshold + timedelta(minutes=1))
 
         self.assertEqual(CurfewAlert.objects.count(), 1)
         self.assertEqual(notify.call_count, 1)
@@ -193,12 +187,8 @@ class CurfewAlertTests(TestCase):
     def test_failed_notification_is_retried(self, notify):
         self.record(GateMovement.Direction.OUT, self.threshold - timedelta(hours=1))
 
-        first = services.process_curfew_alerts(
-            now=self.threshold + timedelta(minutes=1)
-        )
-        second = services.process_curfew_alerts(
-            now=self.threshold + timedelta(minutes=2)
-        )
+        first = services.process_curfew_alerts(now=self.threshold + timedelta(minutes=1))
+        second = services.process_curfew_alerts(now=self.threshold + timedelta(minutes=2))
 
         self.assertEqual(first["notifications_failed"], 1)
         self.assertEqual(second["notifications_sent"], 1)
@@ -206,7 +196,6 @@ class CurfewAlertTests(TestCase):
         alert = CurfewAlert.objects.get(resident=self.resident)
         self.assertIsNotNone(alert.notified_at)
         self.assertEqual(notify.call_count, 2)
-
 
     @patch("apps.gate.services._notify_wardens", return_value=True)
     def test_previous_nights_violation_is_detected_after_midnight(self, notify):
@@ -236,8 +225,6 @@ class CurfewAlertTests(TestCase):
         self.assertEqual(alert.curfew_date, previous_date)
         self.assertIsNotNone(alert.notified_at)
         notify.assert_called_once()
-
-
 
 
 class GateAPITests(TestCase):
@@ -356,9 +343,8 @@ class GateAPITests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
-@override_settings(
-    EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend"
-)
+
+@override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
 class OutpassAndAttendanceTests(TestCase):
     def setUp(self):
         self.allocation = allocated_resident("outpass_resident")
@@ -366,9 +352,7 @@ class OutpassAndAttendanceTests(TestCase):
         self.application = self.allocation.application
         self.application.guardian_email = "guardian@example.com"
         self.application.guardian_name = "Resident Guardian"
-        self.application.save(
-            update_fields=["guardian_email", "guardian_name"]
-        )
+        self.application.save(update_fields=["guardian_email", "guardian_name"])
 
         self.warden = User.objects.create_user(
             username="outpass_warden",
@@ -508,9 +492,9 @@ class OutpassAndAttendanceTests(TestCase):
     def test_attendance_is_generated_for_active_resident(self):
         CurfewConfiguration.objects.create(
             block=self.allocation.bed.room.block,
-            curfew_time=timezone.localtime().time().replace(
-                hour=22, minute=0, second=0, microsecond=0
-            ),
+            curfew_time=timezone.localtime()
+            .time()
+            .replace(hour=22, minute=0, second=0, microsecond=0),
         )
 
         attendance_date = timezone.localdate()
@@ -526,4 +510,3 @@ class OutpassAndAttendanceTests(TestCase):
             attendance.status,
             NightAttendance.Status.values,
         )
-

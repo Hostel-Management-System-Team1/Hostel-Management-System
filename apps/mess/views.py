@@ -62,12 +62,14 @@ def mess_home(request):
 
 # ---------------------------------------------------------------- mess manager
 
+
 def _manager_week(request, form=None):
     offset = week_offset(request, -8, 8)
     monday = week_start(offset)
     items = list(
-        MessMenuItem.objects.filter(menu_date__range=(monday, monday + timedelta(days=6)))
-        .prefetch_related("opt_outs__resident")
+        MessMenuItem.objects.filter(
+            menu_date__range=(monday, monday + timedelta(days=6))
+        ).prefetch_related("opt_outs__resident")
     )
     served = {
         (a.activity_date, a.meal_type): a.meals_served
@@ -85,24 +87,28 @@ def _manager_week(request, form=None):
     if form is None:
         form = _prefilled_form(request)
     last_month = timezone.localdate().replace(day=1) - timedelta(days=1)
-    return render(request, "mess/manager_menu.html", {
-        "form": form,
-        "editing": request.GET.get("edit"),
-        "meal_types": meal_types,
-        "days": days,
-        "today": timezone.localdate(),
-        "now": now,
-        "offset": offset,
-        "monday": monday,
-        "sunday": monday + timedelta(days=6),
-        "housed": housed,
-        "planned": len(items),
-        "skips": sum(len(item.skipping) for item in items),
-        "months": list(enumerate(calendar.month_name))[1:],
-        "bill_month": last_month.month,
-        "bill_year": last_month.year,
-        "meal_price": MEAL_PRICE,
-    })
+    return render(
+        request,
+        "mess/manager_menu.html",
+        {
+            "form": form,
+            "editing": request.GET.get("edit"),
+            "meal_types": meal_types,
+            "days": days,
+            "today": timezone.localdate(),
+            "now": now,
+            "offset": offset,
+            "monday": monday,
+            "sunday": monday + timedelta(days=6),
+            "housed": housed,
+            "planned": len(items),
+            "skips": sum(len(item.skipping) for item in items),
+            "months": list(enumerate(calendar.month_name))[1:],
+            "bill_month": last_month.month,
+            "bill_year": last_month.year,
+            "meal_price": MEAL_PRICE,
+        },
+    )
 
 
 def _prefilled_form(request):
@@ -111,14 +117,22 @@ def _prefilled_form(request):
         item = MessMenuItem.objects.filter(pk=request.GET["edit"]).first()
         if item and item.meal_datetime:
             local = timezone.localtime(item.meal_datetime)
-            return MealForm(initial={"menu_date": item.menu_date, "meal_type": item.meal_type,
-                                     "time": local.time(), "description": item.description})
+            return MealForm(
+                initial={
+                    "menu_date": item.menu_date,
+                    "meal_type": item.meal_type,
+                    "time": local.time(),
+                    "description": item.description,
+                }
+            )
     meal_type = request.GET.get("meal", "LUNCH")
-    return MealForm(initial={
-        "menu_date": request.GET.get("date") or timezone.localdate() + timedelta(days=1),
-        "meal_type": meal_type,
-        "time": DEFAULT_TIMES.get(meal_type, DEFAULT_TIMES["LUNCH"]),
-    })
+    return MealForm(
+        initial={
+            "menu_date": request.GET.get("date") or timezone.localdate() + timedelta(days=1),
+            "meal_type": meal_type,
+            "time": DEFAULT_TIMES.get(meal_type, DEFAULT_TIMES["LUNCH"]),
+        }
+    )
 
 
 @role_required(R.MESS_MANAGER)
@@ -130,7 +144,8 @@ def meal_save(request):
         return _manager_week(request, form=form)
     data = form.cleaned_data
     item = MessMenuItem.objects.filter(
-        menu_date=data["menu_date"], meal_type=data["meal_type"]).first()
+        menu_date=data["menu_date"], meal_type=data["meal_type"]
+    ).first()
     changed = item is not None
     if changed and item.meal_datetime and item.meal_datetime <= timezone.now():
         messages.error(request, "That meal has already been served and cannot be changed.")
@@ -139,10 +154,16 @@ def meal_save(request):
     item.meal_datetime = data["meal_datetime"]
     item.description = data["description"]
     publish_menu(item, request.user)
-    audit.record("mess.menu_changed" if changed else "mess.menu_published", target=item,
-                 detail={"date": str(item.menu_date), "meal": item.meal_type})
-    messages.success(request, f"{item.get_meal_type_display()} on {item.menu_date:%a %d %b} "
-                              f"{'updated' if changed else 'published'}.")
+    audit.record(
+        "mess.menu_changed" if changed else "mess.menu_published",
+        target=item,
+        detail={"date": str(item.menu_date), "meal": item.meal_type},
+    )
+    messages.success(
+        request,
+        f"{item.get_meal_type_display()} on {item.menu_date:%a %d %b} "
+        f"{'updated' if changed else 'published'}.",
+    )
     offset = (item.menu_date - week_start(0)).days // 7
     return redirect(_week_url(offset))
 
@@ -177,13 +198,21 @@ def copy_week(request):
         if when is None or when <= timezone.now():
             continue
         _, created = MessMenuItem.objects.get_or_create(
-            menu_date=target, meal_type=item.meal_type,
-            defaults={"meal_datetime": when, "description": item.description,
-                      "is_published": True, "published_by": request.user},
+            menu_date=target,
+            meal_type=item.meal_type,
+            defaults={
+                "meal_datetime": when,
+                "description": item.description,
+                "is_published": True,
+                "published_by": request.user,
+            },
         )
         copied += created
-    messages.success(request, f"Copied {copied} meal{'s' if copied != 1 else ''} to the "
-                              f"week of {monday + timedelta(weeks=1):%d %b}.")
+    messages.success(
+        request,
+        f"Copied {copied} meal{'s' if copied != 1 else ''} to the "
+        f"week of {monday + timedelta(weeks=1):%d %b}.",
+    )
     return redirect(_week_url(offset + 1))
 
 
@@ -200,11 +229,15 @@ def record_served(request, pk):
         messages.error(request, "Enter the number of meals served.")
         return _back(request)
     MessActivity.objects.update_or_create(
-        activity_date=item.menu_date, meal_type=item.meal_type,
+        activity_date=item.menu_date,
+        meal_type=item.meal_type,
         defaults={"meals_served": count, "recorded_by": request.user},
     )
-    messages.success(request, f"Recorded {count} served for {item.get_meal_type_display().lower()} "
-                              f"on {item.menu_date:%a %d %b}.")
+    messages.success(
+        request,
+        f"Recorded {count} served for {item.get_meal_type_display().lower()} "
+        f"on {item.menu_date:%a %d %b}.",
+    )
     return _back(request)
 
 
@@ -230,49 +263,64 @@ def _generate_bills(request):
         allocations__allocated_at__date__lte=last_day,
     ).distinct()
     billed = sum(1 for resident in residents if generate_mess_invoice(resident, year, month))
-    messages.success(request, f"Mess bills for {calendar.month_name[month]} {year}: "
-                              f"{billed} resident(s) billed.")
+    messages.success(
+        request, f"Mess bills for {calendar.month_name[month]} {year}: {billed} resident(s) billed."
+    )
 
 
 # ---------------------------------------------------------------- resident
+
 
 def _resident_week(request):
     offset = week_offset(request, 0, 1)
     monday = week_start(offset)
     items = MessMenuItem.objects.filter(
-        is_published=True, menu_date__range=(monday, monday + timedelta(days=6)))
-    skipped = set(MealOptOut.objects.filter(
-        resident=request.user, menu_item__in=items).values_list("menu_item_id", flat=True))
+        is_published=True, menu_date__range=(monday, monday + timedelta(days=6))
+    )
+    skipped = set(
+        MealOptOut.objects.filter(resident=request.user, menu_item__in=items).values_list(
+            "menu_item_id", flat=True
+        )
+    )
     cutoff = timezone.now() + timedelta(hours=24)
     meal_types, days = week_grid(monday, items)
     rows = []
     for day, cells in days:
         open_ids = [i.pk for _, _, i in cells if i and i.meal_datetime and i.meal_datetime > cutoff]
-        rows.append({
-            "day": day, "cells": cells,
-            "can_skip_day": any(pk not in skipped for pk in open_ids),
-            "can_undo_day": any(pk in skipped for pk in open_ids),
-        })
-    return render(request, "mess/resident_menu.html", {
-        "meal_types": meal_types,
-        "rows": rows,
-        "skipped": skipped,
-        "cutoff": cutoff,
-        "today": timezone.localdate(),
-        "offset": offset,
-        "monday": monday,
-        "sunday": monday + timedelta(days=6),
-        "housed": Allocation.objects.filter(
-            resident=request.user, status=Allocation.Status.ACTIVE).exists(),
-        "month": month_so_far(request.user),
-        "meal_price": MEAL_PRICE,
-    })
+        rows.append(
+            {
+                "day": day,
+                "cells": cells,
+                "can_skip_day": any(pk not in skipped for pk in open_ids),
+                "can_undo_day": any(pk in skipped for pk in open_ids),
+            }
+        )
+    return render(
+        request,
+        "mess/resident_menu.html",
+        {
+            "meal_types": meal_types,
+            "rows": rows,
+            "skipped": skipped,
+            "cutoff": cutoff,
+            "today": timezone.localdate(),
+            "offset": offset,
+            "monday": monday,
+            "sunday": monday + timedelta(days=6),
+            "housed": Allocation.objects.filter(
+                resident=request.user, status=Allocation.Status.ACTIVE
+            ).exists(),
+            "month": month_so_far(request.user),
+            "meal_price": MEAL_PRICE,
+        },
+    )
 
 
 def _resident_choice(request):
     """Skip or un-skip one meal, or every meal of a day, until 24 hours before each."""
     if not Allocation.objects.filter(
-            resident=request.user, status=Allocation.Status.ACTIVE).exists():
+        resident=request.user, status=Allocation.Status.ACTIVE
+    ).exists():
         messages.error(request, "You can skip meals once you have a bed in the hostel.")
         return
     action = request.POST.get("action", "skip")
@@ -293,8 +341,10 @@ def _resident_choice(request):
             messages.error(request, "Invalid meal selection.")
             return
         if meals[0].meal_datetime is None or meals[0].meal_datetime <= cutoff:
-            messages.error(request, "Meals can be skipped or un-skipped only until 24 hours "
-                                    "before they are served.")
+            messages.error(
+                request,
+                "Meals can be skipped or un-skipped only until 24 hours before they are served.",
+            )
             return
     with transaction.atomic():
         for meal in meals:
@@ -306,9 +356,15 @@ def _resident_choice(request):
         messages.info(request, "No meals that day can still be changed.")
     elif len(meals) == 1:
         meal = meals[0]
-        messages.success(request, f"{'Eating' if undo else 'Skipping'} "
-                                  f"{meal.get_meal_type_display().lower()} on "
-                                  f"{meal.menu_date:%a %d %b}.")
+        messages.success(
+            request,
+            f"{'Eating' if undo else 'Skipping'} "
+            f"{meal.get_meal_type_display().lower()} on "
+            f"{meal.menu_date:%a %d %b}.",
+        )
     else:
-        messages.success(request, f"{'Eating' if undo else 'Skipping'} {len(meals)} meals on "
-                                  f"{meals[0].menu_date:%a %d %b}.")
+        messages.success(
+            request,
+            f"{'Eating' if undo else 'Skipping'} {len(meals)} meals on "
+            f"{meals[0].menu_date:%a %d %b}.",
+        )

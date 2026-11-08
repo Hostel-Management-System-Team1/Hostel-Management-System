@@ -29,9 +29,12 @@ def submit_application(applicant, **fields):
     application = Application(applicant=applicant, academic_session=session, **fields)
     application.enrolment_number = (application.enrolment_number or "").replace(" ", "").upper()
 
-    existing = Application.objects.filter(
-        academic_session=session, enrolment_number=application.enrolment_number
-    ).first() or Application.objects.filter(applicant=applicant, academic_session=session).first()
+    existing = (
+        Application.objects.filter(
+            academic_session=session, enrolment_number=application.enrolment_number
+        ).first()
+        or Application.objects.filter(applicant=applicant, academic_session=session).first()
+    )
     if existing:
         raise DuplicateApplication(
             f"An application for enrolment number {existing.enrolment_number} already exists for "
@@ -72,6 +75,8 @@ def decide(application, actor, approve, note=""):
     application.save(update_fields=["status", "decided_by", "decided_at", "decision_note"])
     audit.record(
         "application.approved" if approve else "application.rejected",
-        target=application, actor=actor, detail={"application": application.application_number},
+        target=application,
+        actor=actor,
+        detail={"application": application.application_number},
     )
     return application

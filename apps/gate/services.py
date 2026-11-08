@@ -51,13 +51,9 @@ def record_movement(
 
     if capture_method == GateMovement.CaptureMethod.MANUAL:
         if not recorded_by or recorded_by.role != User.Role.SECURITY_GUARD:
-            raise InvalidGateMovement(
-                "Manual movements must be recorded by a security guard."
-            )
+            raise InvalidGateMovement("Manual movements must be recorded by a security guard.")
     elif recorded_by is not None:
-        raise InvalidGateMovement(
-            "Device-originated movements cannot specify a recording guard."
-        )
+        raise InvalidGateMovement("Device-originated movements cannot specify a recording guard.")
 
     occurred_at = occurred_at or timezone.now()
 
@@ -72,12 +68,11 @@ def record_movement(
                 external_event_id=external_event_id or None,
             )
     except IntegrityError:
-        if external_event_id and GateMovement.objects.filter(
-            external_event_id=external_event_id
-        ).exists():
-            return GateMovement.objects.get(
-                external_event_id=external_event_id
-            )
+        if (
+            external_event_id
+            and GateMovement.objects.filter(external_event_id=external_event_id).exists()
+        ):
+            return GateMovement.objects.get(external_event_id=external_event_id)
         raise
 
     audit.record(
@@ -113,15 +108,16 @@ def _curfew_threshold(configuration, curfew_date):
 
 def _resident_was_out_at_threshold(resident, threshold):
     """Check the resident's last recorded movement at or before the threshold."""
-    last_movement = GateMovement.objects.filter(
-        resident=resident,
-        occurred_at__lte=threshold,
-    ).order_by("-occurred_at", "-pk").first()
-
-    return (
-        last_movement is not None
-        and last_movement.direction == GateMovement.Direction.OUT
+    last_movement = (
+        GateMovement.objects.filter(
+            resident=resident,
+            occurred_at__lte=threshold,
+        )
+        .order_by("-occurred_at", "-pk")
+        .first()
     )
+
+    return last_movement is not None and last_movement.direction == GateMovement.Direction.OUT
 
 
 def _notify_wardens(alert):
@@ -140,10 +136,7 @@ def _notify_wardens(alert):
         )
         return False
 
-    resident_name = (
-        alert.resident.get_full_name()
-        or alert.resident.username
-    )
+    resident_name = alert.resident.get_full_name() or alert.resident.username
 
     message = EmailMessage(
         subject=f"Hostel curfew violation - {resident_name}",
@@ -237,7 +230,6 @@ class OutpassError(Exception):
     """An outpass operation violates the workflow rules."""
 
 
-
 def _notify_guardian(outpass, event):
     """Send an outpass approval or return notice to the registered guardian."""
     try:
@@ -252,9 +244,7 @@ def _notify_guardian(outpass, event):
             return False
 
         resident_name = (
-            application.full_name
-            or outpass.resident.get_full_name()
-            or outpass.resident.username
+            application.full_name or outpass.resident.get_full_name() or outpass.resident.username
         )
 
         if event == "approved":
@@ -297,7 +287,6 @@ def _notify_guardian(outpass, event):
         return False
 
 
-
 def submit_outpass(
     resident,
     destination,
@@ -311,10 +300,14 @@ def submit_outpass(
     if expected_return_at <= timezone.now():
         raise OutpassError("Expected return time must be in the future.")
 
-    allocation = Allocation.objects.filter(
-        resident=resident,
-        status=Allocation.Status.ACTIVE,
-    ).select_related("application").first()
+    allocation = (
+        Allocation.objects.filter(
+            resident=resident,
+            status=Allocation.Status.ACTIVE,
+        )
+        .select_related("application")
+        .first()
+    )
 
     if allocation is None:
         raise OutpassError("An active hostel allocation is required.")
@@ -450,10 +443,7 @@ def generate_night_attendance(attendance_date):
 
             if approved_leave:
                 attendance_status = NightAttendance.Status.ON_LEAVE
-            elif (
-                latest_movement
-                and latest_movement.direction == GateMovement.Direction.OUT
-            ):
+            elif latest_movement and latest_movement.direction == GateMovement.Direction.OUT:
                 attendance_status = NightAttendance.Status.ABSENT
             else:
                 attendance_status = NightAttendance.Status.PRESENT

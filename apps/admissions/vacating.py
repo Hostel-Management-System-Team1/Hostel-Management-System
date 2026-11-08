@@ -381,9 +381,17 @@ def _bill_shortfall(request, allocation, amount):
         total=amount,
     )
     InvoiceItem.objects.create(
-        invoice=invoice, description="Damage charges not covered by the deposit", amount=amount,
+        invoice=invoice,
+        description="Damage charges not covered by the deposit",
+        amount=amount,
     )
-    audit.record("invoice.raised", target=invoice, detail={
-        "invoice": invoice.number, "total": str(amount), "reason": "vacating shortfall",
-    })
+    audit.record(
+        "invoice.raised",
+        target=invoice,
+        detail={
+            "invoice": invoice.number,
+            "total": str(amount),
+            "reason": "vacating shortfall",
+        },
+    )
     return invoice

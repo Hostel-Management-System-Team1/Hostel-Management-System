@@ -34,11 +34,15 @@ def invoice_list(request):
 @role_required(R.RESIDENT)
 def invoice_detail(request, pk):
     invoice = own_invoice(request, pk)
-    return render(request, "fees/invoice_detail.html", {
-        "invoice": invoice,
-        "methods": Payment.Method.choices,
-        "receipt": getattr(invoice, "receipt", None),
-    })
+    return render(
+        request,
+        "fees/invoice_detail.html",
+        {
+            "invoice": invoice,
+            "methods": Payment.Method.choices,
+            "receipt": getattr(invoice, "receipt", None),
+        },
+    )
 
 
 @role_required(R.RESIDENT)
@@ -52,13 +56,17 @@ def invoice_pay(request, pk):
         return redirect("fees:invoice_detail", pk=pk)
     try:
         _, redirect_url = services.start_payment(
-            invoice, method, reverse("fees:invoice_detail", args=[pk]))
+            invoice, method, reverse("fees:invoice_detail", args=[pk])
+        )
     except services.InvoiceAlreadyPaid:
         messages.info(request, "This invoice is already paid.")
         return redirect("fees:invoice_detail", pk=pk)
     except gateway.GatewayUnavailable:
-        messages.error(request, "The payment gateway is not reachable. Nothing was charged; "
-                                "the invoice is still unpaid. Please try again shortly.")
+        messages.error(
+            request,
+            "The payment gateway is not reachable. Nothing was charged; "
+            "the invoice is still unpaid. Please try again shortly.",
+        )
         return redirect("fees:invoice_detail", pk=pk)
     return redirect(redirect_url)
 
@@ -72,19 +80,27 @@ def mock_gateway(request, session_id):
     payment = get_object_or_404(Payment.objects.select_related("invoice"), session_id=session_id)
     if request.method == "POST":
         outcome = {"pay": "SUCCESS", "fail": "FAILED", "cancel": "ABANDONED"}.get(
-            request.POST.get("outcome"))
+            request.POST.get("outcome")
+        )
         if outcome is None:
             raise Http404("Unknown outcome")
-        payload = {"paymentSessionId": payment.session_id, "status": outcome,
-                   "gatewayRef": f"MOCK-{payment.session_id[:10].upper()}"}
+        payload = {
+            "paymentSessionId": payment.session_id,
+            "status": outcome,
+            "gatewayRef": f"MOCK-{payment.session_id[:10].upper()}",
+        }
         payload["signature"] = gateway.sign(payload)
         services.handle_callback(payload)
         notes = {
             "SUCCESS": (messages.success, "Payment received. Your receipt is ready to download."),
-            "FAILED": (messages.error, "The payment failed. Nothing was charged and the invoice "
-                                        "is still unpaid."),
-            "ABANDONED": (messages.warning, "The payment was cancelled. The invoice is still "
-                                            "unpaid."),
+            "FAILED": (
+                messages.error,
+                "The payment failed. Nothing was charged and the invoice is still unpaid.",
+            ),
+            "ABANDONED": (
+                messages.warning,
+                "The payment was cancelled. The invoice is still unpaid.",
+            ),
         }
         notify, text = notes[outcome]
         notify(request, text)
@@ -105,7 +121,8 @@ def receipt_download(request, pk):
         log_denied(request)
         raise PermissionDenied
     response = FileResponse(
-        iter([receipt_pdf(receipt)]), content_type="application/pdf",
+        iter([receipt_pdf(receipt)]),
+        content_type="application/pdf",
         filename=f"{receipt.number}.pdf",
     )
     response["Content-Disposition"] = f'inline; filename="{receipt.number}.pdf"'

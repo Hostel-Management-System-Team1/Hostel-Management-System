@@ -35,7 +35,8 @@ class PaymentStartView(APIView):
         serializer.is_valid(raise_exception=True)
         try:
             payment, redirect_url = services.start_payment(
-                invoice, serializer.validated_data["method"],
+                invoice,
+                serializer.validated_data["method"],
                 serializer.validated_data.get("returnUrl", ""),
             )
         except services.InvoiceAlreadyPaid as error:

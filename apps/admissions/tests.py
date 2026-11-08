@@ -132,8 +132,13 @@ class ApplyViewTests(TestCase):
 
     def test_form_page_lists_every_section(self):
         response = self.client.get(reverse("admissions:apply"))
-        for heading in ("Personal details", "Academic details", "Guardian details",
-                        "Medical details", "Room preference"):
+        for heading in (
+            "Personal details",
+            "Academic details",
+            "Guardian details",
+            "Medical details",
+            "Room preference",
+        ):
             self.assertContains(response, heading)
 
     def test_resident_submits_and_sees_the_status_page(self):
@@ -273,12 +278,18 @@ class ApplicationApiTests(TestCase):
     payload = {
         "enrolmentNumber": "PES2UG24CS500",
         "personalDetails": {
-            "fullName": "Aarav Sharma", "dateOfBirth": "2006-05-14", "gender": "M",
-            "phone": "9876543210", "email": "aarav@example.edu", "address": "12 MG Road",
+            "fullName": "Aarav Sharma",
+            "dateOfBirth": "2006-05-14",
+            "gender": "M",
+            "phone": "9876543210",
+            "email": "aarav@example.edu",
+            "address": "12 MG Road",
         },
         "academicDetails": {"programme": "B.Tech CSE", "yearOfStudy": 1, "cgpa": "8.5"},
         "guardianDetails": {
-            "name": "Rakesh Sharma", "relation": "Father", "phone": "9876500000",
+            "name": "Rakesh Sharma",
+            "relation": "Father",
+            "phone": "9876500000",
             "email": "rakesh@example.com",
         },
         "medicalDetails": {"bloodGroup": "O+", "conditions": ""},
@@ -315,8 +326,10 @@ class ApplicationApiTests(TestCase):
         self.assertNotEqual(other.pk, None)
 
     def test_invalid_request_is_400_with_field_details(self):
-        payload = {**self.payload, "personalDetails": {**self.payload["personalDetails"],
-                                                       "phone": "12"}}
+        payload = {
+            **self.payload,
+            "personalDetails": {**self.payload["personalDetails"], "phone": "12"},
+        }
         response = self.post(payload)
         self.assertEqual(response.status_code, 400)
         self.assertIn("phone", str(response.json()["details"]))

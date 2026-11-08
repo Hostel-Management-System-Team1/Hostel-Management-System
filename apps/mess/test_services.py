@@ -22,8 +22,13 @@ class MessServiceTests(TestCase):
 
     def meal(self, when, meal_type="LUNCH", published=True):
         return MessMenuItem.objects.create(
-            menu_date=timezone.localtime(when).date(), meal_datetime=when, meal_type=meal_type,
-            description="Rice", is_published=published, published_by=self.manager)
+            menu_date=timezone.localtime(when).date(),
+            meal_datetime=when,
+            meal_type=meal_type,
+            description="Rice",
+            is_published=published,
+            published_by=self.manager,
+        )
 
     def test_only_a_mess_manager_can_publish(self):
         item = self.meal(timezone.now() + timedelta(days=2), published=False)

@@ -19,8 +19,9 @@ def _clean(detail):
     return json.loads(json.dumps(detail or {}, cls=DjangoJSONEncoder))
 
 
-def record(action, *, target=None, outcome=AuditEntry.Outcome.SUCCESS, detail=None, actor=_UNSET,
-           label=""):
+def record(
+    action, *, target=None, outcome=AuditEntry.Outcome.SUCCESS, detail=None, actor=_UNSET, label=""
+):
     """Append one entry. ``actor`` defaults to whoever is making the current request.
 
     Never put personal data (medical, guardian or identity details, passwords, card data) in

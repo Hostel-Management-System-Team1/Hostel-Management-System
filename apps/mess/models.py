@@ -1,4 +1,3 @@
-
 """Mess Service — HMS-F-030, HMS-F-031 (issue #10)."""
 
 from django.conf import settings
@@ -38,10 +37,7 @@ class MessActivity(models.Model):
         ]
 
     def __str__(self):
-        return (
-            f"{self.get_meal_type_display()} on "
-            f"{self.activity_date}: {self.meals_served} meals"
-        )
+        return f"{self.get_meal_type_display()} on {self.activity_date}: {self.meals_served} meals"
 
 
 class MessMenuItem(models.Model):

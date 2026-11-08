@@ -1,4 +1,3 @@
-
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -54,10 +53,7 @@ class GateMovement(models.Model):
         ]
 
     def __str__(self):
-        return (
-            f"{self.resident} - "
-            f"{self.get_direction_display()} at {self.occurred_at}"
-        )
+        return f"{self.resident} - {self.get_direction_display()} at {self.occurred_at}"
 
 
 class CurfewConfiguration(models.Model):
@@ -200,7 +196,4 @@ class NightAttendance(models.Model):
         ]
 
     def __str__(self):
-        return (
-            f"{self.resident} - {self.attendance_date} "
-            f"({self.get_status_display()})"
-        )
+        return f"{self.resident} - {self.attendance_date} ({self.get_status_display()})"

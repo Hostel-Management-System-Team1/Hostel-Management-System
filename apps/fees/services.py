@@ -1,4 +1,3 @@
-
 """Invoicing, payment, receipts and mess billing (HMS-F-010 to HMS-F-013)."""
 
 import calendar
@@ -70,15 +69,17 @@ def generate_invoice(allocation):
             due_date=today + timedelta(days=settings.FEE_DUE_DAYS),
         )
 
-        InvoiceItem.objects.bulk_create([
-            InvoiceItem(
-                invoice=invoice,
-                description=head.name,
-                amount=head.amount,
-                refundable=head.refundable,
-            )
-            for head in heads
-        ])
+        InvoiceItem.objects.bulk_create(
+            [
+                InvoiceItem(
+                    invoice=invoice,
+                    description=head.name,
+                    amount=head.amount,
+                    refundable=head.refundable,
+                )
+                for head in heads
+            ]
+        )
 
         invoice.total = sum(
             (head.amount for head in heads),
@@ -124,12 +125,9 @@ def generate_mess_invoice(resident, year, month):
     today = timezone.localdate()
 
     with transaction.atomic():
-
         # Lock the resident record to prevent simultaneous
         # duplicate invoice generation for that resident.
-        locked_resident = type(resident).objects.select_for_update().get(
-            pk=resident.pk
-        )
+        locked_resident = type(resident).objects.select_for_update().get(pk=resident.pk)
 
         existing = Invoice.objects.filter(
             resident=locked_resident,
@@ -244,9 +242,7 @@ def _apply_callback(payload):
             .get(session_id=payload["paymentSessionId"])
         )
     except Payment.DoesNotExist as error:
-        raise UnknownPaymentSession(
-            "Unknown payment session."
-        ) from error
+        raise UnknownPaymentSession("Unknown payment session.") from error
 
     if payment.status != Payment.Status.INITIATED:
         return payment
@@ -256,9 +252,7 @@ def _apply_callback(payload):
     payment.completed_at = timezone.now()
 
     if status == "SUCCESS":
-        invoice = Invoice.objects.select_for_update().get(
-            pk=payment.invoice_id
-        )
+        invoice = Invoice.objects.select_for_update().get(pk=payment.invoice_id)
 
         if invoice.status == Invoice.Status.PAID:
             payment.status = Payment.Status.DUPLICATE
@@ -336,17 +330,11 @@ def _send_overdue_reminder(invoice):
     if invoice.allocation_id:
         application = invoice.allocation.application
     else:
-        application = invoice.resident.applications.order_by(
-            "-submitted_at"
-        ).first()
+        application = invoice.resident.applications.order_by("-submitted_at").first()
 
-    resident_email = (
-        getattr(application, "email", "") or invoice.resident.email
-    ).strip()
+    resident_email = (getattr(application, "email", "") or invoice.resident.email).strip()
 
-    guardian_email = (
-        getattr(application, "guardian_email", "") or ""
-    ).strip()
+    guardian_email = (getattr(application, "guardian_email", "") or "").strip()
 
     to = [resident_email] if resident_email else []
     bcc = [guardian_email] if resident_email and guardian_email else []
@@ -356,8 +344,7 @@ def _send_overdue_reminder(invoice):
 
     if not to:
         logger.warning(
-            "Cannot send overdue reminder for invoice %s: "
-            "no resident or guardian email",
+            "Cannot send overdue reminder for invoice %s: no resident or guardian email",
             invoice.number,
         )
         return False
@@ -404,22 +391,24 @@ def process_overdue_invoices(today=None):
         status=Invoice.Status.UNPAID,
     )
 
-    marked_overdue = overdue_candidates.update(
-        status=Invoice.Status.OVERDUE
-    )
+    marked_overdue = overdue_candidates.update(status=Invoice.Status.OVERDUE)
 
     reminders_sent = 0
     reminders_failed = 0
     reminders_skipped = 0
 
-    pending = Invoice.objects.filter(
-        due_date__lt=today,
-        status=Invoice.Status.OVERDUE,
-        reminder_sent_at__isnull=True,
-    ).select_related(
-        "resident",
-        "allocation__application",
-    ).order_by("pk")
+    pending = (
+        Invoice.objects.filter(
+            due_date__lt=today,
+            status=Invoice.Status.OVERDUE,
+            reminder_sent_at__isnull=True,
+        )
+        .select_related(
+            "resident",
+            "allocation__application",
+        )
+        .order_by("pk")
+    )
 
     for invoice in pending:
         try:

@@ -42,11 +42,19 @@ class CurfewConfigurationAdmin(admin.ModelAdmin):
 @admin.register(OutpassRequest)
 class OutpassRequestAdmin(admin.ModelAdmin):
     list_display = (
-        "resident", "destination", "expected_return_at", "status", "decided_by", "returned_at"
+        "resident",
+        "destination",
+        "expected_return_at",
+        "status",
+        "decided_by",
+        "returned_at",
     )
     list_filter = ("status",)
     search_fields = (
-        "resident__username", "resident__first_name", "resident__last_name", "destination"
+        "resident__username",
+        "resident__first_name",
+        "resident__last_name",
+        "destination",
     )
 
     # Outpasses are requested, decided and closed in the portal; the record is evidence.

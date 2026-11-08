@@ -69,8 +69,12 @@ def home(request):
         return redirect("complaints:manage_complaints")
     desk = DESKS.get(user.role, DESKS[R.RESIDENT])
     panels = panels_for(user) or [
-        table_panel(desk["panel"], [], [], empty=empty(
-            desk["empty_icon"], desk["empty_title"], desk["empty_text"]))
+        table_panel(
+            desk["panel"],
+            [],
+            [],
+            empty=empty(desk["empty_icon"], desk["empty_title"], desk["empty_text"]),
+        )
     ]
     context = {
         "desk": desk,

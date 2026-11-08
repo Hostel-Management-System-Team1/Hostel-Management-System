@@ -32,17 +32,19 @@ def visitor_register(request):
 def visitor_list(request):
     """The guard registers visitors and records entry and exit; the warden approves
     visits outside visiting hours from the same list (HMS-F-050, HMS-F-051)."""
-    visitors = Visitor.objects.select_related(
-        "resident", "registered_by", "overridden_by"
+    visitors = Visitor.objects.select_related("resident", "registered_by", "overridden_by")
+    return render(
+        request,
+        "visitors/list.html",
+        {
+            "visitors": visitors,
+            "hours": VisitingHours.objects.filter(is_active=True).first(),
+            "within_hours": within_visiting_hours(),
+            "is_guard": request.user.role == User.Role.SECURITY_GUARD,
+            "inside": visitors.filter(status=Visitor.Status.INSIDE).count(),
+            "waiting": visitors.filter(status=Visitor.Status.REGISTERED).count(),
+        },
     )
-    return render(request, "visitors/list.html", {
-        "visitors": visitors,
-        "hours": VisitingHours.objects.filter(is_active=True).first(),
-        "within_hours": within_visiting_hours(),
-        "is_guard": request.user.role == User.Role.SECURITY_GUARD,
-        "inside": visitors.filter(status=Visitor.Status.INSIDE).count(),
-        "waiting": visitors.filter(status=Visitor.Status.REGISTERED).count(),
-    })
 
 
 def within_visiting_hours():
@@ -67,9 +69,7 @@ def visitor_entry(request, pk):
         messages.error(request, "This visitor has already exited.")
         return redirect("visitors:list")
 
-    if not within_visiting_hours() and not (
-        visitor.overridden_by and visitor.override_reason
-    ):
+    if not within_visiting_hours() and not (visitor.overridden_by and visitor.override_reason):
         messages.error(
             request,
             "Entry is outside permitted visiting hours. Warden approval is required.",

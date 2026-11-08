@@ -1,4 +1,3 @@
-
 from django.urls import path
 
 from . import views
@@ -7,7 +6,6 @@ app_name = "reporting"
 
 urlpatterns = [
     path("", views.reports_dashboard, name="dashboard"),
-
     path("export/dues.csv", views.export_dues_csv, name="export_dues"),
     path(
         "export/occupancy.csv",
@@ -20,7 +18,6 @@ urlpatterns = [
         name="export_complaints",
     ),
     path("export/mess.csv", views.export_mess_csv, name="export_mess"),
-
     path("export/dues.xlsx", views.export_dues_xlsx, name="export_dues_xlsx"),
     path(
         "export/occupancy.xlsx",
@@ -33,7 +30,6 @@ urlpatterns = [
         name="export_complaints_xlsx",
     ),
     path("export/mess.xlsx", views.export_mess_xlsx, name="export_mess_xlsx"),
-
     path("export/dues.pdf", views.export_dues_pdf, name="export_dues_pdf"),
     path(
         "export/occupancy.pdf",

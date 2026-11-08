@@ -45,8 +45,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.WARNING(
-                f"REPORT ONLY - threshold date: {cutoff}; "
-                "no records will be changed."
+                f"REPORT ONLY - threshold date: {cutoff}; no records will be changed."
             )
         )
 

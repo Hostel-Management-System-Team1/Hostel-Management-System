@@ -81,9 +81,9 @@ class HMSAdminSite(admin.AdminSite):
             ],
             "users_url": users_url,
             # Sign-ins and refused requests stay in the audit log; this panel shows changes.
-            "recent_actions": AuditEntry.objects.exclude(
-                category__in=["auth", "access"]
-            ).order_by("-seq")[:8],
+            "recent_actions": AuditEntry.objects.exclude(category__in=["auth", "access"]).order_by(
+                "-seq"
+            )[:8],
             "audit_url": reverse("admin:audit_auditentry_changelist"),
             **(extra_context or {}),
         }

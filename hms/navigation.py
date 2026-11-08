@@ -7,10 +7,7 @@ from apps.accounts.models import User
 
 R = User.Role
 
-ISSUES_URL = (
-    "https://github.com/Hostel-Management-System-Team1/"
-    "Hostel-Management-System/issues"
-)
+ISSUES_URL = "https://github.com/Hostel-Management-System-Team1/Hostel-Management-System/issues"
 SPRINT_DATES = {1: "19–23 Oct", 2: "26–30 Oct"}
 
 
@@ -32,300 +29,335 @@ DASHBOARD = item("Dashboard", "bi-grid-1x2", "home")
 
 NAV = {
     R.RESIDENT: [
-        ("Overview", [
-            item("Home", "bi-house", "home"),
-        ]),
-        ("My hostel", [
-            item(
-                "Room application",
-                "bi-file-earmark-text",
-                "admissions:my_application",
-                hint="Apply for a room",
-            ),
-            item(
-                "Fees & receipts",
-                "bi-receipt",
-                "fees:invoice_list",
-                hint="Invoices, payment and receipts",
-            ),
-            item(
-                "My Vacating",
-                "bi-box-arrow-right",
-                "admissions:my_vacating",
-                hint="Request hostel vacating and track clearances",
-            ),
-            item(
-                "Outpass",
-                "bi-box-arrow-up-right",
-                "gate:outpasses",
-                hint="Leave the hostel overnight",
-                issue=9,
-            ),
-            item(
-                "Meals",
-                "bi-cup-hot",
-                "mess:home",
-                hint="Menu and meal opt-outs",
-                issue=10,
-            ),
-        ]),
-        ("Support", [
-            item(
-                "My complaints",
-                "bi-tools",
-                "complaints:my_complaints",
-                hint="Plumbing, electrical, Wi-Fi",
-                issue=11,
-            ),
-        ]),
+        (
+            "Overview",
+            [
+                item("Home", "bi-house", "home"),
+            ],
+        ),
+        (
+            "My hostel",
+            [
+                item(
+                    "Room application",
+                    "bi-file-earmark-text",
+                    "admissions:my_application",
+                    hint="Apply for a room",
+                ),
+                item(
+                    "Fees & receipts",
+                    "bi-receipt",
+                    "fees:invoice_list",
+                    hint="Invoices, payment and receipts",
+                ),
+                item(
+                    "My Vacating",
+                    "bi-box-arrow-right",
+                    "admissions:my_vacating",
+                    hint="Request hostel vacating and track clearances",
+                ),
+                item(
+                    "Outpass",
+                    "bi-box-arrow-up-right",
+                    "gate:outpasses",
+                    hint="Leave the hostel overnight",
+                    issue=9,
+                ),
+                item(
+                    "Meals",
+                    "bi-cup-hot",
+                    "mess:home",
+                    hint="Menu and meal opt-outs",
+                    issue=10,
+                ),
+            ],
+        ),
+        (
+            "Support",
+            [
+                item(
+                    "My complaints",
+                    "bi-tools",
+                    "complaints:my_complaints",
+                    hint="Plumbing, electrical, Wi-Fi",
+                    issue=11,
+                ),
+            ],
+        ),
     ],
-
     R.WARDEN: [
         ("Overview", [DASHBOARD]),
-        ("Residents", [
-            item(
-                "Applications",
-                "bi-inbox",
-                "admissions:application_list",
-                hint="Review and allocate beds",
-            ),
-            item(
-                "Rooms",
-                "bi-door-closed",
-                "admissions:room_list",
-                hint="Occupancy by room",
-            ),
-            item(
-                "Residents",
-                "bi-people",
-                "admissions:resident_list",
-                hint="Rooms and transfers",
-            ),
-            item(
-                "Vacating Requests",
-                "bi-door-open",
-                "admissions:vacating_list",
-                hint="Review no-dues clearances and complete vacating",
-            ),
-            item(
-                "Outpasses",
-                "bi-box-arrow-up-right",
-                "gate:warden_outpasses",
-                hint="Approve or reject requests",
-                issue=9,
-            ),
-            item(
-                "Night attendance",
-                "bi-moon",
-                "gate:attendance",
-                hint="Daily register per room",
-                issue=9,
-            ),
-        ]),
-        ("Operations", [
-            item(
-                "Complaints",
-                "bi-tools",
-                "complaints:manage_complaints",
-                hint="Assign and track",
-                issue=11,
-            ),
-            item(
-                "Gate log",
-                "bi-arrow-left-right",
-                "gate:log",
-                hint="Entries, exits and curfew",
-                issue=8,
-            ),
-            item(
-                "Visitors",
-                "bi-person-badge",
-                "visitors:list",
-                hint="Visiting-hour overrides",
-                issue=12,
-            ),
-            item(
-                "Reports",
-                "bi-bar-chart",
-                "reporting:dashboard",
-                hint="Occupancy, dues, complaints",
-            ),
-        ]),
+        (
+            "Residents",
+            [
+                item(
+                    "Applications",
+                    "bi-inbox",
+                    "admissions:application_list",
+                    hint="Review and allocate beds",
+                ),
+                item(
+                    "Rooms",
+                    "bi-door-closed",
+                    "admissions:room_list",
+                    hint="Occupancy by room",
+                ),
+                item(
+                    "Residents",
+                    "bi-people",
+                    "admissions:resident_list",
+                    hint="Rooms and transfers",
+                ),
+                item(
+                    "Vacating Requests",
+                    "bi-door-open",
+                    "admissions:vacating_list",
+                    hint="Review no-dues clearances and complete vacating",
+                ),
+                item(
+                    "Outpasses",
+                    "bi-box-arrow-up-right",
+                    "gate:warden_outpasses",
+                    hint="Approve or reject requests",
+                    issue=9,
+                ),
+                item(
+                    "Night attendance",
+                    "bi-moon",
+                    "gate:attendance",
+                    hint="Daily register per room",
+                    issue=9,
+                ),
+            ],
+        ),
+        (
+            "Operations",
+            [
+                item(
+                    "Complaints",
+                    "bi-tools",
+                    "complaints:manage_complaints",
+                    hint="Assign and track",
+                    issue=11,
+                ),
+                item(
+                    "Gate log",
+                    "bi-arrow-left-right",
+                    "gate:log",
+                    hint="Entries, exits and curfew",
+                    issue=8,
+                ),
+                item(
+                    "Visitors",
+                    "bi-person-badge",
+                    "visitors:list",
+                    hint="Visiting-hour overrides",
+                    issue=12,
+                ),
+                item(
+                    "Reports",
+                    "bi-bar-chart",
+                    "reporting:dashboard",
+                    hint="Occupancy, dues, complaints",
+                ),
+            ],
+        ),
     ],
-
     R.SECURITY_GUARD: [
         ("Overview", [DASHBOARD]),
-        ("Gate", [
-            item(
-                "Gate log",
-                "bi-arrow-left-right",
-                "gate:log",
-                hint="Record entry and exit",
-                issue=8,
-            ),
-            item(
-                "Visitors",
-                "bi-person-badge",
-                "visitors:list",
-                hint="Register visitors",
-                issue=12,
-            ),
-            item(
-                "Resident returns",
-                "bi-box-arrow-in-left",
-                "gate:returns",
-                hint="Record residents returning from approved outpasses",
-                issue=9,
-            ),
-        ]),
+        (
+            "Gate",
+            [
+                item(
+                    "Gate log",
+                    "bi-arrow-left-right",
+                    "gate:log",
+                    hint="Record entry and exit",
+                    issue=8,
+                ),
+                item(
+                    "Visitors",
+                    "bi-person-badge",
+                    "visitors:list",
+                    hint="Register visitors",
+                    issue=12,
+                ),
+                item(
+                    "Resident returns",
+                    "bi-box-arrow-in-left",
+                    "gate:returns",
+                    hint="Record residents returning from approved outpasses",
+                    issue=9,
+                ),
+            ],
+        ),
     ],
-
     R.MAINTENANCE_STAFF: [
-        ("Work", [
-            item(
-                "Complaints",
-                "bi-tools",
-                "complaints:manage_complaints",
-                hint="Complaints assigned to you",
-                issue=11,
-            ),
-        ]),
+        (
+            "Work",
+            [
+                item(
+                    "Complaints",
+                    "bi-tools",
+                    "complaints:manage_complaints",
+                    hint="Complaints assigned to you",
+                    issue=11,
+                ),
+            ],
+        ),
     ],
-
     R.MESS_MANAGER: [
         ("Overview", [DASHBOARD]),
-        ("Mess", [
-            item(
-                "Menu & bills",
-                "bi-calendar-week",
-                "mess:home",
-                hint="Publish the menu, see opt-outs, bill the month",
-                issue=10,
-            ),
-        ]),
+        (
+            "Mess",
+            [
+                item(
+                    "Menu & bills",
+                    "bi-calendar-week",
+                    "mess:home",
+                    hint="Publish the menu, see opt-outs, bill the month",
+                    issue=10,
+                ),
+            ],
+        ),
     ],
 }
 
 
 ADMIN_NAV = [
-    ("Overview", [
-        item("Dashboard", "bi-grid-1x2", "admin:index"),
-    ]),
-    ("Residents", [
-        item(
-            "Applications",
-            "bi-inbox",
-            "admin:admissions_application_changelist",
-            hint="Look up applications",
-        ),
-        item(
-            "Residents",
-            "bi-people",
-            "admin:admissions_allocation_changelist",
-            hint="Who lives where",
-        ),
-        item(
-            "Fees",
-            "bi-receipt",
-            "admin:fees_invoice_changelist",
-            hint="Invoices and payments",
-        ),
-    ]),
-    ("Operations", [
-        item(
-            "Complaints",
-            "bi-tools",
-            "admin:complaints_complaint_changelist",
-            hint="Escalations and SLA",
-            issue=11,
-        ),
-        item(
-            "Mess",
-            "bi-cup-hot",
-            "admin:mess_messmenuitem_changelist",
-            hint="Menu and opt-outs",
-            issue=10,
-        ),
-        item(
-            "Gate log",
-            "bi-arrow-left-right",
-            "admin:gate_gatemovement_changelist",
-            hint="Entries, exits and curfew alerts",
-            issue=8,
-        ),
-        item(
-            "Outpasses",
-            "bi-box-arrow-up-right",
-            "admin:gate_outpassrequest_changelist",
-            hint="Leave requests and returns",
-            issue=9,
-        ),
-        item(
-            "Visitors",
-            "bi-person-badge",
-            "admin:visitors_visitor_changelist",
-            hint="Visitor records",
-            issue=12,
-        ),
-    ]),
-    ("Masters", [
-        item(
-            "Hostel blocks",
-            "bi-buildings",
-            "admin:admissions_block_changelist",
-            hint="Blocks and the gender each is for",
-        ),
-        item(
-            "Rooms & beds",
-            "bi-door-closed",
-            "admin:admissions_room_changelist",
-            hint="Room inventory: floor, type, capacity, status",
-        ),
-        item(
-            "Fee structure",
-            "bi-cash-coin",
-            "admin:fees_feehead_changelist",
-            hint="What each room type is charged",
-        ),
-        item(
-            "Allocation order",
-            "bi-sort-numeric-down",
-            "admin:admissions_allocationpolicy_changelist",
-            hint="Merit, seniority or first come",
-        ),
-        item(
-            "Curfew times",
-            "bi-moon",
-            "admin:gate_curfewconfiguration_changelist",
-            hint="Curfew for each block",
-        ),
-        item(
-            "Visiting hours",
-            "bi-clock",
-            "admin:visitors_visitinghours_changelist",
-            hint="When visitors may enter",
-        ),
-    ]),
-    ("Administration", [
-        item(
-            "Users & roles",
-            "bi-person-gear",
-            "admin:accounts_user_changelist",
-            hint="Accounts and roles",
-        ),
-        item(
-            "Reports",
-            "bi-bar-chart",
-            "admin:hms_reports",
-            hint="PDF and XLSX exports",
-        ),
-        item(
-            "Audit log",
-            "bi-journal-text",
-            "admin:audit_auditentry_changelist",
-            hint="Allocations, fees, approvals",
-        ),
-    ]),
+    (
+        "Overview",
+        [
+            item("Dashboard", "bi-grid-1x2", "admin:index"),
+        ],
+    ),
+    (
+        "Residents",
+        [
+            item(
+                "Applications",
+                "bi-inbox",
+                "admin:admissions_application_changelist",
+                hint="Look up applications",
+            ),
+            item(
+                "Residents",
+                "bi-people",
+                "admin:admissions_allocation_changelist",
+                hint="Who lives where",
+            ),
+            item(
+                "Fees",
+                "bi-receipt",
+                "admin:fees_invoice_changelist",
+                hint="Invoices and payments",
+            ),
+        ],
+    ),
+    (
+        "Operations",
+        [
+            item(
+                "Complaints",
+                "bi-tools",
+                "admin:complaints_complaint_changelist",
+                hint="Escalations and SLA",
+                issue=11,
+            ),
+            item(
+                "Mess",
+                "bi-cup-hot",
+                "admin:mess_messmenuitem_changelist",
+                hint="Menu and opt-outs",
+                issue=10,
+            ),
+            item(
+                "Gate log",
+                "bi-arrow-left-right",
+                "admin:gate_gatemovement_changelist",
+                hint="Entries, exits and curfew alerts",
+                issue=8,
+            ),
+            item(
+                "Outpasses",
+                "bi-box-arrow-up-right",
+                "admin:gate_outpassrequest_changelist",
+                hint="Leave requests and returns",
+                issue=9,
+            ),
+            item(
+                "Visitors",
+                "bi-person-badge",
+                "admin:visitors_visitor_changelist",
+                hint="Visitor records",
+                issue=12,
+            ),
+        ],
+    ),
+    (
+        "Masters",
+        [
+            item(
+                "Hostel blocks",
+                "bi-buildings",
+                "admin:admissions_block_changelist",
+                hint="Blocks and the gender each is for",
+            ),
+            item(
+                "Rooms & beds",
+                "bi-door-closed",
+                "admin:admissions_room_changelist",
+                hint="Room inventory: floor, type, capacity, status",
+            ),
+            item(
+                "Fee structure",
+                "bi-cash-coin",
+                "admin:fees_feehead_changelist",
+                hint="What each room type is charged",
+            ),
+            item(
+                "Allocation order",
+                "bi-sort-numeric-down",
+                "admin:admissions_allocationpolicy_changelist",
+                hint="Merit, seniority or first come",
+            ),
+            item(
+                "Curfew times",
+                "bi-moon",
+                "admin:gate_curfewconfiguration_changelist",
+                hint="Curfew for each block",
+            ),
+            item(
+                "Visiting hours",
+                "bi-clock",
+                "admin:visitors_visitinghours_changelist",
+                hint="When visitors may enter",
+            ),
+        ],
+    ),
+    (
+        "Administration",
+        [
+            item(
+                "Users & roles",
+                "bi-person-gear",
+                "admin:accounts_user_changelist",
+                hint="Accounts and roles",
+            ),
+            item(
+                "Reports",
+                "bi-bar-chart",
+                "admin:hms_reports",
+                hint="PDF and XLSX exports",
+            ),
+            item(
+                "Audit log",
+                "bi-journal-text",
+                "admin:audit_auditentry_changelist",
+                hint="Allocations, fees, approvals",
+            ),
+        ],
+    ),
 ]
 
 
@@ -352,10 +384,7 @@ def nav_for(user, current_path=None, admin=False):
             if entry["url"] == home_url:
                 entry["active"] = current_path == home_url
             else:
-                entry["active"] = (
-                    bool(current_path)
-                    and current_path.startswith(entry["url"])
-                )
+                entry["active"] = bool(current_path) and current_path.startswith(entry["url"])
 
             resolved.append(entry)
 
@@ -368,11 +397,7 @@ def find_item(user, slug, admin=False):
     """Return a matching not-yet-built navigation item, if any."""
     for _, items in nav_for(user, admin=admin):
         for entry in items:
-            if (
-                entry["slug"] == slug
-                and not entry["url_name"]
-                and entry.get("sprint")
-            ):
+            if entry["slug"] == slug and not entry["url_name"] and entry.get("sprint"):
                 return entry
     return None
 

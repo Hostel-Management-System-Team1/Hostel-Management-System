@@ -24,7 +24,8 @@ from apps.audit import service as audit
 def log_denied(request):
     """Record a refused request in the audit log (HMS-SR-004)."""
     audit.record(
-        "access.denied", outcome=audit.AuditEntry.Outcome.DENIED,
+        "access.denied",
+        outcome=audit.AuditEntry.Outcome.DENIED,
         detail={"path": request.path, "method": request.method},
     )
 

@@ -20,9 +20,7 @@ class GatewayUnavailable(Exception):
 
 def sign(payload):
     """HMAC-SHA256 signature over the fields of a callback."""
-    message = "|".join(
-        str(payload[key]) for key in ("paymentSessionId", "status", "gatewayRef")
-    )
+    message = "|".join(str(payload[key]) for key in ("paymentSessionId", "status", "gatewayRef"))
     return hmac.new(
         settings.PAYMENT_GATEWAY_SECRET.encode(), message.encode(), hashlib.sha256
     ).hexdigest()

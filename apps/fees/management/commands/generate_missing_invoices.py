@@ -14,7 +14,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         raised = 0
         missing = Allocation.objects.filter(status=Allocation.Status.ACTIVE).exclude(
-            invoices__kind=Invoice.Kind.ALLOCATION)
+            invoices__kind=Invoice.Kind.ALLOCATION
+        )
         for allocation in missing:
             if generate_invoice(allocation):
                 raised += 1

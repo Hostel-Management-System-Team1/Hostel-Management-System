@@ -51,9 +51,11 @@ def submit_complaint(request):
 @login_required
 @role_required("RESIDENT")
 def my_complaints(request):
-    complaints = Complaint.objects.filter(
-        created_by=request.user
-    ).select_related("assigned_to").order_by("-created_at")
+    complaints = (
+        Complaint.objects.filter(created_by=request.user)
+        .select_related("assigned_to")
+        .order_by("-created_at")
+    )
 
     return render(
         request,
@@ -73,21 +75,21 @@ def manage_complaints(request):
     selected = request.GET.get("status", "open")
     tabs = []
     for value, label, statuses in STATUS_TABS:
-        tabs.append({
-            "value": value,
-            "label": label,
-            "count": complaints.filter(status__in=statuses).count(),
-            "active": value == selected,
-        })
+        tabs.append(
+            {
+                "value": value,
+                "label": label,
+                "count": complaints.filter(status__in=statuses).count(),
+                "active": value == selected,
+            }
+        )
         if value == selected:
             shown = complaints.filter(status__in=statuses)
     if not any(tab["active"] for tab in tabs):
         tabs[0]["active"] = True
         shown = complaints.filter(status__in=STATUS_TABS[0][2])
 
-    maintenance_staff = User.objects.filter(
-        role="MAINTENANCE_STAFF", is_active=True
-    )
+    maintenance_staff = User.objects.filter(role="MAINTENANCE_STAFF", is_active=True)
 
     return render(
         request,
@@ -118,9 +120,7 @@ def assign_complaint(request, complaint_id):
         complaint.assigned_to = staff
         complaint.status = Complaint.Status.IN_PROGRESS
         complaint.save()
-        audit.record(
-            "complaint.assigned", target=complaint, detail={"assigned_to": staff.username}
-        )
+        audit.record("complaint.assigned", target=complaint, detail={"assigned_to": staff.username})
 
         messages.success(request, "Complaint assigned successfully.")
 

@@ -86,24 +86,34 @@ class RoomInventoryTests(TestCase):
         allocated_resident("r1", room=full)
         empty = make_room(number="202")
         page = self.client.get(reverse("admin:admissions_room_change", args=[full.pk]))
-        self.assertNotContains(page, "class=\"deletelink\"")
+        self.assertNotContains(page, 'class="deletelink"')
         self.assertEqual(
             self.client.get(reverse("admin:admissions_room_delete", args=[full.pk])).status_code,
             403,
         )
         page = self.client.get(reverse("admin:admissions_room_change", args=[empty.pk]))
-        self.assertContains(page, "class=\"deletelink\"")
+        self.assertContains(page, 'class="deletelink"')
 
     def test_administrator_edits_the_room_inventory_in_the_admin(self):
         User.objects.create_superuser(username="a1", password=PASSWORD)
         login(self.client, "a1")
         block = make_block()
-        response = self.client.post(reverse("admin:admissions_room_add"), {
-            "block": block.pk, "floor": 2, "number": "205", "room_type": "TRIPLE",
-            "bed_capacity": "", "status": "AVAILABLE",
-            "beds-TOTAL_FORMS": 0, "beds-INITIAL_FORMS": 0, "beds-MIN_NUM_FORMS": 0,
-            "beds-MAX_NUM_FORMS": 1000, "_save": "Save",
-        })
+        response = self.client.post(
+            reverse("admin:admissions_room_add"),
+            {
+                "block": block.pk,
+                "floor": 2,
+                "number": "205",
+                "room_type": "TRIPLE",
+                "bed_capacity": "",
+                "status": "AVAILABLE",
+                "beds-TOTAL_FORMS": 0,
+                "beds-INITIAL_FORMS": 0,
+                "beds-MIN_NUM_FORMS": 0,
+                "beds-MAX_NUM_FORMS": 1000,
+                "_save": "Save",
+            },
+        )
         self.assertEqual(response.status_code, 302)
         self.assertEqual(Room.objects.get(number="205").beds.count(), 3)
 
@@ -148,8 +158,7 @@ class AutomaticAllocationTests(TestCase):
         make_room(self.boys, "101")
         make_room(self.girls, "201")
         application = approved_application(make_resident("r1"), gender="F")
-        self.assertEqual(
-            allocator.allocate(application, self.warden).bed.room.block, self.girls)
+        self.assertEqual(allocator.allocate(application, self.warden).bed.room.block, self.girls)
 
     def test_room_type_must_match(self):
         make_room(self.boys, "101", "SINGLE")
@@ -196,8 +205,10 @@ class AutomaticAllocationTests(TestCase):
         application = approved_application(make_resident("r1"), gender="M")
         with self.assertRaises(ValidationError):
             Allocation.objects.create(
-                application=application, resident=application.applicant,
-                bed=room.beds.first(), allocated_by=self.warden,
+                application=application,
+                resident=application.applicant,
+                bed=room.beds.first(),
+                allocated_by=self.warden,
             )
         self.assertFalse(Allocation.objects.exists())
 
@@ -209,12 +220,15 @@ class RankingTests(TestCase):
         make_room(make_block("Block A", "M"), "102", "SINGLE")
         make_room(make_block("Block A", "M"), "103", "SINGLE")
         # Applied in this order: low merit / senior, high merit / junior, middle.
-        self.a = approved_application(make_resident("ra"), cgpa="7.00", year_of_study=4,
-                                      room_type="SINGLE")
-        self.b = approved_application(make_resident("rb"), cgpa="9.50", year_of_study=1,
-                                      room_type="SINGLE")
-        self.c = approved_application(make_resident("rc"), cgpa="8.00", year_of_study=2,
-                                      room_type="SINGLE")
+        self.a = approved_application(
+            make_resident("ra"), cgpa="7.00", year_of_study=4, room_type="SINGLE"
+        )
+        self.b = approved_application(
+            make_resident("rb"), cgpa="9.50", year_of_study=1, room_type="SINGLE"
+        )
+        self.c = approved_application(
+            make_resident("rc"), cgpa="8.00", year_of_study=2, room_type="SINGLE"
+        )
 
     def order(self):
         return [a.pk for a in allocator.ranked_waiting_applications()]
@@ -274,14 +288,16 @@ class AllocationViewTests(TestCase):
 
     def test_detail_offers_the_suggested_bed(self):
         response = self.client.get(
-            reverse("admissions:application_detail", args=[self.application.pk]))
+            reverse("admissions:application_detail", args=[self.application.pk])
+        )
         self.assertContains(response, "Suggested bed")
         self.assertContains(response, "Block A · room 101 · bed A")
 
     def test_detail_without_a_matching_bed_says_so(self):
         Bed.objects.update(status=Bed.Status.BLOCKED)
         response = self.client.get(
-            reverse("admissions:application_detail", args=[self.application.pk]))
+            reverse("admissions:application_detail", args=[self.application.pk])
+        )
         self.assertContains(response, "No matching bed")
 
     def test_warden_allocates_the_suggested_bed(self):
@@ -316,7 +332,8 @@ class AllocationViewTests(TestCase):
     def test_allocated_application_shows_the_bed(self):
         self.client.post(reverse("admissions:application_allocate", args=[self.application.pk]))
         response = self.client.get(
-            reverse("admissions:application_detail", args=[self.application.pk]))
+            reverse("admissions:application_detail", args=[self.application.pk])
+        )
         self.assertContains(response, "Allocated")
         self.assertContains(response, "Wendy")
 
@@ -353,7 +370,8 @@ class AllocationApiTests(TestCase):
 
     def post(self, number):
         return self.client.post(
-            "/api/v1/allocations", {"applicationNumber": number}, content_type="application/json")
+            "/api/v1/allocations", {"applicationNumber": number}, content_type="application/json"
+        )
 
     def test_allocation_returns_bed_block_room_and_time(self):
         response = self.post(self.application.application_number)

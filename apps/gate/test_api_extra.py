@@ -33,8 +33,11 @@ class GateApiBase(TestCase):
         self.api.force_authenticate(user=user)
 
     def submit_outpass(self, **overrides):
-        body = {"destination": "Mysuru", "contact_number": "9876543210",
-                "expected_return_at": (timezone.now() + timedelta(days=1)).isoformat()}
+        body = {
+            "destination": "Mysuru",
+            "contact_number": "9876543210",
+            "expected_return_at": (timezone.now() + timedelta(days=1)).isoformat(),
+        }
         return self.api.post("/api/v1/outpasses", {**body, **overrides}, format="json")
 
 
@@ -42,8 +45,12 @@ class DeviceEndpointErrorTests(GateApiBase):
     body = {"direction": "IN", "capture_method": "RFID", "external_event_id": "E-1"}
 
     def post(self, key="secret", **extra):
-        body = {**self.body, "occurred_at": timezone.now().isoformat(),
-                "resident_id": self.resident.pk, **extra}
+        body = {
+            **self.body,
+            "occurred_at": timezone.now().isoformat(),
+            "resident_id": self.resident.pk,
+            **extra,
+        }
         headers = {"HTTP_X_GATE_DEVICE_KEY": key} if key else {}
         return self.api.post("/api/v1/gate/movements/device", body, format="json", **headers)
 
@@ -74,21 +81,28 @@ class DeviceEndpointErrorTests(GateApiBase):
 class ManualEndpointErrorTests(GateApiBase):
     def test_unknown_resident_is_404(self):
         self.as_user(self.guard)
-        response = self.api.post("/api/v1/gate/movements/manual",
-                                 {"resident_id": 999999, "direction": "IN"}, format="json")
+        response = self.api.post(
+            "/api/v1/gate/movements/manual",
+            {"resident_id": 999999, "direction": "IN"},
+            format="json",
+        )
         self.assertEqual(response.status_code, 404)
 
     def test_malformed_body_is_400(self):
         self.as_user(self.guard)
-        response = self.api.post("/api/v1/gate/movements/manual", {"direction": "IN"},
-                                 format="json")
+        response = self.api.post(
+            "/api/v1/gate/movements/manual", {"direction": "IN"}, format="json"
+        )
         self.assertEqual(response.status_code, 400)
 
     def test_resident_without_a_bed_is_400(self):
         outsider = User.objects.create_user("no_bed2", password="x", role=R.RESIDENT)
         self.as_user(self.guard)
-        response = self.api.post("/api/v1/gate/movements/manual",
-                                 {"resident_id": outsider.pk, "direction": "OUT"}, format="json")
+        response = self.api.post(
+            "/api/v1/gate/movements/manual",
+            {"resident_id": outsider.pk, "direction": "OUT"},
+            format="json",
+        )
         self.assertEqual(response.status_code, 400)
 
 
@@ -124,13 +138,15 @@ class OutpassApiTests(GateApiBase):
         approved = self.api.patch(url, {"decision": "APPROVED"}, format="json")
         self.assertEqual(approved.status_code, 200)
         self.assertEqual(approved.data["status"], OutpassRequest.Status.APPROVED)
-        self.assertEqual(self.api.patch(url, {"decision": "REJECTED"}, format="json").status_code,
-                         409)
+        self.assertEqual(
+            self.api.patch(url, {"decision": "REJECTED"}, format="json").status_code, 409
+        )
 
     def test_deciding_a_missing_outpass_is_404_and_a_bad_decision_is_400(self):
         self.as_user(self.warden)
-        missing = self.api.patch("/api/v1/outpasses/999999/decision",
-                                 {"decision": "APPROVED"}, format="json")
+        missing = self.api.patch(
+            "/api/v1/outpasses/999999/decision", {"decision": "APPROVED"}, format="json"
+        )
         self.assertEqual(missing.status_code, 404)
         bad = self.api.patch("/api/v1/outpasses/1/decision", {"decision": "MAYBE"}, format="json")
         self.assertEqual(bad.status_code, 400)
@@ -138,16 +154,16 @@ class OutpassApiTests(GateApiBase):
     def test_resident_cannot_decide(self):
         self.as_user(self.resident)
         pk = self.submit_outpass().data["id"]
-        response = self.api.patch(f"/api/v1/outpasses/{pk}/decision",
-                                  {"decision": "APPROVED"}, format="json")
+        response = self.api.patch(
+            f"/api/v1/outpasses/{pk}/decision", {"decision": "APPROVED"}, format="json"
+        )
         self.assertEqual(response.status_code, 403)
 
     def test_guard_records_return_once(self):
         self.as_user(self.resident)
         pk = self.submit_outpass().data["id"]
         self.as_user(self.warden)
-        self.api.patch(f"/api/v1/outpasses/{pk}/decision", {"decision": "APPROVED"},
-                       format="json")
+        self.api.patch(f"/api/v1/outpasses/{pk}/decision", {"decision": "APPROVED"}, format="json")
         self.as_user(self.guard)
         self.assertEqual(self.api.post(f"/api/v1/outpasses/{pk}/return").status_code, 200)
         self.assertEqual(self.api.post(f"/api/v1/outpasses/{pk}/return").status_code, 409)
@@ -160,18 +176,21 @@ class OutpassApiTests(GateApiBase):
 class AttendanceApiTests(GateApiBase):
     def test_warden_generates_then_reads_the_register(self):
         night = (timezone.localdate() - timedelta(days=1)).isoformat()
-        CurfewConfiguration.objects.create(block=self.allocation.bed.room.block,
-                                           curfew_time=time(22, 0))
+        CurfewConfiguration.objects.create(
+            block=self.allocation.bed.room.block, curfew_time=time(22, 0)
+        )
         self.as_user(self.warden)
         generated = self.api.post("/api/v1/attendance", {"attendance_date": night}, format="json")
         self.assertEqual(generated.status_code, 200)
         rows = self.api.get("/api/v1/attendance", {"date": night})
         self.assertEqual([row["resident"] for row in rows.data], [self.resident.pk])
         block = self.allocation.bed.room.block_id
-        self.assertEqual(len(self.api.get("/api/v1/attendance",
-                                          {"date": night, "block": block}).data), 1)
-        self.assertEqual(len(self.api.get("/api/v1/attendance",
-                                          {"date": night, "block": block + 99}).data), 0)
+        self.assertEqual(
+            len(self.api.get("/api/v1/attendance", {"date": night, "block": block}).data), 1
+        )
+        self.assertEqual(
+            len(self.api.get("/api/v1/attendance", {"date": night, "block": block + 99}).data), 0
+        )
 
     def test_missing_date_is_400_and_guard_is_refused(self):
         self.as_user(self.warden)

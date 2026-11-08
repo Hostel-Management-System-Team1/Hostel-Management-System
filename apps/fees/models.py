@@ -55,7 +55,10 @@ class Invoice(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="invoices"
     )
     allocation = models.ForeignKey(
-        "admissions.Allocation", null=True, blank=True, on_delete=models.PROTECT,
+        "admissions.Allocation",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
         related_name="invoices",
     )
     kind = models.CharField(max_length=12, choices=Kind.choices, default=Kind.ALLOCATION)

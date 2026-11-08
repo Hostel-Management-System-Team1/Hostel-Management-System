@@ -5,18 +5,20 @@ from django.http import HttpResponseBadRequest
 
 # Scripts only from this site and the Bootstrap CDN, never inline. Inline styles stay allowed
 # because some admin widgets size bars with style attributes.
-CSP = "; ".join([
-    "default-src 'self'",
-    "script-src 'self' https://cdn.jsdelivr.net",
-    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
-    "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com",
-    "img-src 'self' data:",
-    "connect-src 'self'",
-    "object-src 'none'",
-    "base-uri 'self'",
-    "form-action 'self'",
-    "frame-ancestors 'none'",
-])
+CSP = "; ".join(
+    [
+        "default-src 'self'",
+        "script-src 'self' https://cdn.jsdelivr.net",
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com",
+        "font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com",
+        "img-src 'self' data:",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'none'",
+    ]
+)
 
 
 class InputGuardMiddleware:

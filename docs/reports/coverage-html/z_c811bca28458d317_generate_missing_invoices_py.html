@@ -67,7 +67,7 @@
             <a id="nextFileLink" class="nav" href="z_c811bca28458d317_process_overdue_invoices_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.17.2">coverage.py v7.17.2</a>,
-            created at 2026-11-08 19:14 +0530
+            created at 2026-11-08 23:06 +0530
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -98,11 +98,12 @@
     <p class="run"><span class="n"><a id="t14" href="#t14">14</a></span><span class="t">    <span class="key">def</span> <span class="nam">handle</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="op">*</span><span class="nam">args</span><span class="op">,</span> <span class="op">**</span><span class="nam">options</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t15" href="#t15">15</a></span><span class="t">        <span class="nam">raised</span> <span class="op">=</span> <span class="num">0</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t16" href="#t16">16</a></span><span class="t">        <span class="nam">missing</span> <span class="op">=</span> <span class="nam">Allocation</span><span class="op">.</span><span class="nam">objects</span><span class="op">.</span><span class="nam">filter</span><span class="op">(</span><span class="nam">status</span><span class="op">=</span><span class="nam">Allocation</span><span class="op">.</span><span class="nam">Status</span><span class="op">.</span><span class="nam">ACTIVE</span><span class="op">)</span><span class="op">.</span><span class="nam">exclude</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t17" href="#t17">17</a></span><span class="t">            <span class="nam">invoices__kind</span><span class="op">=</span><span class="nam">Invoice</span><span class="op">.</span><span class="nam">Kind</span><span class="op">.</span><span class="nam">ALLOCATION</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t18" href="#t18">18</a></span><span class="t">        <span class="key">for</span> <span class="nam">allocation</span> <span class="key">in</span> <span class="nam">missing</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
-    <p class="par run show_par"><span class="n"><a id="t19" href="#t19">19</a></span><span class="t">            <span class="key">if</span> <span class="nam">generate_invoice</span><span class="op">(</span><span class="nam">allocation</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"><span class="annotate short">19&#x202F;&#x219B;&#x202F;18</span><span class="annotate long">line 19 didn't jump to line 18 because the condition on line 19 was always true</span></span></p>
-    <p class="run"><span class="n"><a id="t20" href="#t20">20</a></span><span class="t">                <span class="nam">raised</span> <span class="op">+=</span> <span class="num">1</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run"><span class="n"><a id="t21" href="#t21">21</a></span><span class="t">        <span class="nam">self</span><span class="op">.</span><span class="nam">stdout</span><span class="op">.</span><span class="nam">write</span><span class="op">(</span><span class="fst">f&quot;</span><span class="op">{</span><span class="nam">raised</span><span class="op">}</span><span class="fst"> invoices raised.</span><span class="fst">&quot;</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t17" href="#t17">17</a></span><span class="t">            <span class="nam">invoices__kind</span><span class="op">=</span><span class="nam">Invoice</span><span class="op">.</span><span class="nam">Kind</span><span class="op">.</span><span class="nam">ALLOCATION</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t18" href="#t18">18</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t19" href="#t19">19</a></span><span class="t">        <span class="key">for</span> <span class="nam">allocation</span> <span class="key">in</span> <span class="nam">missing</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
+    <p class="par run show_par"><span class="n"><a id="t20" href="#t20">20</a></span><span class="t">            <span class="key">if</span> <span class="nam">generate_invoice</span><span class="op">(</span><span class="nam">allocation</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"><span class="annotate short">20&#x202F;&#x219B;&#x202F;19</span><span class="annotate long">line 20 didn't jump to line 19 because the condition on line 20 was always true</span></span></p>
+    <p class="run"><span class="n"><a id="t21" href="#t21">21</a></span><span class="t">                <span class="nam">raised</span> <span class="op">+=</span> <span class="num">1</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run"><span class="n"><a id="t22" href="#t22">22</a></span><span class="t">        <span class="nam">self</span><span class="op">.</span><span class="nam">stdout</span><span class="op">.</span><span class="nam">write</span><span class="op">(</span><span class="fst">f&quot;</span><span class="op">{</span><span class="nam">raised</span><span class="op">}</span><span class="fst"> invoices raised.</span><span class="fst">&quot;</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
     <div class="content">
@@ -112,7 +113,7 @@
             <a class="nav" href="z_c811bca28458d317_process_overdue_invoices_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.17.2">coverage.py v7.17.2</a>,
-            created at 2026-11-08 19:14 +0530
+            created at 2026-11-08 23:06 +0530
         </p>
     </div>
 </footer>

@@ -9,9 +9,9 @@ Team 1 Software Engineering Project.
 | PES2UG24CS595 | Vishnu S R | vishnusr594-afk |
 | PES2UG24CS615 | Yellala Sai Aneesh Reddy | saianeesh-debug |
 
-Design documents: [SRS](PES2UG24CS571_582_595_615_Team1_SRS.pdf) ·
-[SAD](PES2UG24CS571_582_595_615_Team1_SAD.pdf) ·
-[Test Plan](PES2UG24CS571_582_595_615_Team1_Software_Test_Plan_Final.pdf) ·
+Design documents: [SRS](docs/srs/PES2UG24CS571_582_595_615_Team1_SRS.pdf) ·
+[SAD](docs/sad/PES2UG24CS571_582_595_615_Team1_SAD.pdf) ·
+[Test Plan](docs/test-plan/PES2UG24CS571_582_595_615_Team1_Software_Test_Plan_Final.pdf) ·
 [Deviations](DEVIATIONS.md)
 
 ## Tech stack (SAD 3.6)
@@ -193,7 +193,7 @@ difference is shown as payable and raised as an invoice to the resident.
   details of residents who left more than 5 years ago (name, contacts, guardian, medical, enrolment number), of old
   visitor records and of old outpass contacts. The records themselves stay, so history can still be retrieved;
   without `--apply` it only reports.
-- **Performance.** `locustfile.py` drives 200 users against 2,000 seeded residents
+- **Performance.** [`performance/locustfile.py`](performance/locustfile.py) drives 200 users against 2,000 seeded residents
   (`seed_performance_data`, `seed_perf_wardens`). The measured results are in
   [`docs/performance/`](docs/performance/performance_test_summary.txt).
 - **QA.** The Test Plan results, defects and open items are in [`docs/qa/TEST_SUMMARY.md`](docs/qa/TEST_SUMMARY.md),

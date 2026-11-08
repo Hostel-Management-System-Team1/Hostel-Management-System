@@ -108,7 +108,6 @@ class NavigationTests(TestCase):
         self.assertContains(response, "Account menu")
 
 
-
 class AdminSiteTests(TestCase):
     def setUp(self):
         User.objects.create_superuser(username="a1", password=PASSWORD, first_name="Asha")
@@ -124,13 +123,11 @@ class AdminSiteTests(TestCase):
         self.assertContains(response, "Users &amp; roles")
         self.assertContains(response, "People by role")
 
-
     def test_admin_reports_page_opens(self):
         login(self.client, "a1")
         response = self.client.get(reverse("reporting:dashboard"), follow=True)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.redirect_chain[-1][0], reverse("admin:hms_reports"))
-
 
     def test_portal_roles_cannot_open_admin(self):
         login(self.client, "r1")
@@ -193,10 +190,17 @@ class AdminSiteTests(TestCase):
         response = self.client.get(url)
         self.assertEqual(response.content.decode().count('<fieldset class="module aligned'), 1)
         self.assertNotContains(response, 'name="usable_password"')
-        response = self.client.post(url, {
-            "username": "w9", "role": User.Role.WARDEN, "phone": "9876543210",
-            "password1": "Strong-pass-77", "password2": "Strong-pass-77", "_save": "1",
-        })
+        response = self.client.post(
+            url,
+            {
+                "username": "w9",
+                "role": User.Role.WARDEN,
+                "phone": "9876543210",
+                "password1": "Strong-pass-77",
+                "password2": "Strong-pass-77",
+                "_save": "1",
+            },
+        )
         self.assertEqual(response.status_code, 302)
         created = User.objects.get(username="w9")
         self.assertEqual(created.role, User.Role.WARDEN)
@@ -216,10 +220,17 @@ class ProfileTests(TestCase):
         user = User.objects.create_user(username="r1", password=PASSWORD)
         login(self.client, "r1")
         self.assertEqual(self.client.get(reverse("profile")).status_code, 200)
-        response = self.client.post(reverse("profile"), {
-            "first_name": "Aarav", "last_name": "Sharma", "email": "aarav@example.edu",
-            "phone": "9876543210", "role": User.Role.ADMINISTRATOR, "username": "hacker",
-        })
+        response = self.client.post(
+            reverse("profile"),
+            {
+                "first_name": "Aarav",
+                "last_name": "Sharma",
+                "email": "aarav@example.edu",
+                "phone": "9876543210",
+                "role": User.Role.ADMINISTRATOR,
+                "username": "hacker",
+            },
+        )
         self.assertRedirects(response, reverse("profile"))
         user.refresh_from_db()
         self.assertEqual((user.first_name, user.phone), ("Aarav", "9876543210"))

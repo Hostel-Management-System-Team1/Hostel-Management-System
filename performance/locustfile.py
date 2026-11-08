@@ -1,4 +1,3 @@
-
 import csv
 import itertools
 import re
@@ -8,28 +7,20 @@ from pathlib import Path
 import pyotp
 from locust import HttpUser, between, task
 
-PROJECT_DIR = Path(__file__).resolve().parent
+PROJECT_DIR = Path(__file__).resolve().parent.parent
 CREDENTIALS_FILE = PROJECT_DIR / "locust_users.csv"
 
 
 def load_credentials():
     if not CREDENTIALS_FILE.is_file():
-        raise RuntimeError(
-            f"Credentials file not found: {CREDENTIALS_FILE}"
-        )
+        raise RuntimeError(f"Credentials file not found: {CREDENTIALS_FILE}")
 
-    with CREDENTIALS_FILE.open(
-        newline="", encoding="utf-8"
-    ) as file:
+    with CREDENTIALS_FILE.open(newline="", encoding="utf-8") as file:
         reader = csv.DictReader(file)
         required = {"username", "password", "totp_secret"}
 
-        if not reader.fieldnames or not required.issubset(
-            reader.fieldnames
-        ):
-            raise RuntimeError(
-                "CSV must contain username, password, totp_secret."
-            )
+        if not reader.fieldnames or not required.issubset(reader.fieldnames):
+            raise RuntimeError("CSV must contain username, password, totp_secret.")
 
         users = list(reader)
 
@@ -42,9 +33,7 @@ def load_credentials():
         raise RuntimeError("Duplicate usernames in credentials file.")
 
     if any(
-        not user.get("username")
-        or not user.get("password")
-        or not user.get("totp_secret")
+        not user.get("username") or not user.get("password") or not user.get("totp_secret")
         for user in users
     ):
         raise RuntimeError("A credential row contains an empty field.")
@@ -78,10 +67,8 @@ def csrf_token(response):
 
 def safe_response_excerpt(response):
     """Return a short diagnostic without exposing form secrets."""
-    text = re.sub(r"<script\b.*?</script>", " ", response.text,
-                  flags=re.IGNORECASE | re.DOTALL)
-    text = re.sub(r"<style\b.*?</style>", " ", text,
-                  flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r"<script\b.*?</script>", " ", response.text, flags=re.IGNORECASE | re.DOTALL)
+    text = re.sub(r"<style\b.*?</style>", " ", text, flags=re.IGNORECASE | re.DOTALL)
     text = re.sub(r"<[^>]+>", " ", text)
     text = unescape(text)
     text = " ".join(text.split())
@@ -112,10 +99,7 @@ class HMSWardenUser(HttpUser):
         token = csrf_token(response)
 
         if response.status_code != 200 or not token:
-            print(
-                f"{self.username}: login form/CSRF failed "
-                f"(HTTP {response.status_code})"
-            )
+            print(f"{self.username}: login form/CSRF failed (HTTP {response.status_code})")
             return
 
         response = self.client.post(
@@ -147,10 +131,7 @@ class HMSWardenUser(HttpUser):
         token = csrf_token(response)
 
         if response.status_code != 200 or not token:
-            print(
-                f"{self.username}: MFA form/CSRF failed "
-                f"(HTTP {response.status_code})"
-            )
+            print(f"{self.username}: MFA form/CSRF failed (HTTP {response.status_code})")
             return
 
         try:
@@ -194,9 +175,7 @@ class HMSWardenUser(HttpUser):
             catch_response=True,
         ) as response:
             if response.status_code != 200:
-                response.failure(
-                    f"Expected HTTP 200, got {response.status_code}"
-                )
+                response.failure(f"Expected HTTP 200, got {response.status_code}")
 
     @task(1)
     def rooms_list(self):
@@ -210,6 +189,4 @@ class HMSWardenUser(HttpUser):
             catch_response=True,
         ) as response:
             if response.status_code != 200:
-                response.failure(
-                    f"Expected HTTP 200, got {response.status_code}"
-                )
+                response.failure(f"Expected HTTP 200, got {response.status_code}")

@@ -81,9 +81,7 @@ class MFATests(TestCase):
     def test_warden_with_only_a_password_is_held_at_the_second_step(self):
         self.client.login(username="w1", password=PASSWORD)
         response = self.client.get(reverse("home"))
-        self.assertRedirects(
-            response, f"{reverse('mfa')}?next=/", fetch_redirect_response=False
-        )
+        self.assertRedirects(response, f"{reverse('mfa')}?next=/", fetch_redirect_response=False)
 
     def test_api_refuses_a_half_signed_in_warden(self):
         self.client.login(username="w1", password=PASSWORD)
@@ -171,9 +169,7 @@ class ApiTests(TestCase):
         response = self.client.get("/api/v1/me")
         self.assertEqual(response.status_code, 403)
         body = response.json()
-        self.assertEqual(
-            set(body), {"timestamp", "path", "status", "error", "message", "traceId"}
-        )
+        self.assertEqual(set(body), {"timestamp", "path", "status", "error", "message", "traceId"})
         self.assertEqual((body["status"], body["path"]), (403, "/api/v1/me"))
         self.assertEqual(body["traceId"], response["X-Trace-Id"])
 

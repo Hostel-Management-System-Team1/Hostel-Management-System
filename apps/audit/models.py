@@ -41,8 +41,12 @@ class AuditEntry(models.Model):
     seq = models.PositiveBigIntegerField(unique=True, editable=False)
     timestamp = models.DateTimeField(default=timezone.now, editable=False, db_index=True)
     actor = models.ForeignKey(
-        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.PROTECT,
-        related_name="+", editable=False,
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="+",
+        editable=False,
     )
     actor_label = models.CharField(max_length=150, editable=False)
     action = models.CharField(max_length=60, editable=False, db_index=True)
@@ -83,8 +87,9 @@ class AuditEntry(models.Model):
         }
 
     def compute_hash(self):
-        body = json.dumps(self.payload(), sort_keys=True, separators=(",", ":"),
-                          cls=DjangoJSONEncoder)
+        body = json.dumps(
+            self.payload(), sort_keys=True, separators=(",", ":"), cls=DjangoJSONEncoder
+        )
         return hashlib.sha256(f"{self.prev_hash}|{body}".encode()).hexdigest()
 
     def save(self, *args, **kwargs):

@@ -14,11 +14,14 @@ class MealForm(BootstrapFormMixin, forms.Form):
     menu_date = forms.DateField(label="Date", widget=forms.DateInput(attrs={"type": "date"}))
     meal_type = forms.ChoiceField(label="Meal", choices=MessMenuItem.MealType.choices)
     time = forms.TimeField(
-        label="Served at", widget=forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
+        label="Served at",
+        widget=forms.TimeInput(attrs={"type": "time"}, format="%H:%M"),
         help_text="Residents can skip the meal until 24 hours before this time.",
     )
     description = forms.CharField(
-        label="Menu", max_length=500, widget=forms.Textarea(attrs={"rows": 2}),
+        label="Menu",
+        max_length=500,
+        widget=forms.Textarea(attrs={"rows": 2}),
     )
 
     def clean(self):
