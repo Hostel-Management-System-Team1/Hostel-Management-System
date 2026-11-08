@@ -37,8 +37,19 @@ class InvoiceAdmin(admin.ModelAdmin):
     inlines = [InvoiceItemInline]
     actions = None
     total_inr = money("total")
-    readonly_fields = ("number", "resident", "allocation", "kind", "description", "issue_date",
-                       "due_date", "status", "total_inr", "paid_at", "created_at")
+    readonly_fields = (
+        "number",
+        "resident",
+        "allocation",
+        "kind",
+        "description",
+        "issue_date",
+        "due_date",
+        "status",
+        "total_inr",
+        "paid_at",
+        "created_at",
+    )
     fields = readonly_fields
 
     def has_add_permission(self, request):

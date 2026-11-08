@@ -49,9 +49,7 @@ def apply(request):
 
     if request.method == "POST" and form.is_valid():
         try:
-            application = services.submit_application(
-                request.user, **form.cleaned_data
-            )
+            application = services.submit_application(request.user, **form.cleaned_data)
         except services.DuplicateApplication as error:
             form.add_error("enrolment_number", str(error))
         except ValidationError as error:
@@ -82,9 +80,7 @@ def application_list(request):
     if status not in dict(STATUS_TABS):
         status = "SUBMITTED"
 
-    counts = dict(
-        Application.objects.values_list("status").annotate(n=Count("id"))
-    )
+    counts = dict(Application.objects.values_list("status").annotate(n=Count("id")))
 
     tabs = [
         {
@@ -99,9 +95,7 @@ def application_list(request):
     if status == Application.Status.APPROVED:
         applications = allocator.ranked_waiting_applications()
     else:
-        applications = Application.objects.filter(
-            status=status
-        ).select_related("preferred_block")
+        applications = Application.objects.filter(status=status).select_related("preferred_block")
 
     return render(
         request,
@@ -129,9 +123,7 @@ def application_detail(request, pk):
 
     if application.status == Application.Status.APPROVED:
         context["suggested"] = allocator.candidate_beds(application).first()
-        context["eligible_beds"] = allocator.vacant_beds(
-            application.gender
-        ).order_by(
+        context["eligible_beds"] = allocator.vacant_beds(application.gender).order_by(
             "room__block__name",
             "room__floor",
             "room__number",
@@ -189,9 +181,7 @@ def application_allocate(request, pk):
         bed = get_object_or_404(Bed, pk=request.POST["bed"])
 
     try:
-        allocation = allocator.allocate(
-            application, request.user, bed=bed
-        )
+        allocation = allocator.allocate(application, request.user, bed=bed)
     except allocator.AllocationError as error:
         messages.error(request, str(error))
     else:
@@ -226,9 +216,7 @@ def allocate_all(request):
             "No approved applications are waiting for a bed.",
         )
 
-    return redirect(
-        f"{reverse('admissions:application_list')}?status=APPROVED"
-    )
+    return redirect(f"{reverse('admissions:application_list')}?status=APPROVED")
 
 
 @role_required(R.WARDEN)
@@ -237,9 +225,9 @@ def room_list(request):
     block_id = request.GET.get("block", "")
 
     # Fetch only active allocations and their resident records.
-    active_allocations = Allocation.objects.filter(
-        status=Allocation.Status.ACTIVE
-    ).select_related("resident")
+    active_allocations = Allocation.objects.filter(status=Allocation.Status.ACTIVE).select_related(
+        "resident"
+    )
 
     rooms = Room.objects.select_related("block").prefetch_related(
         "beds",
@@ -266,22 +254,15 @@ def room_list(request):
         for bed in beds:
             for allocation in bed.active_allocations:
                 occupants.append(
-                    allocation.resident.get_full_name()
-                    or allocation.resident.username
+                    allocation.resident.get_full_name() or allocation.resident.username
                 )
 
         rows.append(
             {
                 "room": room,
                 "beds": len(beds),
-                "occupied": sum(
-                    bed.status == Bed.Status.OCCUPIED
-                    for bed in beds
-                ),
-                "vacant": sum(
-                    bed.status == Bed.Status.VACANT
-                    for bed in beds
-                ),
+                "occupied": sum(bed.status == Bed.Status.OCCUPIED for bed in beds),
+                "vacant": sum(bed.status == Bed.Status.VACANT for bed in beds),
                 "occupants": occupants,
             }
         )
@@ -301,9 +282,7 @@ def room_list(request):
 @role_required(R.WARDEN)
 def resident_list(request):
     """Everyone with a bed, for transfers and a look at who lives where."""
-    allocations = Allocation.objects.filter(
-        status=Allocation.Status.ACTIVE
-    ).select_related(
+    allocations = Allocation.objects.filter(status=Allocation.Status.ACTIVE).select_related(
         "resident",
         "application",
         "bed__room__block",
@@ -404,9 +383,7 @@ def my_vacating(request):
         .first()
     )
 
-    requests = VacatingRequest.objects.filter(
-        resident=request.user
-    ).prefetch_related(
+    requests = VacatingRequest.objects.filter(resident=request.user).prefetch_related(
         "clearances",
         "damage_charges",
     )
@@ -417,9 +394,12 @@ def my_vacating(request):
         {
             "allocation": current_allocation,
             "vacating_requests": requests,
-            "open_request": requests.filter(status__in=[
-                VacatingRequest.Status.REQUESTED, VacatingRequest.Status.APPROVED,
-            ]).first(),
+            "open_request": requests.filter(
+                status__in=[
+                    VacatingRequest.Status.REQUESTED,
+                    VacatingRequest.Status.APPROVED,
+                ]
+            ).first(),
         },
     )
 
@@ -489,10 +469,7 @@ def _get_vacating_request_for_user(request, pk):
         pk=pk,
     )
 
-    if (
-        request.user.role != R.WARDEN
-        and item.resident_id != request.user.pk
-    ):
+    if request.user.role != R.WARDEN and item.resident_id != request.user.pk:
         raise Http404
 
     return item

@@ -23,8 +23,8 @@ class VisitorRegistrationForm(BootstrapFormMixin, forms.ModelForm):
         self.fields["resident"].queryset = User.objects.filter(
             role=User.Role.RESIDENT, is_active=True
         ).order_by("first_name", "last_name")
-        self.fields["resident"].label_from_instance = (
-            lambda user: f"{user.get_full_name() or user.username} (@{user.username})"
+        self.fields["resident"].label_from_instance = lambda user: (
+            f"{user.get_full_name() or user.username} (@{user.username})"
         )
         self.fields["resident"].label = "Visiting resident"
         self.fields["id_proof_type"].widget.attrs["placeholder"] = "e.g. Aadhaar, driving licence"

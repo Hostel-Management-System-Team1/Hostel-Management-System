@@ -1,9 +1,9 @@
 # System Validation Report
 
-| | |
+| Item | Detail |
 |---|---|
 | **Project** | Hostel Management System (HMS), Team 1 |
-| **Build validated** | `main` at a9af58e plus the changes in this pull request |
+| **Build validated** | `main` at 9f65069 plus the changes in this pull request |
 | **Dates** | Cases executed 2 November 2026 (QA register); full automated suite and reports re-run 8 November 2026 |
 | **Environment** | Fedora 42, PostgreSQL 16, Django 5.2.18, `DJANGO_DEBUG=false` (the CI configuration) |
 | **Prepared by** | Vignesh Nunna (PES2UG24CS582) |
@@ -74,7 +74,7 @@ This report answers one question: *does the running system do what the SRS asks,
 | HMS-SR-005 | No cardholder data stored | TC-SEC-05 | **PASS** | — | No card number, CVV or bank credential field exists; card data posted to the gateway page is not stored. |
 | HMS-SR-006 | Input validation and injection defence | TC-SEC-06 | **PARTIAL** | 17 | SQL injection and stored-markup tests pass on every page; CSP forbids inline script; queries parameterised. No OWASP ZAP scan run. |
 
-## 4. Exit criteria (Test Plan 5.2)
+## 4. Exit criteria (Test Plan 5.4)
 
 | Exit criterion | Met? | Notes |
 |---|---|---|
@@ -97,7 +97,7 @@ The team's position: the product meets its functional exit criteria. The non-fun
 | Low | 9 | D-06 ₹0 mess invoices; D-17 no ticket number shown; D-26 weekend-dependent test |
 | **Total** | **26** | All closed and retested; none open |
 
-Defect density: 25 product defects in 4,221 measured statements, about 5.9 per thousand statements. The full table with fix and retest for each defect is in `docs/qa/TEST_SUMMARY.md`.
+Defect density: 25 product defects in 4,223 measured statements, about 5.9 per thousand statements. The full table with fix and retest for each defect is in `docs/qa/TEST_SUMMARY.md`.
 
 ## 6. Open items and accepted risks
 

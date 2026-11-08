@@ -8,7 +8,6 @@ from django.utils import timezone
 
 
 class Complaint(models.Model):
-
     class Category(models.TextChoices):
         MAINTENANCE = "MAINTENANCE", "Maintenance"
         CLEANING = "CLEANING", "Cleaning"
@@ -103,11 +102,7 @@ class Complaint(models.Model):
     @property
     def is_sla_overdue(self):
         deadline = self.sla_deadline
-        return (
-            self.is_open
-            and deadline is not None
-            and timezone.now() >= deadline
-        )
+        return self.is_open and deadline is not None and timezone.now() >= deadline
 
     def save(self, *args, **kwargs):
         priority_by_category = {

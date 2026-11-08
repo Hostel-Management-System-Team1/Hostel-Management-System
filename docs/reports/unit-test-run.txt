@@ -1,4 +1,4 @@
-Creating test database for alias 'default' ('test_hms_main')...
+Creating test database for alias 'default' ('test_hms')...
 Found 376 test(s).
 Operations to perform:
   Synchronize unmigrated apps: django_otp, humanize, messages, reporting, rest_framework, staticfiles
@@ -430,9 +430,9 @@ test_production_forces_https_hsts_and_secure_cookies (hms.test_security.TlsSetti
 test_proxy_header_is_trusted_only_when_asked (hms.test_security.TlsSettingsTests.test_proxy_header_is_trusted_only_when_asked) ... ok
 
 ----------------------------------------------------------------------
-Ran 376 tests in 97.485s
+Ran 376 tests in 78.225s
 
 OK
-Destroying test database for alias 'default' ('test_hms_main')...
+Destroying test database for alias 'default' ('test_hms')...
  OK
 System check identified no issues (0 silenced).

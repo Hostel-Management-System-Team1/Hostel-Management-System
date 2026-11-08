@@ -58,7 +58,9 @@ def allocate(application, actor, bed=None):
         return _allocate(application, actor, bed)
     except AllocationError as error:
         audit.record(
-            "allocation.failed", target=application, actor=actor,
+            "allocation.failed",
+            target=application,
+            actor=actor,
             outcome=audit.AuditEntry.Outcome.FAILURE,
             detail={"application": application.application_number, "reason": str(error)},
         )
@@ -73,12 +75,14 @@ def _allocate(application, actor, bed):
     if bed is None:
         chosen = candidate_beds(application).select_for_update(of=("self",)).first()
         if chosen is None:
-            raise NoVacantBed(
-                "No vacant bed matches this applicant's gender, block and room type."
-            )
+            raise NoVacantBed("No vacant bed matches this applicant's gender, block and room type.")
     else:
-        chosen = vacant_beds(application.gender).select_for_update(of=("self",)).filter(
-            pk=bed.pk).first()
+        chosen = (
+            vacant_beds(application.gender)
+            .select_for_update(of=("self",))
+            .filter(pk=bed.pk)
+            .first()
+        )
         if chosen is None:
             raise AllocationError("That bed is not vacant or is not in a block for this gender.")
 
@@ -90,7 +94,9 @@ def _allocate(application, actor, bed):
     application.status = Application.Status.ALLOCATED
     application.save(update_fields=["status"])
     audit.record(
-        "allocation.confirmed", target=allocation, actor=actor,
+        "allocation.confirmed",
+        target=allocation,
+        actor=actor,
         detail={"application": application.application_number, "bed": str(chosen)},
     )
     allocation_confirmed.send(sender=Allocation, allocation=allocation)
@@ -137,7 +143,9 @@ def transfer(allocation, to_bed, reason, actor):
         return _transfer(allocation, to_bed, reason, actor)
     except TransferError as error:
         audit.record(
-            "allocation.transfer_failed", target=allocation, actor=actor,
+            "allocation.transfer_failed",
+            target=allocation,
+            actor=actor,
             outcome=audit.AuditEntry.Outcome.FAILURE,
             detail={"to": str(to_bed), "reason": str(error)},
         )
@@ -149,8 +157,11 @@ def _transfer(allocation, to_bed, reason, actor):
     reason = (reason or "").strip()
     if not reason:
         raise TransferError("Give a reason for the transfer.")
-    allocation = Allocation.objects.select_for_update().select_related(
-        "application", "bed").get(pk=allocation.pk)
+    allocation = (
+        Allocation.objects.select_for_update()
+        .select_related("application", "bed")
+        .get(pk=allocation.pk)
+    )
     if allocation.status != Allocation.Status.ACTIVE:
         raise TransferError("This resident no longer has a bed.")
     # Lock both beds in a fixed order so two simultaneous transfers cannot deadlock.
@@ -173,7 +184,9 @@ def _transfer(allocation, to_bed, reason, actor):
         allocation=allocation, from_bed=source, to_bed=target, reason=reason, performed_by=actor
     )
     audit.record(
-        "allocation.transferred", target=allocation, actor=actor,
+        "allocation.transferred",
+        target=allocation,
+        actor=actor,
         detail={"from": str(source), "to": str(target), "reason": reason},
     )
     return record

@@ -1,4 +1,3 @@
-
 import os
 
 from locust import HttpUser, between, task
@@ -10,9 +9,7 @@ class HMSPortalUser(HttpUser):
     def on_start(self):
         session_cookie = os.environ.get("HMS_TEST_SESSION")
         if not session_cookie:
-            raise RuntimeError(
-                "Set HMS_TEST_SESSION to a fresh local test session cookie."
-            )
+            raise RuntimeError("Set HMS_TEST_SESSION to a fresh local test session cookie.")
 
         self.client.cookies.set(
             "sessionid",
@@ -30,9 +27,7 @@ class HMSPortalUser(HttpUser):
             catch_response=True,
         ) as response:
             if response.status_code != 200:
-                response.failure(
-                    f"Expected HTTP 200; got {response.status_code}"
-                )
+                response.failure(f"Expected HTTP 200; got {response.status_code}")
 
     @task(1)
     def rooms_list(self):
@@ -43,6 +38,4 @@ class HMSPortalUser(HttpUser):
             catch_response=True,
         ) as response:
             if response.status_code != 200:
-                response.failure(
-                    f"Expected HTTP 200; got {response.status_code}"
-                )
+                response.failure(f"Expected HTTP 200; got {response.status_code}")

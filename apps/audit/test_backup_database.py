@@ -1,4 +1,3 @@
-
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
@@ -10,9 +9,7 @@ from django.test import SimpleTestCase
 
 class BackupDatabaseCommandTests(SimpleTestCase):
     def test_rejects_non_postgresql_database(self):
-        with patch(
-            "apps.audit.management.commands.backup_database.connections"
-        ) as connections:
+        with patch("apps.audit.management.commands.backup_database.connections") as connections:
             connections.__getitem__.return_value.settings_dict = {
                 "ENGINE": "django.db.backends.sqlite3",
             }
@@ -22,9 +19,7 @@ class BackupDatabaseCommandTests(SimpleTestCase):
     def test_reports_missing_pg_dump(self):
         with tempfile.TemporaryDirectory() as directory:
             with (
-                patch(
-                    "apps.audit.management.commands.backup_database.connections"
-                ) as connections,
+                patch("apps.audit.management.commands.backup_database.connections") as connections,
                 patch(
                     "apps.audit.management.commands.backup_database.shutil.which",
                     return_value=None,
@@ -46,16 +41,12 @@ class BackupDatabaseCommandTests(SimpleTestCase):
             fake_dump.touch()
 
             with (
-                patch(
-                    "apps.audit.management.commands.backup_database.connections"
-                ) as connections,
+                patch("apps.audit.management.commands.backup_database.connections") as connections,
                 patch(
                     "apps.audit.management.commands.backup_database.shutil.which",
                     return_value=str(fake_dump),
                 ),
-                patch(
-                    "apps.audit.management.commands.backup_database.subprocess.run"
-                ) as run,
+                patch("apps.audit.management.commands.backup_database.subprocess.run") as run,
             ):
                 connections.__getitem__.return_value.settings_dict = {
                     "ENGINE": "django.db.backends.postgresql",

@@ -1,4 +1,3 @@
-
 """Create a compressed PostgreSQL custom-format database backup."""
 
 import os
@@ -42,9 +41,7 @@ class Command(BaseCommand):
                 pg_dump = str(candidate)
 
         if not pg_dump or not Path(pg_dump).is_file():
-            raise CommandError(
-                "pg_dump was not found. Set PG_DUMP_PATH to its full path."
-            )
+            raise CommandError("pg_dump was not found. Set PG_DUMP_PATH to its full path.")
 
         output_dir.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -59,11 +56,16 @@ class Command(BaseCommand):
             pg_dump,
             "--format=custom",
             "--no-password",
-            "--host", str(config.get("HOST") or "localhost"),
-            "--port", str(config.get("PORT") or "5432"),
-            "--username", str(config.get("USER") or ""),
-            "--dbname", str(config["NAME"]),
-            "--file", str(temporary),
+            "--host",
+            str(config.get("HOST") or "localhost"),
+            "--port",
+            str(config.get("PORT") or "5432"),
+            "--username",
+            str(config.get("USER") or ""),
+            "--dbname",
+            str(config["NAME"]),
+            "--file",
+            str(temporary),
         ]
 
         try:
@@ -92,9 +94,7 @@ class Command(BaseCommand):
                     pg_restore = str(candidate)
 
             if not pg_restore or not Path(pg_restore).is_file():
-                raise CommandError(
-                    "pg_restore was not found; backup verification cannot run."
-                )
+                raise CommandError("pg_restore was not found; backup verification cannot run.")
 
             verification = subprocess.run(
                 [pg_restore, "--list", str(temporary)],
@@ -110,10 +110,12 @@ class Command(BaseCommand):
                 )
 
             temporary.replace(destination)
-            self.stdout.write(self.style.SUCCESS(
-                f"Backup created and archive verified: {destination} "
-                f"({destination.stat().st_size} bytes)"
-            ))
+            self.stdout.write(
+                self.style.SUCCESS(
+                    f"Backup created and archive verified: {destination} "
+                    f"({destination.stat().st_size} bytes)"
+                )
+            )
         except subprocess.TimeoutExpired as exc:
             raise CommandError("PostgreSQL backup or verification timed out.") from exc
         finally:

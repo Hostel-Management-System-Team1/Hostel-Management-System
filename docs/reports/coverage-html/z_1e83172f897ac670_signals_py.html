@@ -67,7 +67,7 @@
             <a id="nextFileLink" class="nav" href="z_1e83172f897ac670_urls_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.17.2">coverage.py v7.17.2</a>,
-            created at 2026-11-08 19:14 +0530
+            created at 2026-11-08 23:06 +0530
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -132,10 +132,12 @@
     <p class="run"><span class="n"><a id="t48" href="#t48">48</a></span><span class="t"><span class="op">@</span><span class="nam">receiver</span><span class="op">(</span><span class="nam">user_login_failed</span><span class="op">,</span> <span class="nam">dispatch_uid</span><span class="op">=</span><span class="str">&quot;accounts.audit_login_failed&quot;</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t49" href="#t49">49</a></span><span class="t"><span class="key">def</span> <span class="nam">audit_login_failed</span><span class="op">(</span><span class="nam">sender</span><span class="op">,</span> <span class="nam">credentials</span><span class="op">,</span> <span class="nam">request</span><span class="op">=</span><span class="key">None</span><span class="op">,</span> <span class="op">**</span><span class="nam">kwargs</span><span class="op">)</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t50" href="#t50">50</a></span><span class="t">    <span class="nam">audit</span><span class="op">.</span><span class="nam">record</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t51" href="#t51">51</a></span><span class="t">        <span class="str">&quot;auth.login_failed&quot;</span><span class="op">,</span> <span class="nam">actor</span><span class="op">=</span><span class="key">None</span><span class="op">,</span> <span class="nam">outcome</span><span class="op">=</span><span class="nam">audit</span><span class="op">.</span><span class="nam">AuditEntry</span><span class="op">.</span><span class="nam">Outcome</span><span class="op">.</span><span class="nam">FAILURE</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t52" href="#t52">52</a></span><span class="t">        <span class="nam">label</span><span class="op">=</span><span class="nam">str</span><span class="op">(</span><span class="nam">credentials</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="str">&quot;username&quot;</span><span class="op">,</span> <span class="str">&quot;&quot;</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="op">:</span><span class="num">150</span><span class="op">]</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t53" href="#t53">53</a></span><span class="t">        <span class="nam">detail</span><span class="op">=</span><span class="op">{</span><span class="str">&quot;username&quot;</span><span class="op">:</span> <span class="nam">str</span><span class="op">(</span><span class="nam">credentials</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="str">&quot;username&quot;</span><span class="op">,</span> <span class="str">&quot;&quot;</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="op">:</span><span class="num">150</span><span class="op">]</span><span class="op">}</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t54" href="#t54">54</a></span><span class="t">    <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t51" href="#t51">51</a></span><span class="t">        <span class="str">&quot;auth.login_failed&quot;</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t52" href="#t52">52</a></span><span class="t">        <span class="nam">actor</span><span class="op">=</span><span class="key">None</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t53" href="#t53">53</a></span><span class="t">        <span class="nam">outcome</span><span class="op">=</span><span class="nam">audit</span><span class="op">.</span><span class="nam">AuditEntry</span><span class="op">.</span><span class="nam">Outcome</span><span class="op">.</span><span class="nam">FAILURE</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t54" href="#t54">54</a></span><span class="t">        <span class="nam">label</span><span class="op">=</span><span class="nam">str</span><span class="op">(</span><span class="nam">credentials</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="str">&quot;username&quot;</span><span class="op">,</span> <span class="str">&quot;&quot;</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="op">:</span><span class="num">150</span><span class="op">]</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t55" href="#t55">55</a></span><span class="t">        <span class="nam">detail</span><span class="op">=</span><span class="op">{</span><span class="str">&quot;username&quot;</span><span class="op">:</span> <span class="nam">str</span><span class="op">(</span><span class="nam">credentials</span><span class="op">.</span><span class="nam">get</span><span class="op">(</span><span class="str">&quot;username&quot;</span><span class="op">,</span> <span class="str">&quot;&quot;</span><span class="op">)</span><span class="op">)</span><span class="op">[</span><span class="op">:</span><span class="num">150</span><span class="op">]</span><span class="op">}</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t56" href="#t56">56</a></span><span class="t">    <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
 </main>
 <footer>
     <div class="content">
@@ -145,7 +147,7 @@
             <a class="nav" href="z_1e83172f897ac670_urls_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.17.2">coverage.py v7.17.2</a>,
-            created at 2026-11-08 19:14 +0530
+            created at 2026-11-08 23:06 +0530
         </p>
     </div>
 </footer>

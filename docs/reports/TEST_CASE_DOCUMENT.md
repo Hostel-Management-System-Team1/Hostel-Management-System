@@ -1,9 +1,9 @@
 # Test Case Document (updated after Sprint 2)
 
-| | |
+| Item | Detail |
 |---|---|
 | **Project** | Hostel Management System (HMS), Team 1 |
-| **Build validated** | `main` at a9af58e plus the changes in this pull request |
+| **Build validated** | `main` at 9f65069 plus the changes in this pull request |
 | **Dates** | Cases executed 2 November 2026 (QA register); full automated suite and reports re-run 8 November 2026 |
 | **Environment** | Fedora 42, PostgreSQL 16, Django 5.2.18, `DJANGO_DEBUG=false` (the CI configuration) |
 | **Prepared by** | Vignesh Nunna (PES2UG24CS582) |

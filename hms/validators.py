@@ -13,6 +13,4 @@ person_name = RegexValidator(
 phone_number = RegexValidator(
     r"^\+?\d{10,15}$", "Enter 10 to 15 digits, with an optional leading +."
 )
-plain_text = RegexValidator(
-    r"^[^<>]*$", "Angle brackets are not allowed.", code="no_markup"
-)
+plain_text = RegexValidator(r"^[^<>]*$", "Angle brackets are not allowed.", code="no_markup")

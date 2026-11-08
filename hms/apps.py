@@ -24,8 +24,10 @@ class HMSAdminConfig(AdminConfig):
         defaults[models.DateTimeField] = {
             "form_class": forms.SplitDateTimeField,
             "widget": forms.SplitDateTimeWidget(
-                date_attrs={"type": "date"}, time_attrs={"type": "time"},
-                date_format="%Y-%m-%d", time_format="%H:%M",
+                date_attrs={"type": "date"},
+                time_attrs={"type": "time"},
+                date_format="%Y-%m-%d",
+                time_format="%H:%M",
             ),
         }
         super().ready()

@@ -50,9 +50,7 @@ class Command(BaseCommand):
             if deadline is None or now < deadline:
                 continue
 
-            subject = (
-                f"Complaint SLA escalation: {complaint.title}"
-            )
+            subject = f"Complaint SLA escalation: {complaint.title}"
 
             message = (
                 f"Complaint: {complaint.title}\n"
@@ -87,7 +85,6 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Escalation check completed. "
-                f"{escalated_count} complaint(s) escalated."
+                f"Escalation check completed. {escalated_count} complaint(s) escalated."
             )
         )

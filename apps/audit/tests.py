@@ -68,7 +68,8 @@ class RecordTests(TestCase):
         service.record("x.fail", actor=None, outcome=AuditEntry.Outcome.FAILURE)
         service.record("x.deny", actor=None, outcome=AuditEntry.Outcome.DENIED)
         self.assertEqual(
-            set(AuditEntry.objects.values_list("outcome", flat=True)), {"FAILURE", "DENIED"})
+            set(AuditEntry.objects.values_list("outcome", flat=True)), {"FAILURE", "DENIED"}
+        )
 
 
 class AppendOnlyTests(TestCase):
@@ -100,19 +101,30 @@ class AppendOnlyTests(TestCase):
     def test_admin_offers_no_way_to_add_edit_or_delete(self):
         User.objects.create_superuser(username="a1", password=PASSWORD)
         login(self.client, "a1")
-        self.assertContains(self.client.get(reverse("admin:audit_auditentry_changelist")),
-                            "Integrity check passed")
+        self.assertContains(
+            self.client.get(reverse("admin:audit_auditentry_changelist")), "Integrity check passed"
+        )
         self.assertEqual(self.client.get(reverse("admin:audit_auditentry_add")).status_code, 403)
         change = self.client.get(reverse("admin:audit_auditentry_change", args=[self.entry.pk]))
         self.assertNotContains(change, 'name="_save"')  # a read-only view, nothing to submit
-        self.assertEqual(self.client.post(
-            reverse("admin:audit_auditentry_change", args=[self.entry.pk]), {"action": "x"}
-        ).status_code, 403)
-        self.assertEqual(self.client.get(
-            reverse("admin:audit_auditentry_delete", args=[self.entry.pk])).status_code, 403)
-        self.assertEqual(self.client.post(
-            reverse("admin:audit_auditentry_delete", args=[self.entry.pk]), {"post": "yes"}
-        ).status_code, 403)
+        self.assertEqual(
+            self.client.post(
+                reverse("admin:audit_auditentry_change", args=[self.entry.pk]), {"action": "x"}
+            ).status_code,
+            403,
+        )
+        self.assertEqual(
+            self.client.get(
+                reverse("admin:audit_auditentry_delete", args=[self.entry.pk])
+            ).status_code,
+            403,
+        )
+        self.assertEqual(
+            self.client.post(
+                reverse("admin:audit_auditentry_delete", args=[self.entry.pk]), {"post": "yes"}
+            ).status_code,
+            403,
+        )
 
 
 class TamperDetectionTests(TestCase):
@@ -133,14 +145,17 @@ class TamperDetectionTests(TestCase):
         self.assertEqual(service.verify_chain()[1], [])
 
     def test_an_edited_entry_is_detected(self):
-        self.tamper("UPDATE audit_auditentry SET outcome = 'SUCCESS', action = 'a.forged' "
-                    "WHERE seq = (SELECT max(seq) - 1 FROM audit_auditentry)")
+        self.tamper(
+            "UPDATE audit_auditentry SET outcome = 'SUCCESS', action = 'a.forged' "
+            "WHERE seq = (SELECT max(seq) - 1 FROM audit_auditentry)"
+        )
         problems = service.verify_chain()[1]
         self.assertTrue(any("contents were changed" in p for p in problems), problems)
 
     def test_a_deleted_entry_is_detected(self):
-        self.tamper("DELETE FROM audit_auditentry WHERE seq = (SELECT max(seq) - 2 FROM "
-                    "audit_auditentry)")
+        self.tamper(
+            "DELETE FROM audit_auditentry WHERE seq = (SELECT max(seq) - 2 FROM audit_auditentry)"
+        )
         problems = service.verify_chain()[1]
         self.assertTrue(any("missing" in p or "does not follow" in p for p in problems), problems)
 
@@ -148,16 +163,20 @@ class TamperDetectionTests(TestCase):
         out = StringIO()
         call_command("verify_audit", stdout=out)
         self.assertIn("verified", out.getvalue())
-        self.tamper("UPDATE audit_auditentry SET action = 'a.forged' WHERE seq = "
-                    "(SELECT min(seq) FROM audit_auditentry)")
+        self.tamper(
+            "UPDATE audit_auditentry SET action = 'a.forged' WHERE seq = "
+            "(SELECT min(seq) FROM audit_auditentry)"
+        )
         with self.assertRaises(CommandError):
             call_command("verify_audit", stdout=StringIO(), stderr=StringIO())
 
     def test_admin_banner_warns_about_tampering(self):
         User.objects.create_superuser(username="a1", password=PASSWORD)
         login(self.client, "a1")
-        self.tamper("UPDATE audit_auditentry SET action = 'a.forged' WHERE seq = "
-                    "(SELECT min(seq) FROM audit_auditentry)")
+        self.tamper(
+            "UPDATE audit_auditentry SET action = 'a.forged' WHERE seq = "
+            "(SELECT min(seq) FROM audit_auditentry)"
+        )
         response = self.client.get(reverse("admin:audit_auditentry_changelist"))
         self.assertContains(response, "has been tampered with")
 
@@ -214,8 +233,7 @@ class WhatIsLoggedTests(TestCase):
         invoice = Invoice.objects.get()
         payment = fees.start_payment(invoice, "UPI", "/fees/")[0]
         self.assertEqual(self.last("payment.started").detail["method"], "UPI")
-        payload = {"paymentSessionId": payment.session_id, "status": "SUCCESS",
-                   "gatewayRef": "GW"}
+        payload = {"paymentSessionId": payment.session_id, "status": "SUCCESS", "gatewayRef": "GW"}
         payload["signature"] = gateway.sign(payload)
         fees.handle_callback(payload)
         done = self.last("payment.succeeded")
@@ -231,8 +249,7 @@ class WhatIsLoggedTests(TestCase):
         invoice = Invoice.objects.get()
         for status in ("FAILED", "ABANDONED"):
             payment = fees.start_payment(invoice, "CARD")[0]
-            payload = {"paymentSessionId": payment.session_id, "status": status,
-                       "gatewayRef": "GW"}
+            payload = {"paymentSessionId": payment.session_id, "status": status, "gatewayRef": "GW"}
             payload["signature"] = gateway.sign(payload)
             fees.handle_callback(payload)
             self.assertEqual(self.last(f"payment.{status.lower()}").outcome, "FAILURE")
@@ -240,9 +257,17 @@ class WhatIsLoggedTests(TestCase):
     def test_account_management_through_the_admin(self):
         User.objects.create_superuser(username="a1", password=PASSWORD)
         login(self.client, "a1")
-        self.client.post(reverse("admin:accounts_user_add"), {
-            "username": "w9", "role": "WARDEN", "phone": "9876543210",
-            "password1": "Strong-pass-77", "password2": "Strong-pass-77", "_save": "1"})
+        self.client.post(
+            reverse("admin:accounts_user_add"),
+            {
+                "username": "w9",
+                "role": "WARDEN",
+                "phone": "9876543210",
+                "password1": "Strong-pass-77",
+                "password2": "Strong-pass-77",
+                "_save": "1",
+            },
+        )
         created = self.last("account.created")
         self.assertEqual(created.actor.username, "a1")
         self.assertEqual(created.detail["role"], "WARDEN")
@@ -306,8 +331,11 @@ class WhatIsLoggedTests(TestCase):
         self.assertEqual(self.last("access.denied").detail["path"], "/api/v1/users")
 
     def test_no_personal_data_in_the_log(self):
-        data = application_data(medical_conditions="Severe peanut allergy",
-                                guardian_phone="9123456780", full_name="Zed Unusualname")
+        data = application_data(
+            medical_conditions="Severe peanut allergy",
+            guardian_phone="9123456780",
+            full_name="Zed Unusualname",
+        )
         resident = make_resident("r1")
         application = admissions.submit_application(resident, **data)
         admissions.decide(application, self.warden, True, "Approved with a private note")

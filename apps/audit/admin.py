@@ -34,6 +34,10 @@ class AuditEntryAdmin(admin.ModelAdmin):
 
     def changelist_view(self, request, extra_context=None):
         checked, problems = service.verify_chain()
-        context = {"chain_checked": checked, "chain_problems": problems, "title": "Audit log",
-                   **(extra_context or {})}
+        context = {
+            "chain_checked": checked,
+            "chain_problems": problems,
+            "title": "Audit log",
+            **(extra_context or {}),
+        }
         return super().changelist_view(request, context)

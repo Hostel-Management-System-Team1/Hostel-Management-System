@@ -15,7 +15,6 @@ User = get_user_model()
 
 
 class ComplaintSLATests(TestCase):
-
     def setUp(self):
         self.resident = User.objects.create_user(
             username="resident_test",
@@ -28,9 +27,7 @@ class ComplaintSLATests(TestCase):
             email="admin@example.edu",
         )
 
-    @patch(
-        "apps.complaints.management.commands.escalate_complaints.send_mail"
-    )
+    @patch("apps.complaints.management.commands.escalate_complaints.send_mail")
     def test_high_priority_escalates_after_48_hours(self, mock_email):
         complaint = Complaint.objects.create(
             title="Broken water pipe",
@@ -47,13 +44,9 @@ class ComplaintSLATests(TestCase):
         self.assertIsNotNone(complaint.escalated_at)
         mock_email.assert_called_once()
         self.assertEqual(mock_email.call_args.args[3], ["admin@example.edu"])
-        self.assertTrue(
-            AuditEntry.objects.filter(action="complaint.escalated").exists()
-        )
+        self.assertTrue(AuditEntry.objects.filter(action="complaint.escalated").exists())
 
-    @patch(
-        "apps.complaints.management.commands.escalate_complaints.send_mail"
-    )
+    @patch("apps.complaints.management.commands.escalate_complaints.send_mail")
     def test_medium_priority_escalates_after_96_hours(self, mock_email):
         complaint = Complaint.objects.create(
             title="Room cleaning",
@@ -70,9 +63,7 @@ class ComplaintSLATests(TestCase):
         self.assertIsNotNone(complaint.escalated_at)
         mock_email.assert_called_once()
 
-    @patch(
-        "apps.complaints.management.commands.escalate_complaints.send_mail"
-    )
+    @patch("apps.complaints.management.commands.escalate_complaints.send_mail")
     def test_not_overdue_complaint_is_not_escalated(self, mock_email):
         complaint = Complaint.objects.create(
             title="Broken light",

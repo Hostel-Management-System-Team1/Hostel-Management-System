@@ -63,9 +63,7 @@ def mfa(request):
             otp_login(request, device)
             audit.record("auth.mfa_verified", target=user)
             return redirect(target or "home")
-        audit.record(
-            "auth.mfa_failed", target=user, outcome=audit.AuditEntry.Outcome.FAILURE
-        )
+        audit.record("auth.mfa_failed", target=user, outcome=audit.AuditEntry.Outcome.FAILURE)
         form.add_error("token", "That code is not right, or it has expired. Try the next one.")
 
     context = {"form": form, "enrolling": enrolling, "next": target}

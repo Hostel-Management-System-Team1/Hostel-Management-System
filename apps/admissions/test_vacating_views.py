@@ -36,8 +36,9 @@ class VacatingViewTests(TestCase):
 
     def submit(self, reason="Graduating"):
         self.as_user(self.resident)
-        return self.client.post(reverse("admissions:submit_vacating"), {"reason": reason},
-                                follow=True)
+        return self.client.post(
+            reverse("admissions:submit_vacating"), {"reason": reason}, follow=True
+        )
 
     def pay_invoice(self):
         self.invoice.status = Invoice.Status.PAID
@@ -47,8 +48,10 @@ class VacatingViewTests(TestCase):
     def clear_all(self, request):
         self.as_user(self.warden)
         for department in vacating.REQUIRED_DEPARTMENTS:
-            self.client.post(reverse("admissions:vacating_clearance", args=[request.pk]),
-                             {"department": department, "cleared": "yes", "notes": "ok"})
+            self.client.post(
+                reverse("admissions:vacating_clearance", args=[request.pk]),
+                {"department": department, "cleared": "yes", "notes": "ok"},
+            )
 
     # --- the resident's side -------------------------------------------------------------
 
@@ -70,18 +73,24 @@ class VacatingViewTests(TestCase):
         request = VacatingRequest.objects.get()
         self.assertEqual(
             self.client.get(reverse("admissions:vacating_detail", args=[request.pk])).status_code,
-            200)
+            200,
+        )
         other = allocated_resident("vv_other", room=make_room(number="VV2")).resident
         self.as_user(other)
         self.assertEqual(
             self.client.get(reverse("admissions:vacating_detail", args=[request.pk])).status_code,
-            404)
+            404,
+        )
 
     def test_resident_cannot_use_the_warden_pages(self):
         self.submit()
         request = VacatingRequest.objects.get()
-        for name in ("vacating_clearance", "vacating_damage", "vacating_approve",
-                     "vacating_complete"):
+        for name in (
+            "vacating_clearance",
+            "vacating_damage",
+            "vacating_approve",
+            "vacating_complete",
+        ):
             response = self.client.post(reverse(f"admissions:{name}", args=[request.pk]))
             self.assertEqual(response.status_code, 403, name)
         self.assertEqual(self.client.get(reverse("admissions:vacating_list")).status_code, 403)
@@ -102,8 +111,9 @@ class VacatingViewTests(TestCase):
         self.submit()
         request = VacatingRequest.objects.get()
         self.as_user(self.warden)
-        response = self.client.post(reverse("admissions:vacating_approve", args=[request.pk]),
-                                    follow=True)
+        response = self.client.post(
+            reverse("admissions:vacating_approve", args=[request.pk]), follow=True
+        )
         request.refresh_from_db()
         self.assertEqual(request.status, VacatingRequest.Status.REQUESTED)
         self.assertTrue(self.last_message(response))
@@ -112,8 +122,10 @@ class VacatingViewTests(TestCase):
         self.submit()
         request = VacatingRequest.objects.get()
         self.as_user(self.warden)
-        self.client.post(reverse("admissions:vacating_clearance", args=[request.pk]),
-                         {"department": NoDuesClearance.Department.HOSTEL, "cleared": "yes"})
+        self.client.post(
+            reverse("admissions:vacating_clearance", args=[request.pk]),
+            {"department": NoDuesClearance.Department.HOSTEL, "cleared": "yes"},
+        )
         clearance = request.clearances.get(department=NoDuesClearance.Department.HOSTEL)
         self.assertNotEqual(clearance.status, NoDuesClearance.Status.CLEARED)
 
@@ -123,7 +135,9 @@ class VacatingViewTests(TestCase):
         self.as_user(self.warden)
         response = self.client.post(
             reverse("admissions:vacating_clearance", args=[request.pk]),
-            {"department": "LIBRARY", "cleared": "yes"}, follow=True)
+            {"department": "LIBRARY", "cleared": "yes"},
+            follow=True,
+        )
         self.assertIn("Unknown clearance department", self.last_message(response))
 
     def test_full_workflow_releases_the_bed_and_reports_the_refund(self):
@@ -131,8 +145,11 @@ class VacatingViewTests(TestCase):
         request = VacatingRequest.objects.get()
         self.pay_invoice()
         self.clear_all(request)
-        damage = self.client.post(reverse("admissions:vacating_damage", args=[request.pk]),
-                                  {"description": "Broken window", "amount": "500"}, follow=True)
+        damage = self.client.post(
+            reverse("admissions:vacating_damage", args=[request.pk]),
+            {"description": "Broken window", "amount": "500"},
+            follow=True,
+        )
         self.assertIn("Damage charge added", self.last_message(damage))
         self.assertEqual(request.damage_charges.count(), 1)
 
@@ -140,13 +157,19 @@ class VacatingViewTests(TestCase):
         request.refresh_from_db()
         self.assertEqual(request.status, VacatingRequest.Status.APPROVED)
 
-        late = self.client.post(reverse("admissions:vacating_damage", args=[request.pk]),
-                                {"description": "Door", "amount": "100"}, follow=True)
+        late = self.client.post(
+            reverse("admissions:vacating_damage", args=[request.pk]),
+            {"description": "Door", "amount": "100"},
+            follow=True,
+        )
         self.assertIn("before approval", self.last_message(late))
         self.assertEqual(request.damage_charges.count(), 1)
 
-        done = self.client.post(reverse("admissions:vacating_complete", args=[request.pk]),
-                                {"staff_notes": "Keys returned"}, follow=True)
+        done = self.client.post(
+            reverse("admissions:vacating_complete", args=[request.pk]),
+            {"staff_notes": "Keys returned"},
+            follow=True,
+        )
         self.assertIn("Vacating completed", self.last_message(done))
         request.refresh_from_db()
         self.assertEqual(request.status, VacatingRequest.Status.COMPLETED)
@@ -160,7 +183,9 @@ class VacatingViewTests(TestCase):
         for amount in ("abc", "-5", ""):
             response = self.client.post(
                 reverse("admissions:vacating_damage", args=[request.pk]),
-                {"description": "Door", "amount": amount}, follow=True)
+                {"description": "Door", "amount": amount},
+                follow=True,
+            )
             self.assertTrue(self.last_message(response), amount)
         self.assertEqual(request.damage_charges.count(), 0)
 
@@ -168,8 +193,9 @@ class VacatingViewTests(TestCase):
         self.submit()
         request = VacatingRequest.objects.get()
         self.as_user(self.warden)
-        response = self.client.post(reverse("admissions:vacating_complete", args=[request.pk]),
-                                    follow=True)
+        response = self.client.post(
+            reverse("admissions:vacating_complete", args=[request.pk]), follow=True
+        )
         self.assertIn("must be approved", self.last_message(response))
         request.refresh_from_db()
         self.assertEqual(request.status, VacatingRequest.Status.REQUESTED)

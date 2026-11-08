@@ -42,7 +42,8 @@ class InvoiceGenerationTests(TestCase):
     def test_total_is_the_sum_of_the_items_for_every_room_type(self):
         for number, room_type in (("1", "SINGLE"), ("2", "DOUBLE"), ("3", "TRIPLE")):
             allocation = allocated_resident(
-                f"r{number}", room=make_room(number=number, room_type=room_type))
+                f"r{number}", room=make_room(number=number, room_type=room_type)
+            )
             invoice = Invoice.objects.get(allocation=allocation)
             heads = FeeHead.objects.filter(room_type=room_type, active=True)
             self.assertEqual(invoice.total, sum(h.amount for h in heads))
@@ -222,11 +223,15 @@ class NoCardDataTests(TestCase):
         allocation = allocated_resident("r1", room=make_room())
         invoice = Invoice.objects.get(allocation=allocation)
         payment, _ = services.start_payment(invoice, "CARD", "/fees/")
-        self.client.post(reverse("fees:mock_gateway", args=[payment.session_id]), {
-            "outcome": "pay", "card_number": "4111111111111111", "cvv": "123",
-        })
-        stored = " ".join(
-            str(value) for p in Payment.objects.values() for value in p.values())
+        self.client.post(
+            reverse("fees:mock_gateway", args=[payment.session_id]),
+            {
+                "outcome": "pay",
+                "card_number": "4111111111111111",
+                "cvv": "123",
+            },
+        )
+        stored = " ".join(str(value) for p in Payment.objects.values() for value in p.values())
         self.assertNotIn("4111111111111111", stored)
         self.assertNotIn("123", payment.gateway_ref)
 
@@ -256,7 +261,8 @@ class ResidentViewTests(TestCase):
 
     def pay(self, outcome):
         response = self.client.post(
-            reverse("fees:invoice_pay", args=[self.invoice.pk]), {"method": "UPI"})
+            reverse("fees:invoice_pay", args=[self.invoice.pk]), {"method": "UPI"}
+        )
         self.assertEqual(response.status_code, 302)
         self.assertIn("/pay/gateway/", response["Location"])
         return self.client.post(response["Location"], {"outcome": outcome}, follow=True)
@@ -284,14 +290,16 @@ class ResidentViewTests(TestCase):
 
     def test_payment_method_is_required(self):
         response = self.client.post(
-            reverse("fees:invoice_pay", args=[self.invoice.pk]), {"method": "CASH"}, follow=True)
+            reverse("fees:invoice_pay", args=[self.invoice.pk]), {"method": "CASH"}, follow=True
+        )
         self.assertContains(response, "Choose how you want to pay")
         self.assertFalse(Payment.objects.exists())
 
     @override_settings(PAYMENT_GATEWAY_ENABLED=False)
     def test_gateway_outage_is_explained_and_nothing_is_charged(self):
         response = self.client.post(
-            reverse("fees:invoice_pay", args=[self.invoice.pk]), {"method": "UPI"}, follow=True)
+            reverse("fees:invoice_pay", args=[self.invoice.pk]), {"method": "UPI"}, follow=True
+        )
         self.assertContains(response, "Nothing was charged")
         self.invoice.refresh_from_db()
         self.assertEqual(self.invoice.status, Invoice.Status.UNPAID)
@@ -299,7 +307,8 @@ class ResidentViewTests(TestCase):
     def test_return_url_cannot_send_the_resident_off_site(self):
         payment, _ = services.start_payment(self.invoice, "UPI", "https://evil.example/")
         response = self.client.post(
-            reverse("fees:mock_gateway", args=[payment.session_id]), {"outcome": "cancel"})
+            reverse("fees:mock_gateway", args=[payment.session_id]), {"outcome": "cancel"}
+        )
         self.assertEqual(response["Location"], "/")
 
     def test_gateway_page_needs_post_to_act(self):
@@ -316,7 +325,8 @@ class ResidentViewTests(TestCase):
         detail = self.client.get(reverse("fees:invoice_detail", args=[self.invoice.pk]))
         self.assertEqual(detail.status_code, 403)
         pay = self.client.post(
-            reverse("fees:invoice_pay", args=[self.invoice.pk]), {"method": "UPI"})
+            reverse("fees:invoice_pay", args=[self.invoice.pk]), {"method": "UPI"}
+        )
         self.assertEqual(pay.status_code, 403)
 
     def test_dashboard_shows_outstanding_fees(self):
@@ -381,7 +391,9 @@ class FeesApiTests(TestCase):
     def pay(self, pk=None, **body):
         return self.client.post(
             f"/api/v1/invoices/{pk or self.invoice.pk}/payments",
-            {"method": "UPI", "returnUrl": "/fees/", **body}, content_type="application/json")
+            {"method": "UPI", "returnUrl": "/fees/", **body},
+            content_type="application/json",
+        )
 
     def test_start_payment(self):
         response = self.pay()
@@ -413,7 +425,8 @@ class FeesApiTests(TestCase):
         payment = services.start_payment(self.invoice, "UPI")[0]
         self.client.logout()
         response = self.client.post(
-            "/api/v1/payments/callback", callback(payment), content_type="application/json")
+            "/api/v1/payments/callback", callback(payment), content_type="application/json"
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"received": True})
         self.invoice.refresh_from_db()
@@ -422,8 +435,10 @@ class FeesApiTests(TestCase):
     def test_webhook_with_a_bad_signature_is_400(self):
         payment = services.start_payment(self.invoice, "UPI")[0]
         response = self.client.post(
-            "/api/v1/payments/callback", callback(payment, signature="bad"),
-            content_type="application/json")
+            "/api/v1/payments/callback",
+            callback(payment, signature="bad"),
+            content_type="application/json",
+        )
         self.assertEqual(response.status_code, 400)
         self.assertIn("Invalid signature", response.json()["message"])
         self.invoice.refresh_from_db()
@@ -433,7 +448,8 @@ class FeesApiTests(TestCase):
         payload = {"paymentSessionId": "nope", "status": "SUCCESS", "gatewayRef": "x"}
         payload["signature"] = gateway.sign(payload)
         response = self.client.post(
-            "/api/v1/payments/callback", payload, content_type="application/json")
+            "/api/v1/payments/callback", payload, content_type="application/json"
+        )
         self.assertEqual(response.status_code, 404)
 
 
@@ -446,8 +462,14 @@ class FeeAdminTests(TestCase):
         head = FeeHead.objects.get(room_type="DOUBLE", name="Room rent")
         response = self.client.post(
             reverse("admin:fees_feehead_change", args=[head.pk]),
-            {"name": "Room rent", "room_type": "DOUBLE", "amount": "50000.00", "active": "on",
-             "_save": "Save"})
+            {
+                "name": "Room rent",
+                "room_type": "DOUBLE",
+                "amount": "50000.00",
+                "active": "on",
+                "_save": "Save",
+            },
+        )
         self.assertEqual(response.status_code, 302)
         head.refresh_from_db()
         self.assertEqual(head.amount, Decimal("50000.00"))
@@ -456,13 +478,17 @@ class FeeAdminTests(TestCase):
         User.objects.create_user(username="warden0", password=PASSWORD, role=R.WARDEN)
         allocated_resident("r1", room=make_room())
         invoice = Invoice.objects.get()
-        self.assertContains(self.client.get(reverse("admin:fees_invoice_changelist")),
-                            invoice.number)
+        self.assertContains(
+            self.client.get(reverse("admin:fees_invoice_changelist")), invoice.number
+        )
         page = self.client.get(reverse("admin:fees_invoice_change", args=[invoice.pk]))
         self.assertNotContains(page, 'name="_save"')
-        self.assertEqual(self.client.post(
-            reverse("admin:fees_invoice_delete", args=[invoice.pk]), {"post": "yes"}).status_code,
-            403)
+        self.assertEqual(
+            self.client.post(
+                reverse("admin:fees_invoice_delete", args=[invoice.pk]), {"post": "yes"}
+            ).status_code,
+            403,
+        )
 
     def test_fee_structure_and_fees_appear_in_the_admin_navigation(self):
         response = self.client.get(reverse("admin:index"))
@@ -555,7 +581,6 @@ class OverdueInvoiceTests(TestCase):
         self.invoice.refresh_from_db()
         self.assertIsNotNone(self.invoice.reminder_sent_at)
         self.assertEqual(result["reminders_sent"], 1)
-
 
 
 class CommandTests(TestCase):

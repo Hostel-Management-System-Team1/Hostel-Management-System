@@ -1,9 +1,9 @@
 # Branch Coverage Report
 
-| | |
+| Item | Detail |
 |---|---|
 | **Project** | Hostel Management System (HMS), Team 1 |
-| **Build tested** | `main` at a9af58e plus the changes in this pull request |
+| **Build tested** | `main` at 9f65069 plus the changes in this pull request |
 | **Date** | 8 November 2026 |
 | **Environment** | Fedora 42, Python 3.13.13 (CI uses 3.12), Django 5.2.18, PostgreSQL 16, `DJANGO_DEBUG=false` (the CI configuration) |
 | **Prepared by** | Vignesh Nunna (PES2UG24CS582) |
@@ -14,13 +14,13 @@
 | Measure | Value |
 |---|---|
 | Branches measured (each side of an `if`, loop or `try`) | 734 |
-| Branches taken by the 376 tests | 609 |
-| Branches never taken | 125 |
-| Lines where only one side was taken (partial) | 105 |
-| **Branch coverage** | **83.0%** |
+| Branches taken by the 376 tests | 608 |
+| Branches never taken | 126 |
+| Lines where only one side was taken (partial) | 106 |
+| **Branch coverage** | **82.8%** |
 | Files with branches / fully covered | 61 / 17 |
 
-Branch coverage is always lower than line coverage (95.0%) because a line can run while only one outcome of its decision is ever tried. That is the case for most of the 125 untaken branches here: the "everything is fine" side is tested, the rarer side (a refusal, a database error) is not always.
+Branch coverage is always lower than line coverage (95.0%) because a line can run while only one outcome of its decision is ever tried. That is the case for most of the 126 untaken branches here: the "everything is fine" side is tested, the rarer side (a refusal, a database error) is not always.
 
 ## 2. Method
 
@@ -36,11 +36,11 @@ Same run as the Code Coverage Report: coverage.py with `branch = true` (`pyproje
 | `apps/complaints` | 42 | 31 | 11 | 11 | **73.8%** |
 | `apps/fees` | 66 | 56 | 10 | 10 | **84.8%** |
 | `apps/gate` | 114 | 99 | 15 | 15 | **86.8%** |
-| `apps/mess` | 72 | 51 | 21 | 17 | **70.8%** |
+| `apps/mess` | 72 | 50 | 22 | 18 | **69.4%** |
 | `apps/reporting` | 22 | 22 | 0 | 0 | **100.0%** |
 | `apps/visitors` | 22 | 17 | 5 | 5 | **77.3%** |
 | `hms` | 86 | 69 | 17 | 15 | **80.2%** |
-| **Total** | **734** | **609** | **125** | **105** | **83.0%** |
+| **Total** | **734** | **608** | **126** | **106** | **82.8%** |
 
 Reporting is fully covered. Accounts, admissions and gate are above 85%. The lowest are audit (the backup command needs `pg_dump`), mess, complaints and visitors, whose views have many small refusal and redirect branches.
 
@@ -48,7 +48,7 @@ Reporting is fully covered. Accounts, admissions and gate are above 85%. The low
 
 | File | Branches | Never taken | Branch coverage |
 |---|---|---|---|
-| `apps/mess/views.py` | 50 | 15 | 70.0% |
+| `apps/mess/views.py` | 50 | 16 | 68.0% |
 | `apps/audit/management/commands/backup_database.py` | 22 | 13 | 40.9% |
 | `apps/gate/services.py` | 68 | 12 | 82.4% |
 | `apps/admissions/vacating.py` | 40 | 9 | 77.5% |

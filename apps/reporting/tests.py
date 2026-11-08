@@ -1,4 +1,3 @@
-
 import csv
 from datetime import date, timedelta
 from io import BytesIO
@@ -41,9 +40,7 @@ class ReportingAccessTests(TestCase):
         session.save()
 
     def test_anonymous_user_is_redirected_to_login(self):
-        response = self.client.get(
-            reverse("reporting:dashboard")
-        )
+        response = self.client.get(reverse("reporting:dashboard"))
 
         self.assertEqual(response.status_code, 302)
         self.assertIn("/accounts/login/", response.url)
@@ -51,18 +48,14 @@ class ReportingAccessTests(TestCase):
     def test_warden_can_open_reports_dashboard(self):
         self.log_in_verified_warden(self.warden)
 
-        response = self.client.get(
-            reverse("reporting:dashboard")
-        )
+        response = self.client.get(reverse("reporting:dashboard"))
 
         self.assertEqual(response.status_code, 200)
 
     def test_resident_is_forbidden_from_reports(self):
         self.client.force_login(self.resident)
 
-        response = self.client.get(
-            reverse("reporting:dashboard")
-        )
+        response = self.client.get(reverse("reporting:dashboard"))
 
         self.assertEqual(response.status_code, 403)
 
@@ -105,9 +98,7 @@ class ReportingExportTests(TestCase):
         )
 
     def test_occupancy_export_returns_csv(self):
-        response = self.client.get(
-            reverse("reporting:export_occupancy")
-        )
+        response = self.client.get(reverse("reporting:export_occupancy"))
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/csv", response["Content-Type"])
@@ -116,36 +107,24 @@ class ReportingExportTests(TestCase):
             response["Content-Disposition"],
         )
 
-        rows = list(
-            csv.reader(
-                response.content.decode("utf-8").splitlines()
-            )
-        )
+        rows = list(csv.reader(response.content.decode("utf-8").splitlines()))
 
         self.assertEqual(rows[0][0], "Block")
         self.assertIn("Occupied beds", rows[0])
 
     def test_dues_export_returns_csv(self):
-        response = self.client.get(
-            reverse("reporting:export_dues")
-        )
+        response = self.client.get(reverse("reporting:export_dues"))
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("text/csv", response["Content-Type"])
 
-        rows = list(
-            csv.reader(
-                response.content.decode("utf-8").splitlines()
-            )
-        )
+        rows = list(csv.reader(response.content.decode("utf-8").splitlines()))
 
         self.assertEqual(rows[0][0], "Invoice")
         self.assertIn("Amount", rows[0])
 
     def test_occupancy_export_returns_xlsx(self):
-        response = self.client.get(
-            reverse("reporting:export_occupancy_xlsx")
-        )
+        response = self.client.get(reverse("reporting:export_occupancy_xlsx"))
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("spreadsheetml", response["Content-Type"])
@@ -153,9 +132,7 @@ class ReportingExportTests(TestCase):
         self.assertTrue(response.content.startswith(b"PK"))
 
     def test_dues_export_returns_xlsx(self):
-        response = self.client.get(
-            reverse("reporting:export_dues_xlsx")
-        )
+        response = self.client.get(reverse("reporting:export_dues_xlsx"))
 
         self.assertEqual(response.status_code, 200)
         self.assertIn("spreadsheetml", response["Content-Type"])
@@ -163,9 +140,7 @@ class ReportingExportTests(TestCase):
         self.assertTrue(response.content.startswith(b"PK"))
 
     def test_occupancy_export_returns_pdf(self):
-        response = self.client.get(
-            reverse("reporting:export_occupancy_pdf")
-        )
+        response = self.client.get(reverse("reporting:export_occupancy_pdf"))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -176,9 +151,7 @@ class ReportingExportTests(TestCase):
         self.assertTrue(response.content.startswith(b"%PDF"))
 
     def test_dues_export_returns_pdf(self):
-        response = self.client.get(
-            reverse("reporting:export_dues_pdf")
-        )
+        response = self.client.get(reverse("reporting:export_dues_pdf"))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -189,51 +162,29 @@ class ReportingExportTests(TestCase):
         self.assertTrue(response.content.startswith(b"%PDF"))
 
     def test_complaints_csv_contains_real_records(self):
-        response = self.client.get(
-            reverse("reporting:export_complaints")
-        )
+        response = self.client.get(reverse("reporting:export_complaints"))
 
         self.assertEqual(response.status_code, 200)
 
-        rows = list(
-            csv.reader(
-                response.content.decode("utf-8").splitlines()
-            )
-        )
+        rows = list(csv.reader(response.content.decode("utf-8").splitlines()))
 
         self.assertEqual(rows[0][0], "Title")
-        self.assertTrue(
-            any("Leaking bathroom tap" in row for row in rows)
-        )
-        self.assertTrue(
-            any(row[-1] == "4" for row in rows[1:])
-        )
+        self.assertTrue(any("Leaking bathroom tap" in row for row in rows))
+        self.assertTrue(any(row[-1] == "4" for row in rows[1:]))
 
     def test_mess_csv_contains_real_records(self):
-        response = self.client.get(
-            reverse("reporting:export_mess")
-        )
+        response = self.client.get(reverse("reporting:export_mess"))
 
         self.assertEqual(response.status_code, 200)
 
-        rows = list(
-            csv.reader(
-                response.content.decode("utf-8").splitlines()
-            )
-        )
+        rows = list(csv.reader(response.content.decode("utf-8").splitlines()))
 
         self.assertEqual(rows[0][0], "Activity date")
-        self.assertTrue(
-            any("120" in row for row in rows)
-        )
-        self.assertTrue(
-            any("Lunch" in row for row in rows)
-        )
+        self.assertTrue(any("120" in row for row in rows))
+        self.assertTrue(any("Lunch" in row for row in rows))
 
     def test_complaints_xlsx_contains_real_records(self):
-        response = self.client.get(
-            reverse("reporting:export_complaints_xlsx")
-        )
+        response = self.client.get(reverse("reporting:export_complaints_xlsx"))
 
         self.assertEqual(response.status_code, 200)
 
@@ -247,17 +198,10 @@ class ReportingExportTests(TestCase):
             workbook.close()
 
         self.assertEqual(rows[0][0], "Title")
-        self.assertTrue(
-            any(
-                "Leaking bathroom tap" in row
-                for row in rows
-            )
-        )
+        self.assertTrue(any("Leaking bathroom tap" in row for row in rows))
 
     def test_mess_xlsx_contains_real_records(self):
-        response = self.client.get(
-            reverse("reporting:export_mess_xlsx")
-        )
+        response = self.client.get(reverse("reporting:export_mess_xlsx"))
 
         self.assertEqual(response.status_code, 200)
 
@@ -271,14 +215,10 @@ class ReportingExportTests(TestCase):
             workbook.close()
 
         self.assertEqual(rows[0][0], "Activity date")
-        self.assertTrue(
-            any(120 in row for row in rows)
-        )
+        self.assertTrue(any(120 in row for row in rows))
 
     def test_complaints_pdf_returns_valid_pdf(self):
-        response = self.client.get(
-            reverse("reporting:export_complaints_pdf")
-        )
+        response = self.client.get(reverse("reporting:export_complaints_pdf"))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -289,9 +229,7 @@ class ReportingExportTests(TestCase):
         self.assertTrue(response.content.startswith(b"%PDF"))
 
     def test_mess_pdf_returns_valid_pdf(self):
-        response = self.client.get(
-            reverse("reporting:export_mess_pdf")
-        )
+        response = self.client.get(reverse("reporting:export_mess_pdf"))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(

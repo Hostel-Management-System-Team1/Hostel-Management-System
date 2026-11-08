@@ -56,8 +56,11 @@ class GateLogTests(TestCase):
         response = self.client.get(url)
         self.assertContains(response, "Record entry")
         self.client.post(url, {"resident": self.resident.pk, "direction": "IN"})
-        moves = list(GateMovement.objects.order_by("occurred_at", "pk").values_list(
-            "direction", "capture_method", "recorded_by"))
+        moves = list(
+            GateMovement.objects.order_by("occurred_at", "pk").values_list(
+                "direction", "capture_method", "recorded_by"
+            )
+        )
         self.assertEqual(moves, [("OUT", "MANUAL", self.guard.pk), ("IN", "MANUAL", self.guard.pk)])
 
     def test_warden_sees_log_but_cannot_record(self):
@@ -78,11 +81,21 @@ class ComplaintScreenTests(TestCase):
         self.staff = person("fixer", R.MAINTENANCE_STAFF)
         self.other_staff = person("fixer2", R.MAINTENANCE_STAFF)
         self.mine = Complaint.objects.create(
-            title="Tap leaking", description="Drips", category="MAINTENANCE",
-            created_by=self.resident, assigned_to=self.staff, status="IN_PROGRESS")
+            title="Tap leaking",
+            description="Drips",
+            category="MAINTENANCE",
+            created_by=self.resident,
+            assigned_to=self.staff,
+            status="IN_PROGRESS",
+        )
         self.theirs = Complaint.objects.create(
-            title="Fan broken", description="Stopped", category="MAINTENANCE",
-            created_by=self.resident, assigned_to=self.other_staff, status="IN_PROGRESS")
+            title="Fan broken",
+            description="Stopped",
+            category="MAINTENANCE",
+            created_by=self.resident,
+            assigned_to=self.other_staff,
+            status="IN_PROGRESS",
+        )
 
     def test_maintenance_staff_see_only_their_complaints(self):
         sign_in(self.client, self.staff)
@@ -92,8 +105,10 @@ class ComplaintScreenTests(TestCase):
 
     def test_assigned_staff_resolve_and_it_is_audited(self):
         sign_in(self.client, self.staff)
-        self.client.post(reverse("complaints:update_complaint_status", args=[self.mine.pk]),
-                         {"status": "RESOLVED"})
+        self.client.post(
+            reverse("complaints:update_complaint_status", args=[self.mine.pk]),
+            {"status": "RESOLVED"},
+        )
         self.mine.refresh_from_db()
         self.assertEqual(self.mine.status, Complaint.Status.RESOLVED)
         self.assertTrue(AuditEntry.objects.filter(action="complaint.status_changed").exists())
@@ -101,10 +116,15 @@ class ComplaintScreenTests(TestCase):
     def test_warden_assignment_is_audited(self):
         sign_in(self.client, person("warden1", R.WARDEN))
         complaint = Complaint.objects.create(
-            title="Light out", description="Corridor", category="MAINTENANCE",
-            created_by=self.resident)
-        self.client.post(reverse("complaints:assign_complaint", args=[complaint.pk]),
-                         {"assigned_to": self.staff.pk})
+            title="Light out",
+            description="Corridor",
+            category="MAINTENANCE",
+            created_by=self.resident,
+        )
+        self.client.post(
+            reverse("complaints:assign_complaint", args=[complaint.pk]),
+            {"assigned_to": self.staff.pk},
+        )
         complaint.refresh_from_db()
         self.assertEqual(complaint.assigned_to, self.staff)
         entry = AuditEntry.objects.get(action="complaint.assigned")
@@ -115,8 +135,12 @@ class VisitorScreenTests(TestCase):
     def test_warden_sees_visitors_and_can_allow_out_of_hours(self):
         resident = person("res1", R.RESIDENT)
         visitor = Visitor.objects.create(
-            visitor_name="Sunita", phone="9876500000", resident=resident,
-            purpose="Visit", registered_by=person("guard1", R.SECURITY_GUARD))
+            visitor_name="Sunita",
+            phone="9876500000",
+            resident=resident,
+            purpose="Visit",
+            registered_by=person("guard1", R.SECURITY_GUARD),
+        )
         sign_in(self.client, person("warden1", R.WARDEN))
         response = self.client.get(reverse("visitors:list"))
         self.assertContains(response, "Sunita")
@@ -129,30 +153,44 @@ class VisitorScreenTests(TestCase):
 class AdminReportsTests(TestCase):
     def setUp(self):
         self.admin = User.objects.create_user(
-            username="admin1", password=PASSWORD, role=R.ADMINISTRATOR, is_staff=True)
+            username="admin1", password=PASSWORD, role=R.ADMINISTRATOR, is_staff=True
+        )
         sign_in(self.client, self.admin)
 
     def test_reports_open_inside_the_admin_site(self):
         response = self.client.get(reverse("admin:hms_reports"))
         self.assertContains(response, "Management reports")
         self.assertContains(response, "Account menu")  # the admin header, not the portal sidebar
-        self.assertRedirects(self.client.get(reverse("reporting:dashboard")),
-                             reverse("admin:hms_reports"))
+        self.assertRedirects(
+            self.client.get(reverse("reporting:dashboard")), reverse("admin:hms_reports")
+        )
 
     def test_admin_menu_links_sprint2_modules(self):
         response = self.client.get(reverse("admin:index"))
-        for name in ("admin:complaints_complaint_changelist", "admin:mess_messmenuitem_changelist",
-                     "admin:gate_gatemovement_changelist", "admin:visitors_visitor_changelist"):
+        for name in (
+            "admin:complaints_complaint_changelist",
+            "admin:mess_messmenuitem_changelist",
+            "admin:gate_gatemovement_changelist",
+            "admin:visitors_visitor_changelist",
+        ):
             self.assertContains(response, reverse(name))
         self.assertNotContains(response, "Sprint 2")
 
     def test_lists_have_no_bulk_actions_and_evidence_is_read_only(self):
         resident = person("res1", R.RESIDENT)
         visitor = Visitor.objects.create(
-            visitor_name="Sunita", phone="9876500000", resident=resident,
-            purpose="Visit", registered_by=person("guard1", R.SECURITY_GUARD))
-        for name in ("admin:visitors_visitor_changelist", "admin:complaints_complaint_changelist",
-                     "admin:mess_messmenuitem_changelist", "admin:gate_gatemovement_changelist"):
+            visitor_name="Sunita",
+            phone="9876500000",
+            resident=resident,
+            purpose="Visit",
+            registered_by=person("guard1", R.SECURITY_GUARD),
+        )
+        for name in (
+            "admin:visitors_visitor_changelist",
+            "admin:complaints_complaint_changelist",
+            "admin:mess_messmenuitem_changelist",
+            "admin:gate_gatemovement_changelist",
+        ):
             self.assertNotContains(self.client.get(reverse(name)), "action-checkbox")
         page = self.client.get(reverse("admin:visitors_visitor_change", args=[visitor.pk]))
         self.assertContains(page, "View visitor")
@@ -167,5 +205,6 @@ class SeedDemoTests(TestCase):
         self.assertEqual(Complaint.objects.count(), 4)
         self.assertEqual(Visitor.objects.count(), 3)
         self.assertTrue(GateMovement.objects.exists())
-        self.assertEqual(User.objects.get(username="aarav").allocations.filter(
-            status="ACTIVE").count(), 1)
+        self.assertEqual(
+            User.objects.get(username="aarav").allocations.filter(status="ACTIVE").count(), 1
+        )

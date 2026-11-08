@@ -48,10 +48,13 @@ class UserAdmin(BaseUserAdmin):
     form = HMSUserChangeForm
     add_form = HMSUserCreationForm
     add_fieldsets = (
-        (None, {
-            "classes": ("wide",),
-            "fields": ("username", "role", "phone", "password1", "password2"),
-        }),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("username", "role", "phone", "password1", "password2"),
+            },
+        ),
     )
 
     @admin.display(description="Name", ordering="first_name")
@@ -110,10 +113,16 @@ class UserAdmin(BaseUserAdmin):
         ]
         status_tabs = [
             {"label": "All", "url": list_url(request, is_active__exact=None), "active": not active},
-            {"label": "Active", "url": list_url(request, is_active__exact="1"),
-             "active": active == "1"},
-            {"label": "Inactive", "url": list_url(request, is_active__exact="0"),
-             "active": active == "0"},
+            {
+                "label": "Active",
+                "url": list_url(request, is_active__exact="1"),
+                "active": active == "1",
+            },
+            {
+                "label": "Inactive",
+                "url": list_url(request, is_active__exact="0"),
+                "active": active == "0",
+            },
         ]
         context = {
             "title": "Users & roles",

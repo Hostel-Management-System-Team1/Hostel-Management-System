@@ -48,7 +48,9 @@ def audit_logout(sender, request, user, **kwargs):
 @receiver(user_login_failed, dispatch_uid="accounts.audit_login_failed")
 def audit_login_failed(sender, credentials, request=None, **kwargs):
     audit.record(
-        "auth.login_failed", actor=None, outcome=audit.AuditEntry.Outcome.FAILURE,
+        "auth.login_failed",
+        actor=None,
+        outcome=audit.AuditEntry.Outcome.FAILURE,
         label=str(credentials.get("username", ""))[:150],
         detail={"username": str(credentials.get("username", ""))[:150]},
     )

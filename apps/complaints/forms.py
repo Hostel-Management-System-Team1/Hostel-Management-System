@@ -16,9 +16,7 @@ class ComplaintForm(BootstrapFormMixin, forms.ModelForm):
         )
 
         widgets = {
-            "title": forms.TextInput(
-                attrs={"placeholder": "e.g. Tap leaking in room A-101"}
-            ),
+            "title": forms.TextInput(attrs={"placeholder": "e.g. Tap leaking in room A-101"}),
             "description": forms.Textarea(
                 attrs={
                     "rows": 4,
@@ -40,8 +38,6 @@ class ComplaintForm(BootstrapFormMixin, forms.ModelForm):
         photo = self.cleaned_data.get("photo")
 
         if photo and photo.size > 5 * 1024 * 1024:
-            raise forms.ValidationError(
-                "Photo size must not exceed 5 MB."
-            )
+            raise forms.ValidationError("Photo size must not exceed 5 MB.")
 
         return photo

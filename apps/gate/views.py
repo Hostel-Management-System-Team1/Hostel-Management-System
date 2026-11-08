@@ -1,4 +1,3 @@
-
 from django.contrib import messages
 from django.db.models import OuterRef, Q, Subquery
 from django.shortcuts import get_object_or_404, redirect, render
@@ -68,17 +67,21 @@ def gate_log(request):
     movements = GateMovement.objects.select_related("resident", "recorded_by")[:25]
     alerts = CurfewAlert.objects.select_related("resident", "block")[:10]
 
-    return render(request, "gate/log.html", {
-        "is_guard": is_guard,
-        "residents": residents,
-        "query": query,
-        "out_now": out_now,
-        "in_now": len(residents) - out_now,
-        "moves_today": GateMovement.objects.filter(occurred_at__date=today).count(),
-        "alerts_today": CurfewAlert.objects.filter(curfew_date=today).count(),
-        "movements": movements,
-        "alerts": alerts,
-    })
+    return render(
+        request,
+        "gate/log.html",
+        {
+            "is_guard": is_guard,
+            "residents": residents,
+            "query": query,
+            "out_now": out_now,
+            "in_now": len(residents) - out_now,
+            "moves_today": GateMovement.objects.filter(occurred_at__date=today).count(),
+            "alerts_today": CurfewAlert.objects.filter(curfew_date=today).count(),
+            "movements": movements,
+            "alerts": alerts,
+        },
+    )
 
 
 @role_required(User.Role.RESIDENT)
@@ -102,9 +105,7 @@ def outpass_page(request):
         except (services.OutpassError, ValueError) as error:
             messages.error(request, str(error))
 
-    requests = OutpassRequest.objects.filter(
-        resident=request.user
-    ).order_by("-requested_at")
+    requests = OutpassRequest.objects.filter(resident=request.user).order_by("-requested_at")
 
     return render(
         request,
@@ -130,21 +131,20 @@ def attendance_page(request):
             result = services.generate_night_attendance(attendance_date)
             messages.success(
                 request,
-                f"Attendance generated: {result['created']} created, "
-                f"{result['updated']} updated.",
+                f"Attendance generated: {result['created']} created, {result['updated']} updated.",
             )
-            return redirect(
-                f"{request.path}?date={attendance_date.isoformat()}"
-            )
+            return redirect(f"{request.path}?date={attendance_date.isoformat()}")
         except ValueError:
             messages.error(request, "Please select a valid attendance date.")
 
-    records = NightAttendance.objects.filter(
-        attendance_date=selected_date
-    ).select_related("resident", "room__block").order_by(
-        "room__block__name",
-        "room__number",
-        "resident__username",
+    records = (
+        NightAttendance.objects.filter(attendance_date=selected_date)
+        .select_related("resident", "room__block")
+        .order_by(
+            "room__block__name",
+            "room__number",
+            "resident__username",
+        )
     )
 
     counts = {status: 0 for status in NightAttendance.Status.values}
@@ -213,13 +213,17 @@ def gate_returns_page(request):
 
         return redirect("gate:returns")
 
-    approved_outpasses = OutpassRequest.objects.filter(
-        status=OutpassRequest.Status.APPROVED,
-        returned_at__isnull=True,
-    ).select_related(
-        "resident",
-        "allocation__bed__room__block",
-    ).order_by("expected_return_at")
+    approved_outpasses = (
+        OutpassRequest.objects.filter(
+            status=OutpassRequest.Status.APPROVED,
+            returned_at__isnull=True,
+        )
+        .select_related(
+            "resident",
+            "allocation__bed__room__block",
+        )
+        .order_by("expected_return_at")
+    )
 
     return render(
         request,

@@ -88,15 +88,17 @@ class TransferServiceTests(TestCase):
         allocator.transfer(self.allocation, self.source, "Back again", self.warden)
         self.assertEqual(
             list(Transfer.objects.order_by("pk").values_list("reason", flat=True)),
-            ["First", "Back again"])
+            ["First", "Back again"],
+        )
         self.allocation.refresh_from_db()
         self.assertEqual(self.allocation.bed, self.source)
         self.assertEqual(Allocation.objects.filter(status="ACTIVE").count(), 1)
 
     def test_a_transfer_into_a_room_with_a_roommate_shows_on_their_dashboard(self):
         mate = allocated_resident("r2", bed=self.room2.beds.get(label="A"), first_name="Rohan")
-        allocator.transfer(self.allocation, self.room2.beds.get(label="B"),
-                           "Closer to class", self.warden)
+        allocator.transfer(
+            self.allocation, self.room2.beds.get(label="B"), "Closer to class", self.warden
+        )
         self.assertEqual(mate.bed.room, self.room2)
         login(self.client, "r2")
         self.assertContains(self.client.get(reverse("home")), "R1")  # first name of r1
@@ -115,10 +117,12 @@ class TransferViewTests(TestCase):
     def test_resident_list_search(self):
         response = self.client.get(reverse("admissions:resident_list"))
         self.assertContains(response, "Aarav")
-        self.assertContains(self.client.get(reverse("admissions:resident_list"), {"q": "102"}),
-                            "No match")
-        self.assertContains(self.client.get(reverse("admissions:resident_list"), {"q": "101"}),
-                            "Aarav")
+        self.assertContains(
+            self.client.get(reverse("admissions:resident_list"), {"q": "102"}), "No match"
+        )
+        self.assertContains(
+            self.client.get(reverse("admissions:resident_list"), {"q": "101"}), "Aarav"
+        )
 
     def test_detail_lists_only_suitable_beds(self):
         girls_room = make_room(make_block("Block B", "F"), "201")
@@ -129,7 +133,8 @@ class TransferViewTests(TestCase):
     def test_warden_transfers_a_resident(self):
         target = self.room2.beds.get(label="B")
         response = self.client.post(
-            self.url, {"bed": target.pk, "reason": "Maintenance in room 101"}, follow=True)
+            self.url, {"bed": target.pk, "reason": "Maintenance in room 101"}, follow=True
+        )
         self.assertRedirects(response, self.url)
         self.assertContains(response, "moved from")
         self.assertContains(response, "Maintenance in room 101")
@@ -163,6 +168,7 @@ class TransferViewTests(TestCase):
         User.objects.create_superuser(username="a1", password=PASSWORD)
         self.client.logout()
         login(self.client, "a1")
-        self.assertContains(self.client.get(reverse("admin:admissions_transfer_changelist")),
-                            "Move")
+        self.assertContains(
+            self.client.get(reverse("admin:admissions_transfer_changelist")), "Move"
+        )
         self.assertEqual(self.client.get(reverse("admin:admissions_transfer_add")).status_code, 403)

@@ -1,9 +1,9 @@
 # Unit Test Report
 
-| | |
+| Item | Detail |
 |---|---|
 | **Project** | Hostel Management System (HMS), Team 1 |
-| **Build tested** | `main` at a9af58e plus the changes in this pull request |
+| **Build tested** | `main` at 9f65069 plus the changes in this pull request |
 | **Date** | 8 November 2026 |
 | **Environment** | Fedora 42, Python 3.13.13 (CI uses 3.12), Django 5.2.18, PostgreSQL 16, `DJANGO_DEBUG=false` (the CI configuration) |
 | **Prepared by** | Vignesh Nunna (PES2UG24CS582) |
@@ -16,7 +16,7 @@
 | Tests run | **376** |
 | Passed | **376** |
 | Failed / errors / skipped | 0 / 0 / 0 |
-| Run time | 97 s |
+| Run time | 78 s |
 | Lint (`ruff check .`) | no findings |
 | Django checks, migrations check, deployment check | all clean |
 
@@ -24,7 +24,7 @@ The first run on 8 November, on the unchanged `main`, had **one failure** (defec
 
 ## 2. How the tests are organised
 
-The Test Plan (section 5.1) names four levels. Every test lives next to the module it checks and runs with one command:
+The Test Plan (section 5.2) names four levels. Every test lives next to the module it checks and runs with one command:
 
 - **Unit:** services, models, validators and serializers called directly (for example `apps/admissions/test_vacating.py`, `apps/mess/test_services.py`).
 - **Integration:** REST endpoints and pages with the database, the mock payment gateway and the mail backend (for example `apps/fees/tests.py`, `apps/gate/test_api_extra.py`).

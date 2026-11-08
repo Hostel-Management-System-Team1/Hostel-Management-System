@@ -49,9 +49,11 @@ class Command(BaseCommand):
             .filter(last_left__date__lt=cutoff)
         )
         visitors = Visitor.objects.filter(created_at__date__lt=cutoff).exclude(
-            visitor_name="Visitor")
+            visitor_name="Visitor"
+        )
         outpasses = OutpassRequest.objects.filter(requested_at__date__lt=cutoff).exclude(
-            Q(contact_number="") & Q(destination="Withheld"))
+            Q(contact_number="") & Q(destination="Withheld")
+        )
 
         counts = {
             "residents": residents.count(),
@@ -59,8 +61,9 @@ class Command(BaseCommand):
             "outpasses": outpasses.count(),
         }
         mode = "Anonymised" if options["apply"] else "Would anonymise (dry run, add --apply)"
-        self.stdout.write(f"Cutoff {cutoff}. {mode}: " + ", ".join(
-            f"{n} {label}" for label, n in counts.items()))
+        self.stdout.write(
+            f"Cutoff {cutoff}. {mode}: " + ", ".join(f"{n} {label}" for label, n in counts.items())
+        )
         if not options["apply"] or not any(counts.values()):
             return
 
@@ -68,18 +71,35 @@ class Command(BaseCommand):
             ids = list(residents.values_list("pk", flat=True))
             for pk in ids:
                 User.objects.filter(pk=pk).update(
-                    username=f"former-{pk}", first_name="Former", last_name="resident",
-                    email="", phone="", is_active=False, password=make_password(None),
+                    username=f"former-{pk}",
+                    first_name="Former",
+                    last_name="resident",
+                    email="",
+                    phone="",
+                    is_active=False,
+                    password=make_password(None),
                 )
             Application.objects.filter(applicant_id__in=ids).update(
                 full_name="Former resident",
-                enrolment_number=Concat(Value("ANON"), Cast("pk", CharField())), phone="", email="",
-                address="", date_of_birth=date(1900, 1, 1), guardian_name="",
-                guardian_relation="", guardian_phone="", guardian_email="", blood_group="",
+                enrolment_number=Concat(Value("ANON"), Cast("pk", CharField())),
+                phone="",
+                email="",
+                address="",
+                date_of_birth=date(1900, 1, 1),
+                guardian_name="",
+                guardian_relation="",
+                guardian_phone="",
+                guardian_email="",
+                blood_group="",
                 medical_conditions="",
             )
             visitors.update(visitor_name="Visitor", phone="", id_proof_type="", id_proof_number="")
             outpasses.update(contact_number="", destination="Withheld")
-            audit.record("retention.anonymised", actor=None, detail={
-                "cutoff": str(cutoff), **counts,
-            })
+            audit.record(
+                "retention.anonymised",
+                actor=None,
+                detail={
+                    "cutoff": str(cutoff),
+                    **counts,
+                },
+            )

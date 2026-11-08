@@ -1,4 +1,3 @@
-
 import secrets
 
 from django.conf import settings
@@ -134,21 +133,16 @@ class GateDeviceEventView(APIView):
         )
 
 
-
-
 class CurfewAlertListView(APIView):
     """GET /api/v1/gate/curfew-alerts."""
 
     permission_classes = [roles(User.Role.WARDEN)]
 
     def get(self, request):
-        alerts = CurfewAlert.objects.select_related(
-            "resident", "block"
-        ).order_by("-detected_at")
+        alerts = CurfewAlert.objects.select_related("resident", "block").order_by("-detected_at")
 
         serializer = CurfewAlertSerializer(alerts, many=True)
         return Response(serializer.data)
-
 
 
 class OutpassListCreateView(APIView):
@@ -193,9 +187,7 @@ class OutpassListCreateView(APIView):
                 resident=request.user,
                 destination=serializer.validated_data["destination"],
                 contact_number=serializer.validated_data["contact_number"],
-                expected_return_at=serializer.validated_data[
-                    "expected_return_at"
-                ],
+                expected_return_at=serializer.validated_data["expected_return_at"],
             )
         except services.OutpassError as error:
             raise ValidationError(str(error)) from error
@@ -236,9 +228,7 @@ class OutpassDecisionView(APIView):
 class OutpassReturnView(APIView):
     """POST /api/v1/outpasses/{id}/return."""
 
-    permission_classes = [
-        roles(User.Role.SECURITY_GUARD, User.Role.WARDEN)
-    ]
+    permission_classes = [roles(User.Role.SECURITY_GUARD, User.Role.WARDEN)]
 
     def post(self, request, pk):
         try:
@@ -284,9 +274,6 @@ class NightAttendanceView(APIView):
         serializer = AttendanceGenerationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        result = services.generate_night_attendance(
-            serializer.validated_data["attendance_date"]
-        )
+        result = services.generate_night_attendance(serializer.validated_data["attendance_date"])
 
         return Response(result, status=status.HTTP_200_OK)
-

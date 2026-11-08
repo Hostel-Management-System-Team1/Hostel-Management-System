@@ -6,14 +6,22 @@ from .allocation import vacant_beds
 from .models import Application, Block, Gender, RoomType
 
 SECTIONS = [
-    ("Personal details", ["enrolment_number", "full_name", "date_of_birth", "gender",
-                          "phone", "email", "address"]),
+    (
+        "Personal details",
+        ["enrolment_number", "full_name", "date_of_birth", "gender", "phone", "email", "address"],
+    ),
     ("Academic details", ["programme", "year_of_study", "cgpa"]),
-    ("Guardian details", ["guardian_name", "guardian_relation", "guardian_phone",
-                          "guardian_email"]),
+    (
+        "Guardian details",
+        ["guardian_name", "guardian_relation", "guardian_phone", "guardian_email"],
+    ),
     ("Medical details", ["blood_group", "medical_conditions"]),
     ("Room preference", ["preferred_block", "room_type"]),
 ]
+
+
+def _ordinal_suffix(n):
+    return {1: "st", 2: "nd", 3: "rd"}.get(n, "th")
 
 
 class ApplicationForm(BootstrapFormMixin, forms.ModelForm):
@@ -30,10 +38,10 @@ class ApplicationForm(BootstrapFormMixin, forms.ModelForm):
             "guardian_phone": forms.TextInput(attrs={"type": "tel"}),
             "full_name": forms.TextInput(attrs={"autocomplete": "name"}),
             "email": forms.EmailInput(attrs={"autocomplete": "email"}),
-            "year_of_study": forms.Select(choices=[("", "Select")] + [
-                (n, f"{n}{'st' if n == 1 else 'nd' if n == 2 else 'rd' if n == 3 else 'th'} year")
-                for n in range(1, 7)
-            ]),
+            "year_of_study": forms.Select(
+                choices=[("", "Select")]
+                + [(n, f"{n}{_ordinal_suffix(n)} year") for n in range(1, 7)]
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -49,18 +57,23 @@ class ApplicationForm(BootstrapFormMixin, forms.ModelForm):
 
 class DecisionForm(BootstrapFormMixin, forms.Form):
     note = forms.CharField(
-        label="Reason (required when rejecting)", required=False, max_length=300,
+        label="Reason (required when rejecting)",
+        required=False,
+        max_length=300,
         widget=forms.Textarea(attrs={"rows": 2}),
     )
 
 
 class TransferForm(BootstrapFormMixin, forms.Form):
     bed = forms.ModelChoiceField(
-        queryset=None, label="Move to", empty_label="Select a vacant bed",
+        queryset=None,
+        label="Move to",
+        empty_label="Select a vacant bed",
         help_text="Only vacant beds in a block for this resident's gender are listed.",
     )
     reason = forms.CharField(
-        label="Reason for the transfer", max_length=300,
+        label="Reason for the transfer",
+        max_length=300,
         widget=forms.Textarea(attrs={"rows": 2}),
         help_text="Recorded with your name and the time.",
     )
@@ -69,7 +82,8 @@ class TransferForm(BootstrapFormMixin, forms.Form):
         super().__init__(*args, **kwargs)
         self.allocation = allocation
         self.fields["bed"].queryset = vacant_beds(allocation.application.gender).order_by(
-            "room__block__name", "room__floor", "room__number", "label")
+            "room__block__name", "room__floor", "room__number", "label"
+        )
         self.fields["bed"].label_from_instance = lambda bed: (
             f"{bed.room.block.name} · room {bed.room.number} · bed {bed.label} "
             f"({bed.room.get_room_type_display()}, floor {bed.room.floor})"

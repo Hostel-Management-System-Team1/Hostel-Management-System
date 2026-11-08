@@ -1,4 +1,4 @@
-﻿from django.conf import settings
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 from django.utils import timezone
@@ -59,10 +59,10 @@ class VisitorModelTests(TestCase):
         self.assertEqual(hours.end_time.strftime("%H:%M"), "18:00")
         self.assertTrue(hours.is_active)
 
+
 @override_settings(
     MIDDLEWARE=[
-        m for m in settings.MIDDLEWARE
-        if m != "apps.accounts.middleware.MFARequiredMiddleware"
+        m for m in settings.MIDDLEWARE if m != "apps.accounts.middleware.MFARequiredMiddleware"
     ]
 )
 class VisitorPermissionTests(TestCase):
@@ -97,16 +97,12 @@ class VisitorPermissionTests(TestCase):
 
     def test_guard_cannot_open_warden_override(self):
         self.client.force_login(self.guard)
-        response = self.client.get(
-            f"/visitors/{self.visitor.pk}/override/"
-        )
+        response = self.client.get(f"/visitors/{self.visitor.pk}/override/")
         self.assertEqual(response.status_code, 403)
 
     def test_warden_can_open_override(self):
         self.client.force_login(self.warden)
-        response = self.client.get(
-            f"/visitors/{self.visitor.pk}/override/"
-        )
+        response = self.client.get(f"/visitors/{self.visitor.pk}/override/")
         self.assertEqual(response.status_code, 200)
 
     def test_entry_outside_visiting_hours_is_blocked(self):
@@ -162,4 +158,3 @@ class VisitorPermissionTests(TestCase):
         self.visitor.refresh_from_db()
         self.assertIsNotNone(self.visitor.exit_time)
         self.assertEqual(self.visitor.status, Visitor.Status.EXITED)
-

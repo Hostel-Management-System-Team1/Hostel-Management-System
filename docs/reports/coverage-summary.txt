@@ -5,82 +5,82 @@ apps/accounts/api.py                                            13      0      0
 apps/accounts/api_urls.py                                        3      0      0      0   100%
 apps/accounts/apps.py                                            7      0      0      0   100%
 apps/accounts/forms.py                                          31      0      2      1    97%   33->exit
-apps/accounts/management/commands/seed_demo.py                  91      1     30      1    98%   68
+apps/accounts/management/commands/seed_demo.py                  91      1     30      1    98%   95
 apps/accounts/management/commands/totp_code.py                  16      2      4      2    80%   18, 21
 apps/accounts/middleware.py                                     23      0      4      0   100%
 apps/accounts/models.py                                         41      1      6      1    96%   64
-apps/accounts/permissions.py                                    49      6     16      0    85%   57-62
+apps/accounts/permissions.py                                    49      6     16      0    85%   58-63
 apps/accounts/serializers.py                                     8      0      0      0   100%
 apps/accounts/signals.py                                        31      0     10      0   100%
 apps/accounts/urls.py                                            3      0      0      0   100%
 apps/accounts/views.py                                          52      1     14      1    97%   46
-apps/admissions/admin.py                                        94      7      4      0    93%   95-98, 114-117
+apps/admissions/admin.py                                        94      7      4      0    93%   118-121, 137-140
 apps/admissions/allocation.py                                   96      0     24      0   100%
 apps/admissions/api.py                                          40      0      2      0   100%
 apps/admissions/api_urls.py                                      3      0      0      0   100%
 apps/admissions/apps.py                                          7      0      0      0   100%
-apps/admissions/dashboard.py                                    25      1      8      1    94%   39
+apps/admissions/dashboard.py                                    25      1      8      1    94%   57
 apps/admissions/erp.py                                          11      1      2      1    85%   22
-apps/admissions/forms.py                                        35      1      4      1    95%   81
-apps/admissions/models.py                                      244      5     22      1    98%   129, 146, 338, 464, 495
+apps/admissions/forms.py                                        37      1      4      1    95%   95
+apps/admissions/models.py                                      244      5     22      1    98%   138, 155, 361, 489, 517
 apps/admissions/serializers.py                                  43      0      2      0   100%
-apps/admissions/services.py                                     41      2      8      0    96%   51-52
+apps/admissions/services.py                                     41      2      8      0    96%   54-55
 apps/admissions/signals.py                                       2      0      0      0   100%
 apps/admissions/urls.py                                          4      0      0      0   100%
 apps/admissions/vacating.py                                    131     10     40      9    89%   40, 83, 165, 168, 234, 239, 295, 300-301, 306
 apps/admissions/validators.py                                   13      0      2      0   100%
-apps/admissions/views.py                                       217      9     46      7    94%   57-58, 157, 161->178, 211->217, 218, 224, 363-364, 540, 566
+apps/admissions/views.py                                       217      9     46      7    94%   55-56, 149, 153->170, 201->207, 208, 214, 342-343, 517, 543
 apps/audit/admin.py                                             27      0      0      0   100%
 apps/audit/apps.py                                               5      0      0      0   100%
 apps/audit/context.py                                           16      0      0      0   100%
 apps/audit/management/commands/anonymise_old_records.py         42      3      6      1    92%   27-28, 40
-apps/audit/management/commands/backup_database.py               56     17     22      3    62%   42, 85-113, 118, 121
+apps/audit/management/commands/backup_database.py               56     17     22      3    62%   41, 87-113, 120, 123
 apps/audit/management/commands/retention_report.py              24      3      4      1    86%   38, 43-44
 apps/audit/management/commands/verify_audit.py                  16      0      6      1    95%   22->24
 apps/audit/models.py                                            52      0      2      0   100%
 apps/audit/service.py                                           39      0     12      0   100%
 apps/complaints/admin.py                                        13      1      0      0    92%   49
 apps/complaints/apps.py                                          7      0      0      0   100%
-apps/complaints/dashboard.py                                    22      2      6      1    89%   26-27
-apps/complaints/forms.py                                        17      1      2      1    89%   43
-apps/complaints/management/commands/escalate_complaints.py      36      4      6      1    88%   23, 70-75
-apps/complaints/models.py                                       56      1      2      1    97%   99
+apps/complaints/dashboard.py                                    22      2      6      1    89%   33-34
+apps/complaints/forms.py                                        17      1      2      1    89%   41
+apps/complaints/management/commands/escalate_complaints.py      36      4      6      1    88%   23, 68-73
+apps/complaints/models.py                                       56      1      2      1    97%   98
 apps/complaints/urls.py                                          4      0      0      0   100%
-apps/complaints/views.py                                        90      3     26      7    91%   85-86, 109->127, 135->165, 143->165, 148, 155->159, 177->194
-apps/fees/admin.py                                              64      1      0      0    98%   81
-apps/fees/api.py                                                45      1      4      1    96%   64
+apps/complaints/views.py                                        90      3     26      7    91%   89-90, 111->127, 135->165, 143->165, 148, 155->159, 177->194
+apps/fees/admin.py                                              64      1      0      0    98%   92
+apps/fees/api.py                                                45      1      4      1    96%   65
 apps/fees/api_urls.py                                            3      0      0      0   100%
 apps/fees/apps.py                                               13      0      0      0   100%
 apps/fees/dashboard.py                                          23      2      8      2    87%   26-28
 apps/fees/gateway.py                                            21      0      2      0   100%
 apps/fees/management/commands/expire_payments.py                 9      0      0      0   100%
-apps/fees/management/commands/generate_missing_invoices.py      13      0      4      1    94%   19->18
+apps/fees/management/commands/generate_missing_invoices.py      13      0      4      1    94%   20->19
 apps/fees/management/commands/process_overdue_invoices.py        7      0      0      0   100%
-apps/fees/models.py                                            108      2      4      1    97%   165, 169
+apps/fees/models.py                                            108      2      4      1    97%   168, 172
 apps/fees/receipts.py                                           30      0      0      0   100%
 apps/fees/serializers.py                                        10      0      0      0   100%
-apps/fees/services.py                                          137      5     30      4    95%   339, 355, 358-363, 431
+apps/fees/services.py                                          137      5     30      4    95%   333, 343, 346-350, 420
 apps/fees/urls.py                                                4      0      0      0   100%
-apps/fees/views.py                                              73      3     14      1    95%   57-58, 77
+apps/fees/views.py                                              73      3     14      1    95%   62-63, 86
 apps/gate/admin.py                                              44      0      0      0   100%
-apps/gate/api.py                                               116      2     16      0    98%   200-201
+apps/gate/api.py                                               116      2     16      0    98%   192-193
 apps/gate/api_urls.py                                            3      0      0      0   100%
 apps/gate/apps.py                                                7      0      0      0   100%
-apps/gate/dashboard.py                                          30      1     10      1    95%   25
+apps/gate/dashboard.py                                          30      1     10      1    95%   29
 apps/gate/management/commands/process_curfew_alerts.py           7      0      0      0   100%
-apps/gate/models.py                                             79      3      0      0    96%   75, 105, 203
+apps/gate/models.py                                             79      3      0      0    96%   71, 101, 199
 apps/gate/serializers.py                                        51      0      2      0   100%
-apps/gate/services.py                                          166     20     68     12    86%   44, 58, 81, 137-141, 226-231, 248-252, 279, 289-297, 320, 340, 379, 389, 452, 475
+apps/gate/services.py                                          166     20     68     12    86%   44, 56, 76, 133-137, 219-224, 240-244, 269, 279-287, 313, 333, 372, 382, 445, 465
 apps/gate/urls.py                                                4      0      0      0   100%
-apps/gate/views.py                                              98     15     18      2    85%   35-36, 58, 91->94, 102-103, 139-140, 180-183, 209-212
-apps/mess/admin.py                                              24      3      2      0    81%   34-36
+apps/gate/views.py                                              98     15     18      2    85%   34-35, 57, 94->97, 105-106, 137-138, 180-183, 209-212
+apps/mess/admin.py                                              24      3      2      0    81%   33-35
 apps/mess/apps.py                                                7      0      0      0   100%
-apps/mess/dashboard.py                                          29      5     10      2    82%   28-30, 42-44
-apps/mess/forms.py                                              18      1      4      2    86%   26->33, 29
-apps/mess/models.py                                             47      2      0      0    96%   41, 118
+apps/mess/dashboard.py                                          29      5     10      2    82%   30-33, 58-60
+apps/mess/forms.py                                              18      1      4      2    86%   29->36, 32
+apps/mess/models.py                                             47      2      0      0    96%   40, 114
 apps/mess/services.py                                           52      0      6      0   100%
 apps/mess/urls.py                                                4      0      0      0   100%
-apps/mess/views.py                                             191     35     50     13    79%   60, 79-82, 85->87, 111-114, 130, 136-137, 157-160, 170-171, 178, 198-201, 216-219, 276-277, 284-286, 293-294, 306
+apps/mess/views.py                                             191     36     50     14    78%   60, 81-84, 87->89, 117-120, 144, 151-152, 178-181, 191-192, 199, 227-230, 249-252, 324-325, 332-334, 341-342, 356, 366
 apps/reporting/apps.py                                           5      0      0      0   100%
 apps/reporting/urls.py                                           4      0      0      0   100%
 apps/reporting/views.py                                        176      0     22      0   100%
@@ -90,7 +90,7 @@ apps/visitors/dashboard.py                                      13      0      2
 apps/visitors/forms.py                                          14      0      0      0   100%
 apps/visitors/models.py                                         33      1      0      0    97%   67
 apps/visitors/urls.py                                            4      0      0      0   100%
-apps/visitors/views.py                                          82      8     20      5    87%   18->28, 63-64, 67-68, 94-95, 120-121
+apps/visitors/views.py                                          82      8     20      5    87%   18->28, 65-66, 69-70, 94-95, 120-121
 hms/admin_site.py                                               49      6      6      1    84%   55, 99-103
 hms/adminfields.py                                               8      0      0      0   100%
 hms/api.py                                                      43      5     14      4    84%   46, 52, 54, 56, 59
@@ -98,14 +98,14 @@ hms/api_urls.py                                                  2      0      0
 hms/apps.py                                                     12      0      0      0   100%
 hms/dashboard.py                                                23      1      6      1    93%   31
 hms/forms.py                                                    26      1     14      2    92%   13, 25->24
-hms/navigation.py                                               52      2     22      2    95%   350, 376
-hms/security.py                                                 29      1     10      1    95%   40
-hms/settings.py                                                 68      1      4      2    96%   141->147, 185
+hms/navigation.py                                               52      2     22      2    95%   382, 401
+hms/security.py                                                 29      1     10      1    95%   42
+hms/settings.py                                                 68      1      4      2    96%   137->143, 181
 hms/templatetags/hms_extras.py                                  10      1      2      1    83%   13
 hms/urls.py                                                      6      0      0      0   100%
 hms/validators.py                                                4      0      0      0   100%
-hms/views.py                                                    42      1      8      1    96%   93
+hms/views.py                                                    42      1      8      1    96%   97
 --------------------------------------------------------------------------------------------------------
-TOTAL                                                         4221    211    734    105    93%
+TOTAL                                                         4223    212    734    106    93%
 
 25 empty files skipped.
