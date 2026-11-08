@@ -5,3 +5,27 @@ extend-exclude = ["**/migrations/**"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]
+
+[tool.coverage.run]
+branch = true
+source = ["apps", "hms"]
+omit = [
+    "*/migrations/*",
+    "*/tests.py",
+    "*/test_*.py",
+    "*/testutils.py",
+    "manage.py",
+    "hms/wsgi.py",
+    "hms/asgi.py",
+    # Load-test data generators for the Locust run (docs/performance), not product code.
+    "*/management/commands/seed_performance_data.py",
+    "*/management/commands/seed_perf_wardens.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+exclude_also = [
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+]
