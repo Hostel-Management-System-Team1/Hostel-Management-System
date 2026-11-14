@@ -136,7 +136,7 @@ def main() -> int:
             )
 
     out = []
-    verdict = "✅ All tests passed" if not bad else f"❌ {len(bad)} test(s) failed"
+    verdict = "All tests passed" if not bad else f"{len(bad)} test(s) failed"
     out.append(f"## Test report: {verdict}\n")
     out.append("| Tests | Passed | Failed | Errors | Skipped | Time |")
     out.append("|---:|---:|---:|---:|---:|---:|")
@@ -169,7 +169,7 @@ def main() -> int:
         )
     out.append("")
 
-    icon = {"passed": "✅", "failed": "❌", "error": "❌", "skipped": "⏭️"}
+    icon = {"passed": "PASS", "failed": "FAIL", "error": "ERROR", "skipped": "SKIP"}
     out.append("### Unit tests\n")
     out.append(
         f"<details><summary>All {len(cases)} tests, with their result (expand to read)</summary>\n"
