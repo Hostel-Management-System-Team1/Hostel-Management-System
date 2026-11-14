@@ -94,7 +94,9 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt unittest-xml-reporting
+        run: |
+          pip install -r requirements.txt
+          pip install ruff coverage unittest-xml-reporting
 
       - name: Lint (ruff check)
         continue-on-error: true
