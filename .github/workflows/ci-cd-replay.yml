@@ -1,0 +1,222 @@
+# CI/CD replay: run the code of an earlier pull request through the current pipeline.
+#
+# The workflow files of old pull requests cannot be changed, and most of them ran an earlier,
+# smaller CI. This workflow takes a merged pull request's code (refs/pull/<n>/head) and runs it
+# through the same three stages as ci-cd.yml, using the current scripts, so every pull request and
+# the issue it closed has a run in the Actions tab.
+#
+#   Actions > CI/CD replay > Run workflow > PR number (and the issue it closed)
+#
+# Differences from ci-cd.yml, because the code is older: the format check and the deployment
+# security check are skipped, lint findings do not fail the run (a newer ruff reads old code), the
+# coverage threshold is reported but not enforced, the image is built but not pushed, and the smoke
+# test is the basic one. Every test still has to pass.
+name: CI/CD replay
+
+run-name: "CI/CD replay: PR #${{ inputs.pr }} ${{ inputs.issues }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Pull request number to replay"
+        required: true
+      issues:
+        description: "Issue it closed, for the run title (for example: closes #1)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+env:
+  PR_REF: refs/pull/${{ inputs.pr }}/head
+
+jobs:
+  build-and-test:
+    name: Build and unit tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: hms
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DJANGO_SECRET_KEY: ci-only-secret-key
+      DJANGO_DEBUG: "false"
+      POSTGRES_DB: hms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: localhost
+
+    defaults:
+      run:
+        working-directory: app
+
+    steps:
+      - name: Check out the current pipeline files
+        uses: actions/checkout@v4
+        with:
+          path: pipeline
+
+      - name: Check out the pull request code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.PR_REF }}
+          path: app
+
+      - name: Which code is being replayed
+        run: |
+          {
+            echo "## Replay of PR #${{ inputs.pr }} ${{ inputs.issues }}"
+            echo
+            echo "Commit: \`$(git rev-parse --short HEAD)\`"
+            echo
+            echo "$(git log -1 --format=%s)"
+          } >> "$GITHUB_STEP_SUMMARY"
+          mkdir -p .github
+          cp -r ../pipeline/.github/scripts .github/scripts
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt unittest-xml-reporting
+
+      - name: Lint (ruff check)
+        continue-on-error: true
+        run: ruff check . --output-format=github
+
+      - name: Django system checks
+        run: python manage.py check
+
+      - name: Check for missing migrations
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Unit tests with branch coverage
+        env:
+          PYTHONPATH: .github/scripts
+        run: coverage run --branch manage.py test --testrunner junit_runner.JUnitRunner
+
+      - name: Coverage reports
+        if: always()
+        run: |
+          coverage json -o coverage.json
+          coverage html -d coverage-html
+
+      - name: Test summary and annotations
+        if: always() && hashFiles('app/test-results/junit.xml') != ''
+        run: python .github/scripts/ci_report.py test-results/junit.xml coverage.json
+
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            app/test-results/junit.xml
+            app/coverage.json
+            app/coverage-html
+          retention-days: 30
+
+  coverage-gate:
+    name: Coverage & Quality Gate
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the current pipeline files
+        uses: actions/checkout@v4
+
+      - name: Download the test and coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports
+          path: reports
+
+      # Every test must pass. Coverage is reported; the 80% threshold applies to current code only.
+      - name: Quality gate (all tests passed, coverage reported)
+        run: |
+          python .github/scripts/quality_gate.py \
+            "$(find reports -name coverage.json)" "$(find reports -name junit.xml)" --min 0
+
+  deploy:
+    name: Deploy to Staging/Production
+    needs: [build-and-test, coverage-gate]
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: hms
+          POSTGRES_USER: hms
+          POSTGRES_PASSWORD: hms
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      APP_ENV: >-
+        -e DJANGO_SECRET_KEY=replay-only-key-0123456789-abcdefghijklmnopqrstuvwxyz
+        -e DJANGO_DEBUG=false
+        -e POSTGRES_HOST=localhost
+        -e HMS_FORCE_HTTPS=false
+
+    steps:
+      - name: Check out the current pipeline files
+        uses: actions/checkout@v4
+        with:
+          path: pipeline
+
+      - name: Check out the pull request code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.PR_REF }}
+          path: app
+
+      - name: Add the current Dockerfile to the old code
+        run: |
+          cp pipeline/Dockerfile pipeline/.dockerignore pipeline/requirements-prod.txt app/
+
+      - name: Build the image (not pushed)
+        run: docker build -t hms-replay app
+
+      - name: Migrate the database
+        run: docker run --rm --network host $APP_ENV hms-replay python manage.py migrate --noinput
+
+      - name: Start the application
+        run: |
+          docker run -d --name hms --network host $APP_ENV hms-replay \
+            gunicorn hms.wsgi:application --bind 127.0.0.1:8000 --workers 2
+          for i in $(seq 1 30); do
+            curl -s -o /dev/null http://127.0.0.1:8000/ && exit 0
+            sleep 2
+          done
+          docker logs hms
+          echo "::error::The application did not start"
+          exit 1
+
+      - name: Smoke test
+        run: pipeline/.github/scripts/smoke_test.sh http://127.0.0.1:8000 --basic
+
+      - name: Application log
+        if: always()
+        run: docker logs hms || true

@@ -313,6 +313,13 @@ failed test is also an **annotation** on the file and line where it failed
 [`junit_runner.py`](.github/scripts/junit_runner.py) writes). The reports are uploaded as the
 `test-reports` artifact for 30 days.
 
+**CI/CD replay.** Pull requests merged before this pipeline existed ran the earlier, smaller CI.
+[`ci-cd-replay.yml`](.github/workflows/ci-cd-replay.yml) (Actions, Run workflow, enter a PR number)
+runs a merged pull request's code through the same three stages with the current scripts, so every
+pull request, and the issue it closed, has a run in the Actions tab. For old code it skips the
+format and deployment-security checks, reports coverage without enforcing the 80% threshold, builds
+the image without pushing it, and uses the basic smoke test; every test must still pass.
+
 There is no production server for this project, so the deploy stage runs the image on the runner;
 rolling out to a real host is one more step there, using the same image. The image runs only the
 application under gunicorn; TLS and static files stay with the reverse proxy
