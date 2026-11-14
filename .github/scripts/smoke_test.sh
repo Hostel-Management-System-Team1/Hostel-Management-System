@@ -10,8 +10,8 @@ FAILED=0
 ROWS=""
 
 check() { # name, expected, actual
-  local ok="✅"
-  if [ "$2" != "$3" ]; then ok="❌"; FAILED=1; fi
+  local ok="PASS"
+  if [ "$2" != "$3" ]; then ok="FAIL"; FAILED=1; fi
   ROWS+="| $1 | $2 | $3 | $ok |"$'\n'
 }
 
@@ -24,6 +24,6 @@ check "Admin site redirects an anonymous visitor (GET /admin/)" 302 "$(status /a
 check "Content-Security-Policy header is sent" content-security-policy "$(header /accounts/login/ content-security-policy)"
 check "X-Frame-Options header is sent" x-frame-options "$(header /accounts/login/ x-frame-options)"
 
-REPORT="### Smoke test of $BASE"$'\n\n'"| Check | Expected | Got | |"$'\n'"|---|---|---|---|"$'\n'"$ROWS"
+REPORT="### Smoke test of $BASE"$'\n\n'"| Check | Expected | Got | Result |"$'\n'"|---|---|---|---|"$'\n'"$ROWS"
 if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then printf '%s\n' "$REPORT" >> "$GITHUB_STEP_SUMMARY"; else printf '%s\n' "$REPORT"; fi
 [ "$FAILED" -eq 0 ] || { echo "::error::Smoke test failed"; exit 1; }

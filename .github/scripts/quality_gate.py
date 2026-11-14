@@ -36,18 +36,18 @@ def main() -> int:
     count, bad = failed_tests(args.junit)
 
     rows = [
-        ("Tests passed", f"{count - bad} of {count}", "pass" if bad == 0 else "FAIL"),
+        ("Tests passed", f"{count - bad} of {count}", "PASS" if bad == 0 else "FAIL"),
         (
             f"Total coverage (threshold {args.min:.0f}%)",
             f"{coverage:.1f}%",
-            "pass" if coverage >= args.min else "FAIL",
+            "PASS" if coverage >= args.min else "FAIL",
         ),
         ("Statement coverage", f"{statements:.1f}%", "info"),
         ("Branch coverage", f"{branches:.1f}%", "info"),
     ]
     ok = bad == 0 and coverage >= args.min
     lines = [
-        f"## Coverage & quality gate: {'✅ passed' if ok else '❌ failed'}",
+        f"## Coverage & quality gate: {'passed' if ok else 'failed'}",
         "",
         "| Check | Value | Result |",
         "|---|---:|:---:|",
