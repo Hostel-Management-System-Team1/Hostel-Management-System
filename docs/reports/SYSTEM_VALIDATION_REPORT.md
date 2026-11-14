@@ -3,8 +3,8 @@
 | Item | Detail |
 |---|---|
 | **Project** | Hostel Management System (HMS), Team 1 |
-| **Build validated** | `main` at 9f65069 plus the changes in this pull request |
-| **Dates** | Cases executed 2 November 2026 (QA register); full automated suite and reports re-run 8 November 2026 |
+| **Build validated** | Release `v1.0` (`main` at 0f9d3d8); numbers re-verified on 12 November 2026 |
+| **Dates** | Cases executed 2 November 2026 (QA register); full automated suite and reports re-run 8 November 2026 and verified again 12 November 2026 |
 | **Environment** | Fedora 42, PostgreSQL 16, Django 5.2.18, `DJANGO_DEBUG=false` (the CI configuration) |
 | **Prepared by** | Vignesh Nunna (PES2UG24CS582) |
 | **QA lead review** | Vaishnavi Goyal (PES2UG24CS571) |
@@ -80,7 +80,7 @@ This report answers one question: *does the running system do what the SRS asks,
 |---|---|---|
 | 100% of planned test cases executed | **No, 30 of 31 (97%)** | TC-OPS-AVAIL needs a month of uptime data |
 | Every High-priority functional requirement implemented and verified | **Yes** | All 20 functional requirements pass; the differences from the SRS are in `DEVIATIONS.md` |
-| No non-functional or security requirement fails | **Yes, with 5 partial** | Nothing fails. NF-001, NF-004, SR-001 and SR-006 are partial, NF-002 is not run |
+| No non-functional or security requirement fails | **Yes, with 4 partial and 1 not run** | Nothing fails. NF-001, NF-004, SR-001 and SR-006 are partial, NF-002 is not run |
 | All High-severity defects closed | **Yes** | 7 High defects, all fixed and retested |
 | RTM shows Pass for every required test case | **No, 26 of 31** | The five others are listed in section 6 |
 

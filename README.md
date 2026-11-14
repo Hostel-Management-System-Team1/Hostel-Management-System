@@ -285,18 +285,38 @@ settings, set the `POSTGRES_*` environment variables listed in `.env.example`.
 
 ```bash
 ruff check .
+ruff format --check .
 python manage.py check
 python manage.py makemigrations --check --dry-run
 python manage.py test
 ```
 
-GitHub Actions runs the same steps, against PostgreSQL, on every pull request to `main`. It runs
-the suite under coverage.py with branch coverage and fails the build below 80%:
-
 ```bash
 coverage run manage.py test
 coverage report -m          # add `coverage html` for a browsable report
 ```
+
+### CI/CD pipeline (GitHub Actions)
+
+One workflow, [`ci-cd.yml`](.github/workflows/ci-cd.yml), with three stages:
+
+| Stage | Runs on | What it does |
+|---|---|---|
+| **Build and unit tests** | every pull request, push to `main`, `v*` tag | lint (`ruff check` as annotations on the changed lines, `ruff format --check`), Django checks, migrations check, deployment security check, then all 376 unit and integration tests under coverage.py with branch coverage, against PostgreSQL 16 |
+| **Coverage & Quality Gate** | after the stage above | fails unless every test passed and total coverage is at least 80% ([`quality_gate.py`](.github/scripts/quality_gate.py)) |
+| **Deploy to Staging/Production** | push to `main` or a `v*` tag only (skipped on pull requests) | builds the [`Dockerfile`](Dockerfile) image and pushes it to the GitHub Container Registry, starts that exact image with a fresh PostgreSQL, migrates, runs the [smoke test](.github/scripts/smoke_test.sh); on a tag it also creates a GitHub Release with the reports and the SRS, SAD and Test Plan attached |
+
+Every run shows a **job summary**: tests passed and failed per module, every unit test with its
+result, statement and branch coverage per module, the slowest tests and the failure messages. A
+failed test is also an **annotation** on the file and line where it failed
+([`ci_report.py`](.github/scripts/ci_report.py) reads the JUnit XML that
+[`junit_runner.py`](.github/scripts/junit_runner.py) writes). The reports are uploaded as the
+`test-reports` artifact for 30 days.
+
+There is no production server for this project, so the deploy stage runs the image on the runner;
+rolling out to a real host is one more step there, using the same image. The image runs only the
+application under gunicorn; TLS and static files stay with the reverse proxy
+([`deploy/nginx.conf.example`](deploy/nginx.conf.example)).
 
 ### Test reports (`docs/reports/`)
 
