@@ -1,0 +1,16 @@
+.git
+.github
+.venv
+.ruff_cache
+.coverage
+__pycache__
+*.pyc
+.env
+staticfiles
+test-results
+coverage.json
+coverage.xml
+htmlcov
+docs
+performance
+*.sqlite3

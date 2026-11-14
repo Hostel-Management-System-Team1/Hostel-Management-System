@@ -1,0 +1,282 @@
+# CI/CD pipeline for the Hostel Management System.
+#
+#   Build and unit tests          lint, Django checks, the whole test suite under coverage
+#   Coverage & Quality Gate       every test passed and total coverage is at least 80%
+#   Deploy to Staging/Production  build the Docker image, run it with a fresh PostgreSQL,
+#                                 migrate, smoke-test; on a v* tag also publish a GitHub Release
+#
+# Pull requests to main run the first two stages only. A push to main or a v* tag runs all three.
+# There is no production host for this project (DEVIATIONS 14), so the deploy stage runs the image
+# on the runner; rolling out to a real host is one more step there, using the same image.
+name: CI/CD
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    tags: ["v*"]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-cd-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and unit tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: hms
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DJANGO_SECRET_KEY: ci-only-secret-key
+      DJANGO_DEBUG: "false"
+      POSTGRES_DB: hms
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: localhost
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+
+      # --output-format=github turns each finding into an annotation on the changed line.
+      - name: Lint (ruff check)
+        run: ruff check . --output-format=github
+
+      - name: Formatting (ruff format)
+        run: ruff format --check --diff .
+
+      - name: Django system checks
+        run: python manage.py check
+
+      - name: Check for missing migrations
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Deployment security checks
+        env:
+          DJANGO_SECRET_KEY: ci-deployment-check-key-0123456789-abcdefghijklmnopqrstuvwxyz
+          HMS_BEHIND_PROXY: "true"
+        run: python manage.py check --deploy --fail-level WARNING
+
+      # Runs every unit test; writes test-results/junit.xml alongside the console output.
+      - name: Unit tests with branch coverage
+        env:
+          PYTHONPATH: .github/scripts
+        run: coverage run manage.py test --testrunner junit_runner.JUnitRunner
+
+      - name: Coverage reports
+        if: always()
+        run: |
+          coverage json -o coverage.json
+          coverage xml -o coverage.xml
+          coverage html -d coverage-html
+          coverage report > coverage-summary.txt || true
+
+      # Job summary: totals, per-module tests and coverage, every unit test with its result,
+      # the slowest tests and the failures. Each failed test is also an annotation on its line.
+      - name: Test summary and annotations
+        if: always() && hashFiles('test-results/junit.xml') != ''
+        run: python .github/scripts/ci_report.py test-results/junit.xml coverage.json
+
+      - name: Upload test and coverage reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            test-results/junit.xml
+            coverage.json
+            coverage.xml
+            coverage-summary.txt
+            coverage-html
+          retention-days: 30
+
+  coverage-gate:
+    name: Coverage & Quality Gate
+    needs: build-and-test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository (for the gate script)
+        uses: actions/checkout@v4
+
+      - name: Download the test and coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports
+          path: reports
+
+      - name: Quality gate (all tests passed, coverage at least 80%)
+        run: |
+          python .github/scripts/quality_gate.py \
+            reports/coverage.json reports/test-results/junit.xml --min 80
+
+  deploy:
+    name: Deploy to Staging/Production
+    needs: [build-and-test, coverage-gate]
+    # Not on pull requests: those stop at the quality gate.
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    # Appears under the repository's Environments and Deployments.
+    environment:
+      name: staging
+    permissions:
+      contents: write
+      packages: write
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: hms
+          POSTGRES_USER: hms
+          POSTGRES_PASSWORD: hms
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      APP_ENV: >-
+        -e DJANGO_SECRET_KEY=staging-only-key-0123456789-abcdefghijklmnopqrstuvwxyz
+        -e DJANGO_DEBUG=false
+        -e POSTGRES_HOST=localhost
+        -e HMS_FORCE_HTTPS=false
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Image name in lower case
+        id: ref
+        run: echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Image tags and labels
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ steps.ref.outputs.image }}
+          tags: |
+            type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=ref,event=tag
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push the image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Image published
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+          IMAGE: ${{ steps.ref.outputs.image }}
+          DIGEST: ${{ steps.build.outputs.digest }}
+        run: |
+          {
+            echo "## Image published"
+            echo
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Image | \`$IMAGE\` |"
+            echo "| Digest | \`$DIGEST\` |"
+            echo "| Tags | $(echo "$TAGS" | sed 's/.*://' | paste -sd, -) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Migrate the database
+        env:
+          IMAGE: ${{ steps.ref.outputs.image }}@${{ steps.build.outputs.digest }}
+        run: docker run --rm --network host $APP_ENV "$IMAGE" python manage.py migrate --noinput
+
+      - name: Start the application
+        env:
+          IMAGE: ${{ steps.ref.outputs.image }}@${{ steps.build.outputs.digest }}
+        run: |
+          docker run -d --name hms --network host $APP_ENV "$IMAGE" \
+            gunicorn hms.wsgi:application --bind 127.0.0.1:8000 --workers 2
+          for i in $(seq 1 30); do
+            curl -s -o /dev/null http://127.0.0.1:8000/accounts/login/ && exit 0
+            sleep 2
+          done
+          docker logs hms
+          echo "::error::The application did not start"
+          exit 1
+
+      - name: Smoke test
+        run: .github/scripts/smoke_test.sh http://127.0.0.1:8000
+
+      - name: Application log
+        if: always()
+        run: docker logs hms || true
+
+      # Release: only for a v* tag. Attaches the reports and the three design documents.
+      - name: Download the test and coverage reports
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/download-artifact@v4
+        with:
+          name: test-reports
+          path: reports
+
+      - name: Bundle the documents
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          zip -r "hms-${GITHUB_REF_NAME}-reports.zip" docs/reports reports -x "docs/reports/coverage-html/*"
+          zip -r "hms-${GITHUB_REF_NAME}-coverage-html.zip" docs/reports/coverage-html
+
+      - name: Create the GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            --title "HMS $GITHUB_REF_NAME" \
+            --generate-notes \
+            "hms-${GITHUB_REF_NAME}-reports.zip" \
+            "hms-${GITHUB_REF_NAME}-coverage-html.zip" \
+            docs/srs/*.pdf docs/sad/*.pdf docs/test-plan/*.pdf

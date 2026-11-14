@@ -41,3 +41,10 @@ monitoring/uptime.csv
 # Coverage output
 .coverage
 htmlcov/
+
+# CI report output (the committed copies live in docs/reports)
+test-results/
+/coverage.json
+/coverage.xml
+/coverage-html/
+/coverage-summary.txt

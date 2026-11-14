@@ -3,8 +3,8 @@
 | Item | Detail |
 |---|---|
 | **Project** | Hostel Management System (HMS), Team 1 |
-| **Build tested** | `main` at 9f65069 plus the changes in this pull request |
-| **Date** | 8 November 2026 |
+| **Build tested** | Release `v1.0` (`main` at 0f9d3d8); numbers re-verified on 12 November 2026 |
+| **Date** | 8 November 2026; re-run and verified 12 November 2026 (same results) |
 | **Environment** | Fedora 42, Python 3.13.13 (CI uses 3.12), Django 5.2.18, PostgreSQL 16, `DJANGO_DEBUG=false` (the CI configuration) |
 | **Prepared by** | Vignesh Nunna (PES2UG24CS582) |
 | **QA lead review** | Vaishnavi Goyal (PES2UG24CS571) |
@@ -17,10 +17,12 @@
 | Branches taken by the 376 tests | 608 |
 | Branches never taken | 126 |
 | Lines where only one side was taken (partial) | 106 |
-| **Branch coverage** | **82.8%** |
+| **Branch coverage** | **82.8%** (82.8% on 12 November; 83.0% when re-run on 14 November, see note) |
 | Files with branches / fully covered | 61 / 17 |
 
 Branch coverage is always lower than line coverage (95.0%) because a line can run while only one outcome of its decision is ever tried. That is the case for most of the 126 untaken branches here: the "everything is fine" side is tested, the rarer side (a refusal, a database error) is not always.
+
+> **Note on the date-dependent branch.** `apps/mess/views.py` computes the current week from today's date, so one branch in the week logic is taken on some days and not others. The 12 November run took 608 of 734 branches (82.8%); the 14 November run took 609 (83.0%). The figure is the same within 0.2 points on any day, and the gate (80%) passes either way.
 
 ## 2. Method
 

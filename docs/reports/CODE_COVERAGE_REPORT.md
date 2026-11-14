@@ -3,8 +3,8 @@
 | Item | Detail |
 |---|---|
 | **Project** | Hostel Management System (HMS), Team 1 |
-| **Build tested** | `main` at 9f65069 plus the changes in this pull request |
-| **Date** | 8 November 2026 |
+| **Build tested** | Release `v1.0` (`main` at 0f9d3d8); numbers re-verified on 12 November 2026 |
+| **Date** | 8 November 2026; re-run and verified 12 November 2026 (same results) |
 | **Environment** | Fedora 42, Python 3.13.13 (CI uses 3.12), Django 5.2.18, PostgreSQL 16, `DJANGO_DEBUG=false` (the CI configuration) |
 | **Prepared by** | Vignesh Nunna (PES2UG24CS582) |
 | **QA lead review** | Vaishnavi Goyal (PES2UG24CS571) |
