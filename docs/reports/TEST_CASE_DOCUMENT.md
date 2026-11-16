@@ -3,6 +3,7 @@
 | Item | Detail |
 |---|---|
 | **Project** | Hostel Management System (HMS), Team 1 |
+| **Team members** | Vaishnavi Goyal (PES2UG24CS571), Vignesh Nunna (PES2UG24CS582), Vishnu S R (PES2UG24CS595), Yellala Sai Aneesh Reddy (PES2UG24CS615) |
 | **Build validated** | Release `v1.0` (`main` at 0f9d3d8); numbers re-verified on 12 November 2026 |
 | **Dates** | Cases executed 2 November 2026 (QA register); full automated suite and reports re-run 8 November 2026 and verified again 12 November 2026 |
 | **Environment** | Fedora 42, PostgreSQL 16, Django 5.2.18, `DJANGO_DEBUG=false` (the CI configuration) |
